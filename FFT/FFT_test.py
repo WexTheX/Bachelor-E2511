@@ -21,10 +21,31 @@ axlx_size = len(axlx)
 axlx_space = 1/1600 # Unsure of this is correct (sample frequency was 1600 for the log)
 
 # FFT of axlx
-yf = fft(axlx)
-xf = fftfreq(axlx_size, axlx_space)[:axlx_size//2]
+axlx_yf = fft(axlx)
+axlx_xf = fftfreq(axlx_size, axlx_space)[:axlx_size//2]
+
+# Get y-coordinates for axeleration, get sample size
+axly = df['Axl.Y']
+axly_size = len(axly)
+axly_space = 1/1600 # Unsure of this is correct (sample frequency was 1600 for the log)
+
+# FFT of axly
+axly_yf = fft(axly)
+axly_xf = fftfreq(axly_size, axly_space)[:axly_size//2]
+
+# Get z-coordinates for axeleration, get sample size
+axlz = df['Axl.Z']
+axlz_size = len(axlz)
+axlz_space = 1/1600 # Unsure of this is correct (sample frequency was 1600 for the log)
+
+# FFT of axlx
+axlz_yf = fft(axlz)
+axlz_xf = fftfreq(axlz_size, axlz_space)[:axlz_size//2]
 
 # Plot FFT result
-plt.plot(xf, 2.0/axlx_size*np.abs(yf[0:axlx_size//2]))
+plt.plot(axlx_xf, 2.0/axlx_size*np.abs(axlx_yf[0:axlx_size//2]))
+plt.plot(axly_xf, 2.0/axly_size*np.abs(axly_yf[0:axly_size//2]))
+plt.plot(axlz_xf, 2.0/axlz_size*np.abs(axlz_yf[0:axlz_size//2]))
 plt.grid()
+plt.legend()
 plt.show()

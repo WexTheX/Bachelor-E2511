@@ -46,6 +46,6 @@ axlz_xf = fftfreq(axlz_size, axlz_space)[:axlz_size//2]
 plt.plot(axlx_xf, 2.0/axlx_size*np.abs(axlx_yf[0:axlx_size//2]))
 plt.plot(axly_xf, 2.0/axly_size*np.abs(axly_yf[0:axly_size//2]))
 plt.plot(axlz_xf, 2.0/axlz_size*np.abs(axlz_yf[0:axlz_size//2]))
+plt.legend(['Axl.X','Axl.Y','Axl.Z'])
 plt.grid()
-plt.legend()
 plt.show()

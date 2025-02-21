@@ -49,3 +49,5 @@ plt.plot(axlz_xf, 2.0/axlz_size*np.abs(axlz_yf[0:axlz_size//2]))
 plt.legend(['Axl.X','Axl.Y','Axl.Z'])
 plt.grid()
 plt.show()
+
+#YOYOYO :)

@@ -12,41 +12,51 @@ def tab_txt_to_csv(txt_file, csv_file):
 
 #tab_txt_to_csv("20250221112108_Drill_10s.txt", "20250221112108_Drill_10s.csv")
 
+set1 = "25-02-2025 123109_OA_HF"
+set2 = "25-02-2025 123422_FA_HF"
+set3 = "25-02-2025 123720_W_HF"
+
+variabel = "Gyr.Z"
+
+tab_txt_to_csv(set1+".txt", set1+".csv")
+tab_txt_to_csv(set2+".txt", set2+".csv")
+tab_txt_to_csv(set3+".txt", set3+".csv")
+
 # Read csv file
-df = pd.read_csv("20250221112108_Drill_10s.csv")
+df_1 = pd.read_csv(set1+".csv")
+df_2 = pd.read_csv(set2+".csv")
+df_3 = pd.read_csv(set3+".csv")
 
-# Get x-coordinates for axeleration, get sample size
-axlx = df['Axl.X']
-axlx_size = len(axlx)
-axlx_space = 1/1600 # Unsure of this is correct (sample frequency was 1600 for the log)
 
-# FFT of axlx
-axlx_yf = fft(axlx)
-axlx_xf = fftfreq(axlx_size, axlx_space)[:axlx_size//2]
+x1 = df_1[variabel]
+x1_size = len(x1)
+x1_space = 1/800 
 
-# Get y-coordinates for axeleration, get sample size
-axly = df['Axl.Y']
-axly_size = len(axly)
-axly_space = 1/1600 # Unsure of this is correct (sample frequency was 1600 for the log)
+x1_yf = fft(x1)
+x1_xf = fftfreq(x1_size, x1_space)[:x1_size//2]
 
-# FFT of axly
-axly_yf = fft(axly)
-axly_xf = fftfreq(axly_size, axly_space)[:axly_size//2]
 
-# Get z-coordinates for axeleration, get sample size
-axlz = df['Axl.Z']
-axlz_size = len(axlz)
-axlz_space = 1/1600 # Unsure of this is correct (sample frequency was 1600 for the log)
+x2 = df_2[variabel]
+x2_size = len(x2)
+x2_space = 1/800 
 
-# FFT of axlx
-axlz_yf = fft(axlz)
-axlz_xf = fftfreq(axlz_size, axlz_space)[:axlz_size//2]
+
+x2_yf = fft(x2)
+x2_xf = fftfreq(x2_size, x2_space)[:x2_size//2]
+
+
+x3 = df_3[variabel]
+x3_size = len(x3)
+x3_space = 1/800 
+
+x3_yf = fft(x3)
+x3_xf = fftfreq(x3_size, x3_space)[:x3_size//2]
 
 # Plot FFT result
-plt.plot(axlx_xf, 2.0/axlx_size*np.abs(axlx_yf[0:axlx_size//2]))
-plt.plot(axly_xf, 2.0/axly_size*np.abs(axly_yf[0:axly_size//2]))
-plt.plot(axlz_xf, 2.0/axlz_size*np.abs(axlz_yf[0:axlz_size//2]))
-plt.legend(['Axl.X','Axl.Y','Axl.Z'])
+plt.plot(x1_xf, 2.0/x1_size*np.abs(x1_yf[0:x1_size//2]))
+plt.plot(x2_xf, 2.0/x2_size*np.abs(x2_yf[0:x2_size//2]))
+plt.plot(x3_xf, 2.0/x3_size*np.abs(x3_yf[0:x3_size//2]))
+plt.legend(['OA','FA', 'W'])
 plt.grid()
 plt.show()
 

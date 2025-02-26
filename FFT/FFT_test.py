@@ -21,19 +21,21 @@ def FFTofFile(file, feature):
   x_xf = fftfreq(x_size, x_space)[:x_size//2]
   return x_yf, x_xf, x_size
 
-# Choose the amount of sets used for comparisons
-set1 = ""
+# Add sets to plot, sets.append("path from main file")
+# Add name of file, not file type (.txt, .csv)
+sets = []
+sets.append("Datafiles/20250226 Angle Grinder/26.02.2025 094702")
+sets.append("Datafiles/20250226 Angle Grinder/26.02.2025 094951")
 
 # Choose variable to compare
 variabel = "Axl.Z"
 
 # Convert txtfiles to csv files (Possibly redundant)
-tab_txt_to_csv(set1+".txt", set1+".csv")
-
-x1_yf, x1_xf, x1_size = FFTofFile(set1, variabel)
+for i in sets:
+  tab_txt_to_csv(i+".txt", i+".csv")
+  x_yf, x_xf, x_size = FFTofFile(i, variabel)
+  plt.plot(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
 
 # Plot FFT result
-plt.plot(x1_xf, 2.0/x1_size*np.abs(x1_yf[0:x1_size//2]))
-plt.legend(['Set 1'])
 plt.grid()
 plt.show()

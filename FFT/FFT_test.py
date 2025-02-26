@@ -14,12 +14,15 @@ def tab_txt_to_csv(txt_file, csv_file):
 
 # Choose the amount of sets used for comparisons
 setAmount = 3
-set1 = "25-02-2025 123109_OA_HF"
-set2 = "25-02-2025 123422_FA_HF"
-set3 = "25-02-2025 123720_W_HF"
+#set1 = "25-02-2025 123109_OA_HF"
+#set2 = "25-02-2025 123422_FA_HF"
+#set3 = "25-02-2025 123720_W_HF"
+set1 = "25-02-2025 123031_OA_LF"
+set2 = "25-02-2025 123348_FA_LF"
+set3 = "25-02-2025 123655_W_LF"
 
 # Choose variable to compare
-variabel = "Gyr.Z"
+variabel = "Axl.Z"
 
 # Convert txtfiles to csv files (Possibly redundant)
 tab_txt_to_csv(set1+".txt", set1+".csv")

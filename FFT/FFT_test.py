@@ -25,17 +25,26 @@ def FFTofFile(file, feature):
 # Add name of file, not file type (.txt, .csv)
 sets = []
 sets.append("Datafiles/20250226 Angle Grinder/26.02.2025 094702")
-sets.append("Datafiles/20250226 Angle Grinder/26.02.2025 094951")
+#sets.append("Datafiles/20250226 Angle Grinder/26.02.2025 094951")
+#sets.append("Datafiles/20250226 Angle Grinder/26.02.2025 095305")
 
-# Choose variable to compare
-variabel = "Axl.Z"
+# Choose variables to compare
+variables = []
+variables.append("Axl.X")
+variables.append("Axl.Y")
+variables.append("Axl.Z")
 
-# Convert txtfiles to csv files (Possibly redundant)
+label_names = []
+
+# For loop that plots every set in sets
 for i in sets:
-  tab_txt_to_csv(i+".txt", i+".csv")
-  x_yf, x_xf, x_size = FFTofFile(i, variabel)
-  plt.plot(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
+  for j in variables:
+    tab_txt_to_csv(i+".txt", i+".csv")
+    x_yf, x_xf, x_size = FFTofFile(i, j)
+    plt.plot(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
+    label_names.append(i + ", " + j)
 
 # Plot FFT result
+plt.legend(label_names)
 plt.grid()
 plt.show()

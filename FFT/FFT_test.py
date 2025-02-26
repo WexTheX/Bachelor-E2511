@@ -22,30 +22,18 @@ def FFTofFile(file, feature):
   return x_yf, x_xf, x_size
 
 # Choose the amount of sets used for comparisons
-setAmount = 3
-#set1 = "25-02-2025 123109_OA_HF"
-#set2 = "25-02-2025 123422_FA_HF"
-#set3 = "25-02-2025 123720_W_HF"
-set1 = "25-02-2025 123031_OA_LF"
-set2 = "25-02-2025 123348_FA_LF"
-set3 = "25-02-2025 123655_W_LF"
+set1 = ""
 
 # Choose variable to compare
 variabel = "Axl.Z"
 
 # Convert txtfiles to csv files (Possibly redundant)
 tab_txt_to_csv(set1+".txt", set1+".csv")
-tab_txt_to_csv(set2+".txt", set2+".csv")
-tab_txt_to_csv(set3+".txt", set3+".csv")
 
 x1_yf, x1_xf, x1_size = FFTofFile(set1, variabel)
-x2_yf, x2_xf, x2_size = FFTofFile(set2, variabel)
-x3_yf, x3_xf, x3_size = FFTofFile(set3, variabel)
 
 # Plot FFT result
 plt.plot(x1_xf, 2.0/x1_size*np.abs(x1_yf[0:x1_size//2]))
-plt.plot(x2_xf, 2.0/x2_size*np.abs(x2_yf[0:x2_size//2]))
-plt.plot(x3_xf, 2.0/x3_size*np.abs(x3_yf[0:x3_size//2]))
-plt.legend(['OA','FA', 'W'])
+plt.legend(['Set 1'])
 plt.grid()
 plt.show()

@@ -10,7 +10,16 @@ def tab_txt_to_csv(txt_file, csv_file):
   df_txt = pd.read_csv(txt_file, delimiter='\t')
   df_txt.to_csv(csv_file, index = None)
 
-#tab_txt_to_csv("20250221112108_Drill_10s.txt", "20250221112108_Drill_10s.csv")
+# Make FFT of given file, with given feature
+def FFTofFile(file, feature):
+  df = pd.read_csv(file+".csv")
+  x = df[feature]
+  x_size = len(x)
+  x_space = 1/800
+
+  x_yf = fft(x)
+  x_xf = fftfreq(x_size, x_space)[:x_size//2]
+  return x_yf, x_xf, x_size
 
 # Choose the amount of sets used for comparisons
 setAmount = 3
@@ -29,34 +38,9 @@ tab_txt_to_csv(set1+".txt", set1+".csv")
 tab_txt_to_csv(set2+".txt", set2+".csv")
 tab_txt_to_csv(set3+".txt", set3+".csv")
 
-# Read csv file
-df_1 = pd.read_csv(set1+".csv")
-df_2 = pd.read_csv(set2+".csv")
-df_3 = pd.read_csv(set3+".csv")
-
-# Define variables for set 1
-x1 = df_1[variabel]
-x1_size = len(x1)
-x1_space = 1/800 # Usikkert på denne variablen
-# FFT for set 1
-x1_yf = fft(x1)
-x1_xf = fftfreq(x1_size, x1_space)[:x1_size//2]
-
-# Define variables for set 2
-x2 = df_2[variabel]
-x2_size = len(x2)
-x2_space = 1/800 
-# FFT for set 2
-x2_yf = fft(x2)
-x2_xf = fftfreq(x2_size, x2_space)[:x2_size//2]
-
-# Define variables for set 3
-x3 = df_3[variabel]
-x3_size = len(x3)
-x3_space = 1/800 
-# FFT for set 3
-x3_yf = fft(x3)
-x3_xf = fftfreq(x3_size, x3_space)[:x3_size//2]
+x1_yf, x1_xf, x1_size = FFTofFile(set1, variabel)
+x2_yf, x2_xf, x2_size = FFTofFile(set2, variabel)
+x3_yf, x3_xf, x3_size = FFTofFile(set3, variabel)
 
 # Plot FFT result
 plt.plot(x1_xf, 2.0/x1_size*np.abs(x1_yf[0:x1_size//2]))

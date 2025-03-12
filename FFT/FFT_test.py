@@ -36,7 +36,7 @@ variables.append("Axl.Z")
 
 label_names = []
 
-# For loop that plots every set in sets
+# For loop that plots every set in sets and variable in variables
 for i in sets:
   for j in variables:
     tab_txt_to_csv(i+".txt", i+".csv")

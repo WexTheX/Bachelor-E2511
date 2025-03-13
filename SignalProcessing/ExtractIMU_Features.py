@@ -18,8 +18,6 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
     gyro_Z  = imu_data[:, 6]  # Gyroscope in Z direction
 
 
-
-
     # Define a list to store features for each window
     all_window_features = []
 

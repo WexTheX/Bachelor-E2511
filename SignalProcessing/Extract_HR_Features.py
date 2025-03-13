@@ -60,7 +60,6 @@ def Extract_HR_Features(HR_data, WindowLength_HR, PeakHR):
 
     return HR_feature_df
 
-
 def entropy(labels, base=None):
     """ Computes entropy of label distribution. """
     #https://stackoverflow.com/questions/15450192/fastest-way-to-compute-entropy-in-python
@@ -85,7 +84,6 @@ def entropy(labels, base=None):
         ent -= i * log(i, base)
 
     return ent
-
 
 def interquartile_range(signal):
     """finds the interquartile range of a 1d numpy array"""

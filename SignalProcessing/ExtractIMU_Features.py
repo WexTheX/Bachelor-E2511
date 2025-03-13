@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
-from get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
-from get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
-
-from FFT_test import tab_txt_to_csv
-
+# SignalProcessing part is needed when this file is imported in main.py
+from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
+from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
 
 def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
 
@@ -111,16 +109,3 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
     feature_df = pd.DataFrame(all_window_features)
 
     return feature_df
-
-
-## Test code
-# windowLength = 10
-
-# imu_data = np.zeros((windowLength, 7))
-
-# for i in range(0, windowLength):
-    # imu_data[i:,0] = 1741840 + i
-
-# print(imu_data)
-
-# ExtractIMU_Features(imu_data, windowLength, 0)

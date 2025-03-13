@@ -3,8 +3,20 @@ import pandas as pd
 from get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
 
-from FFT_test import tab_txt_to_csv
+# '''
+# Prøver å merge filinnhenting / prosessering fra FFT_test inn i feature extraction kodene
+# from FFT_test import tab_txt_to_csv
 
+sets, variables = [], []
+
+sets.append("SensorData/grinding/26.02.2025 094702.txt")
+sensorTypes = "Gyr.X Gyr.Y Gyr.Z Axl.X Axl.Y Axl.Z Mag.X Mag.Y Mag.Z Temp Hum".split()
+variables.extend(sensorTypes)
+
+print(variables, sets)
+
+# imu_data = tab_txt_to_csv()
+# '''
 
 def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
 

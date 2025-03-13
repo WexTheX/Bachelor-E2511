@@ -10,7 +10,8 @@ def tab_txt_to_csv(txt_file, csv_file):
   df_txt = pd.read_csv(txt_file, delimiter='\t')
   df_txt.to_csv(csv_file, index = None)
 
-# Make FFT of given file, with given feature
+
+# Make FFT of given file, with given feature 
 def FFTofFile(file, feature):
   df = pd.read_csv(file+".csv")
   x = df[feature]

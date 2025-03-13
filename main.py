@@ -33,3 +33,10 @@ variables.append("Axl.Y")
 variables.append("Axl.Z")
 
 FFT.plotFFT(sets, variables)
+
+# Det som var i ExtractIMU_Features før:
+
+sensorTypes = "Gyr.X Gyr.Y Gyr.Z Axl.X Axl.Y Axl.Z Mag.X Mag.Y Mag.Z Temp Hum".split()
+variables.extend(sensorTypes)
+
+print(variables, sets)

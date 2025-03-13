@@ -2,10 +2,13 @@ import numpy as np
 import pandas as pd
 from get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
+import fileinput
 
-# '''
+'''
 # Prøver å merge filinnhenting / prosessering fra FFT_test inn i feature extraction kodene
-# from FFT_test import tab_txt_to_csv
+#from FFT_test import tab_txt_to_csv
+
+#tab_txt_to_csv(1, 2)
 
 sets, variables = [], []
 
@@ -13,10 +16,23 @@ sets.append("SensorData/grinding/26.02.2025 094702.txt")
 sensorTypes = "Gyr.X Gyr.Y Gyr.Z Axl.X Axl.Y Axl.Z Mag.X Mag.Y Mag.Z Temp Hum".split()
 variables.extend(sensorTypes)
 
-print(variables, sets)
+print(sets[0])
+
+n = 3  # Change this to the number of lines you want to remove
+
+
+file_path = sets[0]
+
+with open(file_path, "r") as f:
+    lines = f.readlines()  # Read all lines
+
+with open(file_path, "w") as f:
+    f.writelines(lines[n:])  # Write back everything except the first `n` lines
+
+
 
 # imu_data = tab_txt_to_csv()
-# '''
+'''
 
 def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
 
@@ -34,7 +50,7 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
     all_window_features = []
 
     # Calculate the number of windows
-    num_samples = len(time_data)
+    num_samples = len(time_data) # antall målinger
     num_windows = num_samples // WindowLength
     print(f"Number of IMU  windows: {num_windows}")
 
@@ -72,6 +88,7 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
             ## merge all
             window_features = {**window_features_accel_Norm_Time, 
                                **window_features_accel_Norm_Freq,
+
                                **window_features_gyro_X_Time,
                                **window_features_gyro_Y_Time,
                                **window_features_gyro_Z_Time,
@@ -80,7 +97,7 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
                                **window_features_gyro_Z_Freq}
             
 
-        if Norm_Accel == False:    
+        if Norm_Accel == False:
             window_accel_X = accel_X[start_idx:end_idx]
             window_accel_Y = accel_Y[start_idx:end_idx]
             window_accel_Z = accel_Z[start_idx:end_idx]
@@ -108,6 +125,7 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
                                **window_features_accel_X_Freq,
                                **window_features_accel_Y_Freq,
                                **window_features_accel_Z_Freq,
+
                                **window_features_gyro_X_Time,
                                **window_features_gyro_Y_Time,
                                **window_features_gyro_Z_Time,
@@ -125,14 +143,18 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
     return feature_df
 
 
-## Test code
-# windowLength = 10
+'''
+ExtractIMU_Features(sets[0], 100, 1)
 
-# imu_data = np.zeros((windowLength, 7))
+Test code
+windowLength = 10
 
-# for i in range(0, windowLength):
+imu_data = np.zeros((windowLength, 7))
+
+for i in range(0, windowLength):
     # imu_data[i:,0] = 1741840 + i
 
-# print(imu_data)
+print(imu_data)
 
-# ExtractIMU_Features(imu_data, windowLength, 0)
+ExtractIMU_Features(imu_data, windowLength, 0)
+'''

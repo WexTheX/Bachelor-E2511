@@ -20,11 +20,22 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
     all_window_features = []
 
     # Calculate the number of windows
-    num_samples = len(time_data) # antall målinger
+    num_samples = len(time_data) # Number of measurements
     num_windows = num_samples // WindowLength
+    # 42 = 84 322 // 2 000
+
+    # Trying to remove first and last 10 seconds from the IMU_data sets
+    # To avoid time wasted during start and stop of tests
+
+    # cutLength = (10 * Fs) // WindowLength
+    # 4 = 10 * 800 // 2 000
+
     print(f"Number of IMU  windows: {num_windows}")
 
+    # for i in range(cutLength, num_windows - cutLength):
+
     for i in range(num_windows):
+        
         # Define the start and end index for the window
         start_idx = i * WindowLength
         end_idx = start_idx + WindowLength

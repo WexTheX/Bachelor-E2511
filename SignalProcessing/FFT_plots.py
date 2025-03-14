@@ -35,4 +35,5 @@ def plotFFT(sets, variables):
   # Plot FFT result
   plt.legend(label_names)
   plt.grid()
-  plt.show()
+  # plt.show()
+  plt.figure()

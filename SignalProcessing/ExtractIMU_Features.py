@@ -111,3 +111,35 @@ def ExtractIMU_Features(imu_data, WindowLength, Norm_Accel):
     feature_df = pd.DataFrame(all_window_features)
 
     return feature_df
+
+'''
+def splitTrainingAndTest(num_of_windows):
+    trainingShare = 0.9
+    testShare = (1 - trainingShare)
+    n = 3
+    j = "Datafiles/20250226 Angle Grinder/26.02.2025 095305"
+
+    feature_df = ExtractIMU_Features("imu_data", "WindowLength", "Norm_Accel")
+    
+    for i in feature_df:
+        random = random.randint(0, 9)
+        if random != 9:
+            trainingData = i  
+            name = set[j]
+            label = name[n:]
+
+            # append trainingData til df_training
+
+        elif random == 9:
+            testData = i
+            # Label testData
+
+            # append testData til df_testing
+
+    
+
+
+    # trainingData = num_of_windows * trainingShare
+
+    # testData = num_of_windows * testShare'
+'''

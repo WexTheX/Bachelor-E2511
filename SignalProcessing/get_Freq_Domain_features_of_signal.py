@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
+    
     features = {} 
 
     suffix = ""
@@ -20,6 +21,12 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     # Compute PSD via Welch algorithm
     freq, psd = welch(signal_t, Fs, nperseg=1024, scaling='density')  # az
     
+    plt.semilogy(freq, psd)  # Log scale for better visibility
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Power Spectral Density')
+    plt.title('Welch PSD')
+    plt.show()
+
     # Convert to [ug / sqrt(Hz)]
     psd = np.sqrt(psd) #* accel2ug
 

@@ -4,19 +4,24 @@ import pandas as pd
 from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
 from Preprocessing.preprocessing import tab_txt_to_csv
+from Preprocessing.preprocessing import delete_header
 
-def ExtractIMU_Features(datasets, WindowLength, Norm_Accel, Fs):
+# Changed name for clarity
+# Still based on Roya's "ExtractIMU_Features"
+
+def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
     
     features_df = []
 
     for i in datasets:
         
-        tab_txt_to_csv(i+".txt", i+".csv")
+        delete_header(i + ".txt") # Deletes lines before Timestamp and does some regex
+        tab_txt_to_csv(i + ".txt", i + ".csv") # Converts from .txt to .csv
 
         df = pd.read_csv(i+".csv")
 
         # 1, 2, 4, 5, or 10 data points must be selected
-        time_data = df["Timestamp [ms][pc]"]  # Assuming 1st column is time
+        time_data = df["Timestamp"]  # Assuming 1st column is time
         
         gyro_X  = df["Gyr.X"]  # Gyroscope data in the X direction
         gyro_Y  = df["Gyr.Y"]  # Gyroscope data in the Y direction

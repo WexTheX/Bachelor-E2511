@@ -10,7 +10,7 @@ from pathlib import Path
 from SignalProcessing.FFT_plots import plotFFT
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
-from SignalProcessing.extractFeatures import ExtractIMU_Features
+from SignalProcessing.extractFeatures import Extract_All_Features
 
 ## Test code
 # windowLength = 10
@@ -31,13 +31,13 @@ windowLength = 800
 Fs = 800
 
 # Grinding path
-folder_path = Path("Preprocessing/Datafiles/Grinding")
-txt_files = list(folder_path.glob("*.txt"))
-print(txt_files)
+# folder_path = Path("Preprocessing/Datafiles/Grinding")
+# txt_files = list(folder_path.glob("*.txt"))
+# print(txt_files)
 
-for i in range(len(txt_files)):
-    sets.append("Preprocessing/Datafiles/Grinding/GRIND" + str(i) )
-    setsLabel.append("GRIN")
+# for i in range(len(txt_files)):
+    # sets.append("Preprocessing/Datafiles/Grinding/GRIND" + str(i) )
+    # setsLabel.append("GRIN")
 
 # Idle path
 folder_path = Path("Preprocessing/Datafiles/Idle")
@@ -51,7 +51,7 @@ print(sets)
 print(setsLabel)
 
 
-ExtractIMU_Features(sets, windowLength, 0, 800)
+Extract_All_Features(sets, windowLength, 0, 800)
 
 # Choose variables to compare, variables.append("column name")
 variables = []

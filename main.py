@@ -50,6 +50,7 @@ print(feature_dataframe)
 # variables.append("Axl.Z")
 
 # plotFFT(sets, variables)
+# plotFFT(sets, variables)
 
 # plot Welch
 # df = pd.read_csv(sets[0]+".csv")
@@ -62,3 +63,10 @@ print(feature_dataframe)
 # variables.extend(sensorTypes)
 
 # print(variables, sets)
+
+# Tester om det er nok med 10 sekunder vindu
+# sets.append("Preprocessing/Datafiles/Grinding/GRIND_0")
+# sets.append("Preprocessing/Datafiles/Grinding/TEST")
+#TEST er fra samme fil GRIND0 men fra 800 til 1600
+# plotFFT(sets, variables)
+

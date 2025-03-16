@@ -12,22 +12,11 @@ from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
 from SignalProcessing.extractFeatures import Extract_All_Features
 
-## Test code
-# windowLength = 10
-
-# imu_data = np.zeros((windowLength, 7))
-
-# for i in range(0, windowLength):
-    # imu_data[i:,0] = 1741840 + i
-
-# print(imu_data)
-
-# ExtractIMU_Features(imu_data, windowLength, 0)
-
 # Add sets to plot, sets.append("path from main file")
 sets = []
 setsLabel = []
-windowLength = 800
+variables = []
+windowLength = 8000
 Fs = 800
 
 # Grinding path
@@ -51,26 +40,21 @@ print(sets)
 print(setsLabel)
 
 
-Extract_All_Features(sets, windowLength, 0, 800)
+feature_dataframe = Extract_All_Features(sets, windowLength, 0, 800)
+print(feature_dataframe)
+
 
 # Choose variables to compare, variables.append("column name")
-variables = []
 # variables.append("Axl.X")
 # variables.append("Axl.Y")
-variables.append("Axl.Z")
+# variables.append("Axl.Z")
 
-plotFFT(sets, variables)
+# plotFFT(sets, variables)
 
-# plt.figure()
-df = pd.read_csv(sets[0]+".csv")
-x = df[variables[0]]
-
-# plot Welsh
-a = freq.get_Freq_Domain_features_of_signal(x, "accel_x", 800)
-
-
-
-# print(a)
+# plot Welch
+# df = pd.read_csv(sets[0]+".csv")
+# signal = df[variables[0]]
+# welchDiagram = freq.get_Freq_Domain_features_of_signal(signal, "accel_x", 800)
 
 # Det som var i ExtractIMU_Features før:
 

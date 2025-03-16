@@ -1,6 +1,39 @@
 import pandas as pd
 import fileinput
 import re
+import os
+
+
+
+def rename_data():
+    
+    pathNames = ["Grinding", "Idle"]
+    activityName = ["GRIND", "IDLE"]
+    folder_path_data = r"Preprocessing/Datafiles"
+
+    for i in range(len(pathNames)):
+        # Change folder path dynamicly
+        folder_path = os.path.join(folder_path_data, pathNames[i])
+        print(f"Changing names of files in folder: {folder_path}")
+
+        # Find and sort txt files in folder
+        files = sorted([f for f in os.listdir(folder_path) if f.endswith(".txt")])
+
+        # Give new names to the files
+        for index, old_name in enumerate(files):
+            new_name = f"{activityName[i]}_{index}.txt"
+            old_path = os.path.join(folder_path, old_name)  # Correct file path
+            new_path = os.path.join(folder_path, new_name)
+
+            # If file exist, skip file
+            if os.path.exists(new_path):
+                print(f"Skipping: {old_name} (Filename {new_name} already exist)")
+                continue
+
+            os.rename(old_path, new_path)
+            print(f"Name changed from: {old_name} -> {new_name}")
+
+    print("Done renaming files!")
 
 def delete_header(path):
     file_path = path

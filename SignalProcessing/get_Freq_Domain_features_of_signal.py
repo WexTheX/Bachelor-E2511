@@ -25,7 +25,7 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Power Spectral Density')
     plt.title('Welch PSD')
-    plt.show()
+    # plt.show()
 
     # Convert to [ug / sqrt(Hz)]
     psd = np.sqrt(psd) #* accel2ug
@@ -38,7 +38,7 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     features[f'psd_max{suffix}']            = psd.max()
     features[f'psd_min{suffix}']            = psd.min()
     features[f'psd_max(Hz)_{suffix}']       = freq[np.argmax(psd)]
-    # features[f'Hz_mean{suffix}']            = freq.mean()  # This does not make sense
+    # features[f'Hz_mean{suffix}']          = freq.mean()  # This does not make sense
 
     return features
 

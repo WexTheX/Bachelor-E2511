@@ -35,38 +35,38 @@ folder_path = Path("Preprocessing/Datafiles/Grinding")
 txt_files = list(folder_path.glob("*.txt"))
 print(txt_files)
 
-for i in range(len(txt_files)):
-    sets.append("Preprocessing/Datafiles/Grinding/GRIND_"+ str(i) )
-    setsLabel.append("GRIN")
+#for i in range(len(txt_files)):
+    #sets.append("Preprocessing/Datafiles/Grinding/GRIND_"+ str(i) )
+    #setsLabel.append("GRIN")
 
 # Idle path
 folder_path = Path("Preprocessing/Datafiles/Idle")
 txt_files = list(folder_path.glob("*.txt"))
 
-for i in range(len(txt_files)):
-    sets.append("Preprocessing/Datafiles/Idle/IDLE_" + str(i) )
-    setsLabel.append("IDLE")
+#for i in range(len(txt_files)):
+    #sets.append("Preprocessing/Datafiles/Idle/IDLE_" + str(i) )
+    #setsLabel.append("IDLE")
 
 print(sets)
 print(setsLabel)
 
 
-Extract_All_Features(sets, windowLength, 0, 800)
+# Extract_All_Features(sets, windowLength, 0, 800)
 
 # Choose variables to compare, variables.append("column name")
 variables = []
-# variables.append("Axl.X")
+variables.append("Axl.X")
 # variables.append("Axl.Y")
-variables.append("Axl.Z")
+#variables.append("Axl.Z")
 
-plotFFT(sets, variables)
+# plotFFT(sets, variables)
 
 # plt.figure()
-df = pd.read_csv(sets[0]+".csv")
-x = df[variables[0]]
+# df = pd.read_csv(sets[0]+".csv")
+# x = df[variables[0]]
 
 # plot Welsh
-a = freq.get_Freq_Domain_features_of_signal(x, "accel_x", 800)
+# a = freq.get_Freq_Domain_features_of_signal(x, "accel_x", 800)
 
 
 
@@ -78,3 +78,10 @@ a = freq.get_Freq_Domain_features_of_signal(x, "accel_x", 800)
 # variables.extend(sensorTypes)
 
 # print(variables, sets)
+
+# Tester om det er nok med 10 sekunder vindu
+sets.append("Preprocessing/Datafiles/Grinding/GRIND_0")
+sets.append("Preprocessing/Datafiles/Grinding/TEST")
+#TEST er fra samme fil GRIND0 men fra 800 til 1600
+plotFFT(sets, variables)
+

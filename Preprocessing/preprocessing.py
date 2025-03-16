@@ -6,6 +6,7 @@ def delete_header(path):
     file_path = path
     found_timestamp = False
 
+    # Read all lines
     with open(file_path, "r") as f:
         lines_to_keep = []
         
@@ -24,7 +25,6 @@ def delete_header(path):
     with open(file_path, "w") as f:
         f.writelines(lines_to_keep)
 
-
 # delete first n lines
 # change Timestamp [ms][ew] til Timestamp
 
@@ -32,5 +32,5 @@ def delete_header(path):
 # txt_file, csv_file format : "filename.txt", "filename.csv"
 # Remember to remove "Information" in file when it comes directly from Muse
 def tab_txt_to_csv(txt_file, csv_file):
-  df_txt = pd.read_csv(txt_file, delimiter=r'\s+', engine='python')
+  df_txt = pd.read_csv(txt_file, delimiter=r'\s+', engine='python') # Delimiter is now all whitespace (tab and space etc)
   df_txt.to_csv(csv_file, index = None)

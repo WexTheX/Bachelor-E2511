@@ -35,18 +35,18 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
         mag_Y   = df["Mag.Y"]  # Magnetometer data in the Y direction
         mag_Z   = df["Mag.Z"]  # Magnetometer data in the Z direction
 
-        # temp  = df["Temp"]
-        # press = df["Press"]
+        temp    = df["Temp"]   # Ambient temperature (°C)
+        # press   = df["Press"]  # Air pressure (Pa or hPa)
 
-        # range = df["Range"]
-        # lum   = df["Lum"]
-        # IR_lum = df["IRLum"]
+        # range   = df["Range"]  # Distance to object (meters)
+        # lum     = df["Lum"]    # Light intensity (lux)
+        # IR_lum  = df["IRLum"]  # Infrared light intensity
 
         # Define a list to store features for each window
         all_window_features = []
 
         # Calculate the number of windows
-        num_samples = len(accel_X) # Number of measurements
+        num_samples = len(time_data) # Number of measurements
         num_windows = num_samples // WindowLength
         # 42 = 84 322 // 2 000
 
@@ -58,3 +58,5 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
         # 4 = 10 * 800 // 2 000
 
         print(f"Number of IMU windows after cut: {num_windows - 2 * cutLength}")
+
+        

@@ -31,20 +31,20 @@ windowLength = 800
 Fs = 800
 
 # Grinding path
-# folder_path = Path("Preprocessing/Datafiles/Grinding")
-# txt_files = list(folder_path.glob("*.txt"))
-# print(txt_files)
+folder_path = Path("Preprocessing/Datafiles/Grinding")
+txt_files = list(folder_path.glob("*.txt"))
+print(txt_files)
 
-# for i in range(len(txt_files)):
-    # sets.append("Preprocessing/Datafiles/Grinding/GRIND" + str(i) )
-    # setsLabel.append("GRIN")
+for i in range(len(txt_files)):
+    sets.append("Preprocessing/Datafiles/Grinding/GRIND_"+ str(i) )
+    setsLabel.append("GRIN")
 
 # Idle path
 folder_path = Path("Preprocessing/Datafiles/Idle")
 txt_files = list(folder_path.glob("*.txt"))
 
 for i in range(len(txt_files)):
-    sets.append("Preprocessing/Datafiles/Idle/IDLE" + str(i) )
+    sets.append("Preprocessing/Datafiles/Idle/IDLE_" + str(i) )
     setsLabel.append("IDLE")
 
 print(sets)
@@ -59,13 +59,14 @@ variables = []
 # variables.append("Axl.Y")
 variables.append("Axl.Z")
 
-# plotFFT(sets, variables)
+plotFFT(sets, variables)
 
 # plt.figure()
 df = pd.read_csv(sets[0]+".csv")
 x = df[variables[0]]
 
-#a = freq.get_Freq_Domain_features_of_signal(x, "accel_x", 800)
+# plot Welsh
+a = freq.get_Freq_Domain_features_of_signal(x, "accel_x", 800)
 
 
 

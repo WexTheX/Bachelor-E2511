@@ -3,36 +3,61 @@ import fileinput
 import re
 import os
 
+def convert_date_format(filename):
+# Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename
+    match = re.match(r"(\d{2})\.(\d{2})\.(\d{4})", filename)  # Finds date in the file name
+    if match:
+        day, month, year = match.groups()
+        return f"{year}.{month}.{day} " + filename[len(match.group(0)):]  # Keeps the rest of the filename
+    return filename  # Returns date if nothing is changed
+
+def find_next_available_index(folder_path, prefix):
+    # Finds next available index for files with a given prefix
+    existing_numbers = []
+
+    for f in os.listdir(folder_path):
+        match = re.match(rf"^{prefix}_(\d+)\.txt$", f)
+        if match:
+            existing_numbers.append(int(match.group(1)))
+
+    if not existing_numbers:
+        return 0  # Start at 0 if there is no files
+
+    existing_numbers.sort()
+
+    for i in range(len(existing_numbers)):
+        if i != existing_numbers[i]:
+            return i  # Return first hole in dataset
+    return existing_numbers[-1] + 1  # Carries on the sequence
+
 def rename_data(path):
-    
-    # This function sorts the content of each activity folder and renames the files as "GRIND_n", "IDLE_n" etc
+
+    # Folder path for txt files
     pathNames = ["Grinding", "Idle"]
     activityName = ["GRIND", "IDLE"]
-    folder_path_data = os.path.normpath(path)
+    folder_path_Grinding = os.path.normpath(path)
 
     for i in range(len(pathNames)):
-        # Change folder path dynamicly
-        folder_path = os.path.join(folder_path_data, pathNames[i])
-        print(f"Changing names of files in folder: {folder_path}")
+        folder_path = os.path.join(folder_path_Grinding, pathNames[i])
+        print(f"Processing files in: {folder_path}")
 
-        # Find and sort txt files in folder
-        files = sorted([f for f in os.listdir(folder_path) if f.endswith(".txt")])
+        # Fetch and sort .txt files based on new date format
+        files = sorted(
+            [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activityName[i])],
+            key=convert_date_format  # Sorts based on date YYYY / MM / DD
+        )
 
-        # Give new names to the files
-        for index, old_name in enumerate(files):
-            new_name = f"{activityName[i]}_{index}.txt"
-            old_path = os.path.join(folder_path, old_name)  # Correct file path
+        for old_name in files:
+            new_index = find_next_available_index(folder_path, activityName[i])  # Find available index
+            new_name = f"{activityName[i]}_{new_index}.txt"
+            
+            old_path = os.path.join(folder_path, old_name)
             new_path = os.path.join(folder_path, new_name)
 
-            # If file exist, skip file
-            if os.path.exists(new_path):
-                print(f"Skipping: {old_name} (Filename {new_name} already exist)")
-                continue
-
             os.rename(old_path, new_path)
-            print(f"Name changed from: {old_name} -> {new_name}")
+            print(f"Name updated from: {old_name} -> {new_name}")
 
-    print("Done renaming files!")
+        print("Namechanges completed!")
 
 def delete_header(path):
 

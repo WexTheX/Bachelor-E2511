@@ -37,4 +37,4 @@ def plotFFT(sets, variables):
   plt.grid()
   plt.show()
   plt.figure()
-  print("IM HERE !!!!")
+  # print("IM HERE !!!!")

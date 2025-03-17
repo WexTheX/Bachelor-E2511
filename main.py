@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib as plt
 from pathlib import Path
+from sklearn.decomposition import PCA
 
 # Local imports
 # from FOLDER import FILE as F
@@ -36,12 +37,18 @@ for i in range(len(txt_files)):
     sets.append("Preprocessing/Datafiles/Idle/IDLE_" + str(i) )
     setsLabel.append("IDLE")
 
-print(sets)
-print(setsLabel)
+print(f"Sets: \n {sets}")
+print(f"setsLabel: \n {setsLabel}")
 
-
-feature_dataframe = Extract_All_Features(sets, windowLength, 0, 800)
+# TODO: Går det an å sjekke ka som allerede e extracta og kun hente ut det som ikkje e gjort fra før?
+# Make a df with all features and saving it to a .csv file with a random name for now
+feature_dataframe = Extract_All_Features(sets, windowLength, False, 800)
+feature_dataframe.to_csv("Outputfiles/features4.csv", index=False)
 print(feature_dataframe)
+
+# 140 elements per row
+# row n = accel xyz TD, accel xyz FD, gyro xyz TD, gyro xyz FD, mag xyz TD, mag xyz FD, temp TD, temp FD from window n
+
 
 
 # Choose variables to compare, variables.append("column name")
@@ -69,4 +76,3 @@ print(feature_dataframe)
 # sets.append("Preprocessing/Datafiles/Grinding/TEST")
 #TEST er fra samme fil GRIND0 men fra 800 til 1600
 # plotFFT(sets, variables)
-

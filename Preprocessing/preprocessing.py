@@ -3,13 +3,12 @@ import fileinput
 import re
 import os
 
-
-
-def rename_data():
+def rename_data(path):
     
+    # This function sorts the content of each activity folder and renames the files as "GRIND_n", "IDLE_n" etc
     pathNames = ["Grinding", "Idle"]
     activityName = ["GRIND", "IDLE"]
-    folder_path_data = r"Preprocessing/Datafiles"
+    folder_path_data = os.path.normpath(path)
 
     for i in range(len(pathNames)):
         # Change folder path dynamicly
@@ -36,6 +35,9 @@ def rename_data():
     print("Done renaming files!")
 
 def delete_header(path):
+
+    # delete first n lines before "Timestamp"
+    # changes "Timestamp [ms][xx]" to "Timestamp"
     file_path = path
     found_timestamp = False
 
@@ -58,12 +60,8 @@ def delete_header(path):
     with open(file_path, "w") as f:
         f.writelines(lines_to_keep)
 
-# delete first n lines
-# change Timestamp [ms][ew] til Timestamp
-
-# Convert tab seperated txt file to csv file
-# txt_file, csv_file format : "filename.txt", "filename.csv"
-# Remember to remove "Information" in file when it comes directly from Muse
 def tab_txt_to_csv(txt_file, csv_file):
-  df_txt = pd.read_csv(txt_file, delimiter=r'\s+', engine='python') # Delimiter is now all whitespace (tab and space etc)
-  df_txt.to_csv(csv_file, index = None)
+    # Convert tab seperated txt file to csv file
+    # txt_file, csv_file format : "filename.txt", "filename.csv"
+    df_txt = pd.read_csv(txt_file, delimiter=r'\s+', engine='python') # Delimiter is now all whitespace (tab and space etc)
+    df_txt.to_csv(csv_file, index = None)

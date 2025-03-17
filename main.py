@@ -7,7 +7,6 @@ from pathlib import Path
 
 # Local imports
 # from FOLDER import FILE as F
-from SignalProcessing.FFT_plots import plotFFT
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
 from SignalProcessing.extractFeatures import Extract_All_Features

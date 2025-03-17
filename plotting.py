@@ -1,14 +1,24 @@
-from scipy.fft import fft, fftfreq
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Convert tab seperated txt file to csv file
-# txt_file, csv_file format : "filename.txt", "filename.csv"
-# Remember to remove "Information" in file when it comes directly from Muse
-def tab_txt_to_csv(txt_file, csv_file):
-  df_txt = pd.read_csv(txt_file, delimiter='\t')
-  df_txt.to_csv(csv_file, index = None)
+# Plot of normal distribution, WIP
+def normDistPlot(dataset, size):
+    mean = dataset["mean_accel_X"]
+    sd = dataset["sd_accel_X"]
+    
+    values = np.random.normal(mean, sd, size)
+
+    plt.hist(values, 100)
+    plt.axvline(values.mean(), color='k', linestyle='dashed', linewidth=2)
+    plt.figure()
+
+df = pd.read_csv("OutputFiles/features4.csv")
+size = 10
+print(df)
+
+normDistPlot(df[:1], 800*size)
+plt.show()
 
 # Make FFT of given file, with given feature 
 def FFTofFile(file, feature):
@@ -21,7 +31,7 @@ def FFTofFile(file, feature):
   x_xf = fftfreq(x_size, x_space)[:x_size//2]
   return x_yf, x_xf, x_size
 
-# For loop that plots every set in sets and variable in variables
+# Plot of FFT of sets and variables, REDO needed
 def plotFFT(sets, variables):
   label_names = []
 
@@ -37,4 +47,3 @@ def plotFFT(sets, variables):
   plt.grid()
   plt.show()
   plt.figure()
-  # print("IM HERE !!!!")

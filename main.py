@@ -7,22 +7,30 @@ from pathlib import Path
 
 # Local imports
 # from FOLDER import FILE as F
+from extractFeatures import Extract_All_Features
+# from machineLearning import 
+from plotting import plotFFT
+
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
-from extractFeatures import Extract_All_Features
 from Preprocessing.preprocessing import fillSets
 
-sets, setsLabel = fillSets("Preprocessing/Datafiles")
-windowLength = 8000
-Fs = 800
-outputPath = "OutputFiles/GRIN_features.csv"
+# Spesify path for input and output of files
 path = "Preprocessing/Datafiles"
+outputPath = "OutputFiles/GRIN_features.csv"
+
+windowLengthSeconds = 10
+Fs = 800
+
+# Load sets and label for those sets from given path
+sets, setsLabel = fillSets(path)
+
+# Feature extraction:
 
 # TODO: Går det an å sjekke ka som allerede e extracta og kun hente ut det som ikkje e gjort fra før?
 # Make a df with all features and saving it to a .csv file with a random name for now
 
-feature_df = Extract_All_Features(sets, windowLength, False, 800, path)
-
+feature_df = Extract_All_Features(sets, windowLengthSeconds*Fs, False, 800, path)
 feature_df.to_csv("OutputFiles/GRIN_features.csv", index=False)
 print(feature_df)
 
@@ -33,3 +41,18 @@ print(mean_accel_x)
 
 # 140 elements per row
 # row n = accel xyz TD, accel xyz FD, gyro xyz TD, gyro xyz FD, mag xyz TD, mag xyz FD, temp TD, temp FD from window n
+
+if "feature_df" not in globals():
+  feature_df = pd.readcsv("OutputFiles/features_df.csv")
+
+# Machine learning part:
+
+
+
+# Plotting part:
+# Plot FFT:
+'''
+FFTfeature = []
+FFTfeature.append("Axl.X")
+plotFFT(sets, FFTfeature)
+'''

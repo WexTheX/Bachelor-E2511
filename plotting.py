@@ -40,14 +40,15 @@ def plotFFT(sets, variables):
     for j in variables:
       #tab_txt_to_csv(i+".txt", i+".csv")
       x_yf, x_xf, x_size = FFTofFile(i, j)
-      plt.semilogy(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
+      plt.plot(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
+      #plt.semilogy(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
       label_names.append(i + ", " + j)
+      
+    plt.figure()
 
   # Plot FFT result
   plt.legend(label_names)
   plt.grid()
-  plt.show()
-  plt.figure()
 
 def plotWelch():
   # plot Welch

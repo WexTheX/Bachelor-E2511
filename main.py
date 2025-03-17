@@ -12,19 +12,17 @@ from SignalProcessing import get_Freq_Domain_features_of_signal as freq
 from extractFeatures import Extract_All_Features
 from Preprocessing.preprocessing import fillSets
 
-sets, setsLabel = fillSets("Preprocessing/Datafiles")
 windowLength = 8000
 Fs = 800
 outputPath = "OutputFiles/GRIN_features.csv"
 path = "Preprocessing/Datafiles"
+sets, setsLabel = fillSets(path)
 
-# TODO: Går det an å sjekke ka som allerede e extracta og kun hente ut det som ikkje e gjort fra før?
-# Make a df with all features and saving it to a .csv file with a random name for now
-
+# Extract features
 feature_df = Extract_All_Features(sets, windowLength, False, 800, path)
+feature_df.to_csv("OutputFiles/feature_df.csv", index=False)
 
-feature_df.to_csv("OutputFiles/GRIN_features.csv", index=False)
-print(feature_df)
+# print(feature_df)
 
 GRIN_features = pd.read_csv("OutputFiles/GRIN_features.csv")
 

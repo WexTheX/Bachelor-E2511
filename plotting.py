@@ -48,3 +48,12 @@ def plotFFT(sets, variables):
   plt.grid()
   plt.show()
   plt.figure()
+
+def plotWelch():
+  # plot Welch
+  # df = pd.read_csv(sets[0]+".csv")
+  # signal = df[variables[0]]
+  # welchDiagram = freq.get_Freq_Domain_features_of_signal(signal, "accel_x", 800)
+
+  # TBD, this won't work as get_Freq_Domain_features_of_signal() doesn't plot anymore
+  return 0

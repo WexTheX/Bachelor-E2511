@@ -2,6 +2,33 @@ import pandas as pd
 import fileinput
 import re
 import os
+from pathlib import Path
+
+def fillSets(path):
+
+    sets = []
+    setsLabel = []
+
+    # Grinding path
+    folder_path = Path(f"{path}/Grinding")
+    txt_files = list(folder_path.glob("*.txt"))
+
+    for i in range(len(txt_files)):
+        sets.append(f"{path}/Grinding/GRIND_"+ str(i) )
+        setsLabel.append("GRIN")
+
+    # Idle path
+    folder_path = Path(f"{path}/Idle")
+    txt_files = list(folder_path.glob("*.txt"))
+
+    for i in range(len(txt_files)):
+        sets.append(f"{path}/Idle/IDLE_" + str(i) )
+        setsLabel.append("IDLE")
+
+    print(f"Content of sets: \n {sets}")
+    print(f"Content of setsLabel: \n {setsLabel}")
+
+    return sets, setsLabel
 
 def convert_date_format(filename):
 # Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename
@@ -35,11 +62,11 @@ def rename_data(path):
     # Folder path for txt files
     pathNames = ["Grinding", "Idle"]
     activityName = ["GRIND", "IDLE"]
-    folder_path_Grinding = os.path.normpath(path)
+    path = os.path.normpath(path)
 
     for i in range(len(pathNames)):
-        folder_path = os.path.join(folder_path_Grinding, pathNames[i])
-        print(f"Processing files in: {folder_path}")
+        folder_path = os.path.join(path, pathNames[i])
+        print(f"Processing files in: {path}")
 
         # Fetch and sort .txt files based on new date format
         files = sorted(

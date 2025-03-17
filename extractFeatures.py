@@ -10,18 +10,17 @@ from Preprocessing.preprocessing import rename_data
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
 
-def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
+def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs, path):
     
     totalWindowsCounter = 0
     features_df = []
     all_window_features = []
     
     # Renames data inside Datafiles/xxx folder
-    rename_data("Preprocessing/Datafiles")
+    rename_data(path)
 
     for i in datasets:
         
-
         delete_header(i + ".txt") # Deletes lines before Timestamp and does some regex
         tab_txt_to_csv(i + ".txt", i + ".csv") # Converts from .txt to .csv
 
@@ -82,6 +81,7 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
 
             if Norm_Accel == True:
                 # Normalize acceleration
+                
                 norm_acceleration = np.sqrt( np.power(accel_X, 2) + np.power(accel_Y, 2) + np.power(accel_Z, 2))
 
                 g_constant = np.mean(norm_acceleration)
@@ -90,6 +90,7 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
                 window_accel_Norm = gravless_norm[start_idx:end_idx]
 
                 # Get temporal features (mean, std, MAD, etc as datatype dict)
+                # 10 columns, 10 Time domain features each = 100 elements
                 window_features_accel_Norm_Time = get_Time_Domain_features_of_signal(window_accel_Norm, "accel_Norm")
                 window_features_gyro_X_Time     = get_Time_Domain_features_of_signal(window_gyro_X, "gyro_X")
                 window_features_gyro_Y_Time     = get_Time_Domain_features_of_signal(window_gyro_Y, "gyro_Y")
@@ -100,6 +101,7 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
                 window_features_temp_Time       = get_Time_Domain_features_of_signal(window_temp, "temp")
 
                 # Get frequency features (Welch's method)
+                # 10 columns, 4 Frequency domain features each = 40 elements
                 window_features_accel_Norm_Freq = get_Freq_Domain_features_of_signal(window_accel_Norm, "accel_Norm", Fs)
                 window_features_gyro_X_Freq     = get_Freq_Domain_features_of_signal(window_gyro_X, "gyro_X", Fs)
                 window_features_gyro_Y_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Y, "gyro_Y", Fs)
@@ -131,7 +133,6 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
                                 **window_features_temp_Time,
                                 **window_features_temp_Freq}
                         
-
             if Norm_Accel == False:
 
                 window_accel_X = accel_X[start_idx:end_idx]
@@ -163,10 +164,9 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
                 window_features_mag_Y_Freq      = get_Freq_Domain_features_of_signal(window_mag_Y, "mag_Y", Fs)
                 window_features_mag_Z_Freq      = get_Freq_Domain_features_of_signal(window_mag_Z, "mag_Z", Fs)
                 window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", Fs)
-                # print(f"Getting {i}")
 
 
-                ## merge all
+                # Merge all
                 window_features = {
                                 **window_features_accel_X_Time, 
                                 **window_features_accel_Y_Time,
@@ -195,7 +195,6 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
 
             # Append the features of the current window to the list
             all_window_features.append(window_features)
-            # print(f"len of all_window_features:  {len(all_window_features)}")
 
     # Convert the list of features to a Pandas DataFrame for easy manipulation
     feature_df = pd.DataFrame(all_window_features)

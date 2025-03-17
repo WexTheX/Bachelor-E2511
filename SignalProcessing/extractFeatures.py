@@ -21,6 +21,7 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs):
 
     for i in datasets:
         
+
         delete_header(i + ".txt") # Deletes lines before Timestamp and does some regex
         tab_txt_to_csv(i + ".txt", i + ".csv") # Converts from .txt to .csv
 

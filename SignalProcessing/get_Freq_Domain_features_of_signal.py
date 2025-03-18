@@ -42,7 +42,7 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     features[f'psd_max(Hz)_{suffix}']       = freq[np.argmax(psd)]
     # features[f'Hz_mean{suffix}']          = freq.mean()  # This does not make sense
 
-    return features
+    return features, psd
 
 # Make FFT of given file, with given feature 
 def getFFT(file, feature):

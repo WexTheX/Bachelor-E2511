@@ -63,5 +63,5 @@ def testWelch(sets_n, variables_n, fs):
 
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
   
-  
+
 # getWelch(file, feature, fs, filterOn)

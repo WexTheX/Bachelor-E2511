@@ -10,6 +10,7 @@ def fillSets(path):
     setsLabel = []
 
     # sets.append(f"{path}/Grinding/GRIND_1")
+    # setsLabel.append("GRIND")
 
     # Grinding path
     folder_path = Path(f"{path}/Grinding")
@@ -27,8 +28,8 @@ def fillSets(path):
         sets.append(f"{path}/Idle/IDLE_" + str(i) )
         setsLabel.append("IDLE")
 
-    # print(f"Content of sets: \n {sets}")
-    # print(f"Content of setsLabel: \n {setsLabel}")
+    print(f"Content of sets: \n {sets}")
+    print(f"Content of setsLabel: \n {setsLabel}")
 
     return sets, setsLabel
 

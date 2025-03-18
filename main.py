@@ -9,7 +9,6 @@ from pathlib import Path
 # from FOLDER import FILE as F
 from extractFeatures import Extract_All_Features
 # from machineLearning import 
-from plotting import plotFFT, plotWelch, testWelch
 
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
@@ -17,8 +16,9 @@ from Preprocessing.preprocessing import fillSets
 
 # Spesify path for input and output of files
 path = "Preprocessing/Datafiles"
-outputPath = "OutputFiles/features_df.csv"
+outputPath = "OutputFiles/"
 
+wantFeatureExtraction = True
 windowLengthSeconds = 10
 Fs = 800
 
@@ -30,15 +30,26 @@ sets, setsLabel = fillSets(path)
 # TODO: Går det an å sjekke ka som allerede e extracta og kun hente ut det som ikkje e gjort fra før?
 # Make a df with all features and saving it to a .csv file with a random name for now
 
-# feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path)
-# feature_df.to_csv("OutputFiles/feature_df.csv", index=False)
+if(wantFeatureExtraction):
+    feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path)
+    feature_df.to_csv(outputPath+"feature_df.csv", index=False)
+    with open(outputPath+"windowLabels.txt", "w") as fp:
+        for item in windowLabels:
+            fp.write("%s\n" % item)
 
 if "feature_df" not in globals():
-    feature_df = pd.read_csv("OutputFiles/features_df.csv")
+    windowLabels = []
+    feature_df = pd.read_csv(outputPath+"feature_df.csv")
+    f = open(outputPath+"windowLabels.txt", "r")
+    data = f.read()
+    windowLabels = data.split("\n")
+    f.close()
+    windowLabels.pop()
 
 print(feature_df)
-# print(windowLabels)
+print(windowLabels)
 
+'''
 # GRIN_features = pd.read_csv("OutputFiles/GRIN_features.csv")
 
 # mean_accel_x = GRIN_features["mean_accel_X"]    
@@ -46,6 +57,7 @@ print(feature_df)
 
 # 140 elements per row
 # row n = accel xyz TD, accel xyz FD, gyro xyz TD, gyro xyz FD, mag xyz TD, mag xyz FD, temp TD, temp FD from window n
+'''
 
 # Machine learning part:
 
@@ -53,13 +65,13 @@ print(feature_df)
 
 # Plotting part:
 # Plot FFT:
-variables = ["Axl.X"]
-'''
-FFTfeature = []
-FFTfeature.append("Axl.X")
-plotFFT(sets, FFTfeature)
-'''
+# variables = ["Axl.X"]
+# '''
+# FFTfeature = []
+# FFTfeature.append("Axl.X")
+# plotFFT(sets, FFTfeature)
+# '''
 
-# plotWelch(sets, variables, Fs)
+# # plotWelch(sets, variables, Fs)
 
-testWelch(sets[0], variables[0], Fs)
+# testWelch(sets[0], variables[0], Fs)

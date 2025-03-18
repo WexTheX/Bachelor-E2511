@@ -30,9 +30,10 @@ sets, setsLabel = fillSets(path)
 # TODO: Går det an å sjekke ka som allerede e extracta og kun hente ut det som ikkje e gjort fra før?
 # Make a df with all features and saving it to a .csv file with a random name for now
 
-feature_df = Extract_All_Features(sets, windowLengthSeconds*Fs, False, 800, path)
-feature_df.to_csv("OutputFiles/GRIN_features.csv", index=False)
+feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path)
+feature_df.to_csv("OutputFiles/feature_df.csv", index=False)
 print(feature_df)
+print(windowLabels)
 
 GRIN_features = pd.read_csv("OutputFiles/GRIN_features.csv")
 

@@ -5,21 +5,23 @@ import matplotlib.pyplot as plt
 
 # Plot of normal distribution, WIP
 def normDistPlot(dataset, size):
-    mean = dataset["mean_accel_X"]
-    sd = dataset["sd_accel_X"]
+  mean = dataset["mean_accel_X"]
+  sd = dataset["sd_accel_X"]
     
-    values = np.random.normal(mean, sd, size)
+  values = np.random.normal(mean, sd, size)
 
-    plt.hist(values, 100)
-    plt.axvline(values.mean(), color='k', linestyle='dashed', linewidth=2)
-    plt.figure()
+  plt.hist(values, 100)
+  plt.axvline(values.mean(), color='k', linestyle='dashed', linewidth=2)
+  plt.figure()
 
+'''
 df = pd.read_csv("OutputFiles/features4.csv")
 size = 10
 print(df)
 
 normDistPlot(df[:1], 800*size)
 plt.show()
+'''
 
 # Make FFT of given file, with given feature 
 def FFTofFile(file, feature):

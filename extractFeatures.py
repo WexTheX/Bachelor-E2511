@@ -10,21 +10,21 @@ from Preprocessing.preprocessing import rename_data
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
 
-def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs, path):
+def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path):
     
     totalWindowsCounter = 0
     features_df = []
+    windowLabel = []
     all_window_features = []
     
     # Renames data inside Datafiles/xxx folder
     rename_data(path)
 
-    for i in datasets:
-        
-        delete_header(i + ".txt") # Deletes lines before Timestamp and does some regex
-        tab_txt_to_csv(i + ".txt", i + ".csv") # Converts from .txt to .csv
+    for i, name in enumerate(datasets):
+        delete_header(name + ".txt") # Deletes lines before Timestamp and does some regex
+        tab_txt_to_csv(name + ".txt", name + ".csv") # Converts from .txt to .csv
 
-        df = pd.read_csv(i+".csv")
+        df = pd.read_csv(name+".csv")
 
         # 1, 2, 4, 5, or 10 data points must be selected
         time_data   = df["Timestamp"]  # Assuming 1st column is time
@@ -57,14 +57,14 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs, path):
         num_windows_cut = (10 * Fs) // WindowLength
         # 4 = 10 * 800 // 2 000
 
-        print(f"Number of IMU windows in {i} after cut: {num_windows - 2 * num_windows_cut}")
+        print(f"Number of IMU windows in {name} after cut: {num_windows - 2 * num_windows_cut}")
         
         # Only does feature extraction on windows in the middle
-        for i in range(num_windows_cut, num_windows - num_windows_cut):
+        for j in range(num_windows_cut, num_windows - num_windows_cut):
             
             totalWindowsCounter += 1
             # Define the start and end index for the window
-            start_idx = i * WindowLength
+            start_idx = j * WindowLength
             end_idx = start_idx + WindowLength
             print(f"Getting features from window {start_idx} to {end_idx}")  
                     
@@ -195,10 +195,11 @@ def Extract_All_Features(datasets, WindowLength, Norm_Accel, Fs, path):
 
             # Append the features of the current window to the list
             all_window_features.append(window_features)
+            windowLabel.append(datasetsLabel[i])
 
     # Convert the list of features to a Pandas DataFrame for easy manipulation
     feature_df = pd.DataFrame(all_window_features)
 
     print(f"Total number of windows: {totalWindowsCounter}")
 
-    return feature_df
+    return feature_df, windowLabel

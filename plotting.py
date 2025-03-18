@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch, butter_highpass
+from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch, butter_highpass_filter
 
 # Plot of normal distribution, WIP
 def normDistPlot(dataset, size):
@@ -74,5 +74,5 @@ def testWelch(sets_n, variables_n, fs):
 
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
   
-  
+
 # getWelch(file, feature, fs, filterOn)

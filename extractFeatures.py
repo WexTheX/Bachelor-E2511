@@ -111,6 +111,7 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
                 window_features_mag_Z_Freq      = get_Freq_Domain_features_of_signal(window_mag_Z, "mag_Z", Fs)
                 window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", Fs)
 
+
                 ## merge all
                 window_features = {
                                 **window_features_accel_Norm_Time, 

@@ -18,6 +18,7 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     
     signal_t = np.transpose(signal)
      
+     
     # Compute PSD via Welch algorithm
     freq, psd = welch(signal_t, Fs, nperseg=1024, scaling='density')  # az
     

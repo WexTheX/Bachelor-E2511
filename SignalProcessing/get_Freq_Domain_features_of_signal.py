@@ -19,14 +19,15 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     signal_t = np.transpose(signal)
     
     # Compute PSD via Welch algorithm
-    freq, psd = welch(signal_t, Fs, nperseg=1024, scaling='density')  # az
+    
+    freq, psd = getWelch(signal_t, Fs, False, 15, 3)
 
-    # Move to plotting.py ?
     # plt.semilogy(freq, psd)  # Log scale for better visibility
     # plt.xlabel('Frequency (Hz)')
     # plt.ylabel('Power Spectral Density')
-    # plt.title('Welch PSD')
-    # plt.show()
+    # plt.title('Welch PSD {suffix}')
+    # plt.figure()
+
 
     # Convert to [ug / sqrt(Hz)]
     psd = np.sqrt(psd) #* accel2ug
@@ -55,10 +56,10 @@ def getFFT(file, feature):
   return x_yf, x_xf, x_size
 
 # x = signal
-def getWelch(x, fs, filterOn):
+def getWelch(x, fs, filterOn, omega_n, order):
 
     if filterOn:
-        signal = butter_highpass_filter(x, fs)
+        signal = butter_highpass_filter(x, fs, omega_n, order)
     else:
         signal = x
 
@@ -66,10 +67,7 @@ def getWelch(x, fs, filterOn):
 
     return freq, psd
 
-# def butter_highpass(fs, order=3):
-#     return butter(order, fs=fs, btype='high', analog=False, Wn=40) # If fs is specified, Wn is in the same units as fs.
-
-def butter_highpass_filter(data, fs, omega_n, order=3):
+def butter_highpass_filter(data, fs, omega_n, order):
 
     b, a = butter(order, Wn=omega_n, fs=fs, btype='high', analog=False)
     result = lfilter(b, a, data)

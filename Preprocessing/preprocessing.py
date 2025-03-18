@@ -9,7 +9,11 @@ def fillSets(path):
     sets = []
     setsLabel = []
 
-    # sets.append(f"{path}/Grinding/GRIND_1")
+    # sets.append(f"{path}/Grinding/GRIND_0")
+    # setsLabel.append("GRIND")
+
+    # sets.append(f"{path}/Idle/IDLE_0")
+    # setsLabel.append("IDLE")
 
     # Grinding path
     folder_path = Path(f"{path}/Grinding")
@@ -26,10 +30,7 @@ def fillSets(path):
     for i in range(len(txt_files)):
         sets.append(f"{path}/Idle/IDLE_" + str(i) )
         setsLabel.append("IDLE")
-
-    # print(f"Content of sets: \n {sets}")
-    # print(f"Content of setsLabel: \n {setsLabel}")
-
+        
     return sets, setsLabel
 
 def convert_date_format(filename):

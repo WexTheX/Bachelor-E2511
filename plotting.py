@@ -1,7 +1,8 @@
-from scipy.fft import fft, fftfreq
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch, butter_highpass
 
 # Plot of normal distribution, WIP
 def normDistPlot(dataset, size):
@@ -23,17 +24,6 @@ normDistPlot(df[:1], 800*size)
 plt.show()
 '''
 
-# Make FFT of given file, with given feature 
-def FFTofFile(file, feature):
-  df = pd.read_csv(file+".csv")
-  x = df[feature]
-  x_size = len(x)
-  x_space = 1/800
-
-  x_yf = fft(x)
-  x_xf = fftfreq(x_size, x_space)[:x_size//2]
-  return x_yf, x_xf, x_size
-
 # Plot of FFT of sets and variables, REDO needed
 def plotFFT(sets, variables):
   label_names = []
@@ -45,18 +35,35 @@ def plotFFT(sets, variables):
       plt.plot(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
       #plt.semilogy(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
       label_names.append(i + ", " + j)
-      
-    plt.figure()
 
-  # Plot FFT result
+      # Plot one plot for each variable, for each set
+      # plt.legend(label_names)
+      # plt.figure()
+
+    # Plot all variables in same plot, one for each set
+    # plt.legend(label_names)
+    # plt.figure()
+  
+  # Plot all sets and variables in same plot
   plt.legend(label_names)
-  plt.grid()
+  plt.figure()
 
-def plotWelch():
-  # plot Welch
+# Plot of Welch Method
+def plotWelch(sets, variables, fs):
   # df = pd.read_csv(sets[0]+".csv")
   # signal = df[variables[0]]
   # welchDiagram = freq.get_Freq_Domain_features_of_signal(signal, "accel_x", 800)
 
-  # TBD, this won't work as get_Freq_Domain_features_of_signal() doesn't plot anymore
-  return 0
+  # # TBD, this won't work as get_Freq_Domain_features_of_signal() doesn't plot anymore
+
+
+  for i in sets:
+    for j in variables:
+      butter_highpass(fs)
+      freq, psd = getWelch(i, j, fs)
+      plt.semilogy(freq, psd)  # Log scale for better visibility
+      plt.xlabel('Frequency (Hz)')
+      plt.ylabel('Power Spectral Density')
+      plt.title('Welch PSD')
+      plt.grid()
+      plt.figure()

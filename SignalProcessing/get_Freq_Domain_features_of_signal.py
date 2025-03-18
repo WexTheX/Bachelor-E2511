@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import scipy
 from scipy.signal import butter, lfilter, freqz, welch
-from scipy.fft import fft, ifft
+from scipy.fft import fft, ifft, fftfreq
 from scipy import stats
 # from scipy import signal
 from math import log, e
@@ -43,3 +43,31 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
 
     return features
 
+# Make FFT of given file, with given feature 
+def getFFT(file, feature):
+  df = pd.read_csv(file+".csv")
+  x = df[feature]
+  x_size = len(x)
+  x_space = 1/800
+
+  x_yf = fft(x)
+  x_xf = fftfreq(x_size, x_space)[:x_size//2]
+  return x_yf, x_xf, x_size
+
+def getWelch(file, feature, fs):
+   df = pd.read_csv(file+".csv")
+   x = df[feature]
+   
+   signal = butter_highpass_filter(x, fs)
+
+   freq, psd = welch(signal, fs, nperseg=1024, scaling='density')
+
+   return freq, psd
+
+def butter_highpass(fs, order=3):
+    return butter(order, fs=fs, btype='high', analog=False, Wn=40) # If fs is specified, Wn is in the same units as fs.
+
+def butter_highpass_filter(data, fs, order=3):
+    b, a = butter_highpass(fs, order=order)
+    result = lfilter(b, a, data)
+    return result

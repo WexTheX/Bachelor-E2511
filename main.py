@@ -18,12 +18,23 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = True
+
+wantFeatureExtraction = False
+wantPlots = False
 windowLengthSeconds = 10
 Fs = 800
 
 # Load sets and label for those sets from given path
 sets, setsLabel = fillSets(path)
+
+# User inputs
+answer1 = input("Do you want feature extraction? (Y | N)")
+if(answer1 == "Y"):
+    wantFeatureExtraction = True
+
+answer2 = input("Do you want plots? (Y | N)")
+if(answer2 == "Y"):
+    wantPlots = True
 
 # Feature extraction:
 
@@ -31,7 +42,7 @@ sets, setsLabel = fillSets(path)
 # Make a df with all features and saving it to a .csv file with a random name for now
 
 if(wantFeatureExtraction):
-    feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path)
+    feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path, wantPlots)
     feature_df.to_csv(outputPath+"feature_df.csv", index=False)
     with open(outputPath+"windowLabels.txt", "w") as fp:
         for item in windowLabels:
@@ -58,10 +69,6 @@ print(windowLabels)
 # 140 elements per row
 # row n = accel xyz TD, accel xyz FD, gyro xyz TD, gyro xyz FD, mag xyz TD, mag xyz FD, temp TD, temp FD from window n
 '''
-
-# Machine learning part:
-
-
 
 # Plotting part:
 # Plot FFT:

@@ -9,13 +9,14 @@ def fillSets(path):
     sets = []
     setsLabel = []
 
+    ''' Only one set '''
     # sets.append(f"{path}/Grinding/GRIND_0")
     # setsLabel.append("GRIND")
 
     # sets.append(f"{path}/Idle/IDLE_0")
     # setsLabel.append("IDLE")
 
-    # Grinding path
+    ''' Grinding path '''
     folder_path = Path(f"{path}/Grinding")
     txt_files = list(folder_path.glob("*.txt"))
 
@@ -23,13 +24,23 @@ def fillSets(path):
         sets.append(f"{path}/Grinding/GRIND_"+ str(i) )
         setsLabel.append("GRIN")
 
-    # # Idle path
+    ''' Idle path '''
     folder_path = Path(f"{path}/Idle")
     txt_files = list(folder_path.glob("*.txt"))
 
     for i in range(len(txt_files)):
         sets.append(f"{path}/Idle/IDLE_" + str(i) )
         setsLabel.append("IDLE")
+ 
+    ''' Welding path ''' 
+    # TODO Split tig, mig and electrode?
+    # TODO Remove time before welding
+    # folder_path = Path(f"{path}/Welding")
+    # txt_files = list(folder_path.glob("*.txt"))
+
+    # for i in range(len(txt_files)):
+    #     sets.append(f"{path}/Welding/WELD_" + str(i) )
+    #     setsLabel.append("WELD")
         
     return sets, setsLabel
 

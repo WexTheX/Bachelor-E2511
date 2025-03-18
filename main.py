@@ -25,9 +25,9 @@ outputPath = "OutputFiles/"
 
 wantFeatureExtraction = False
 wantPlots = False
-windowLengthSeconds = 10
+windowLengthSeconds = 0
 Fs = 800
-randomness = 5
+randomness = 25
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 # Load sets and label for those sets from given path
@@ -87,14 +87,14 @@ print(f"Content of testing labels: \n {testLabels}")
 ''' SCALING '''
 trainDataScaled = scaleFeatures(trainData)
 testDataScaled = scaleFeatures(testData)
-# print(f"Content of training data scaled: \n {trainDataScaled}")
-# print(f"Content of testing data scaled: \n {testDataScaled}")
+print(f"Content of training data scaled: \n {trainDataScaled}")
+print(f"Content of testing data scaled: \n {testDataScaled}")
 
 ''' CLASSIFIER '''
 clf = svm.SVC(kernel='linear')
 clf.fit(trainDataScaled, trainLabels)
 
-testPredict = clf.predict(testData)
+testPredict = clf.predict(testDataScaled)
 
 ''' EVALUATION '''
 print("Accuracy:", metrics.accuracy_score(testLabels, testPredict))
@@ -116,8 +116,8 @@ print("Accuracy:", metrics.accuracy_score(testLabels, testPredict))
 
 if(wantPlots):
     for i in range(1, len(variables)):
-        plotWelch(sets[14], variables[i], Fs, False)
-        plotWelch(sets[14], variables[i], Fs, True)
+        plotWelch(sets[0], variables[i], Fs, False)
+        plotWelch(sets[0], variables[i], Fs, True)
         plt.xlabel('Frequency (Hz)')
         plt.ylabel('Power Spectral Density')
         plt.title('Welch PSD, %s' % variables[i])

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch, butter_highpass
+from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 
 # Plot of normal distribution, WIP
 def normDistPlot(dataset, size):
@@ -49,24 +49,13 @@ def plotFFT(sets, variables):
   plt.figure()
 
 # Plot of Welch Method
-def plotWelch(sets, variables, fs):
-  # df = pd.read_csv(sets[0]+".csv")
-  # signal = df[variables[0]]
-  # welchDiagram = freq.get_Freq_Domain_features_of_signal(signal, "accel_x", 800)
+def plotWelch(signal, feature, fs, filtering=True, omega_n = 15, order = 3):
+  df = pd.read_csv(signal+".csv")
+  x = df[feature]
+  freq, psd = getWelch(x, fs, filtering, omega_n, order)
 
-  # # TBD, this won't work as get_Freq_Domain_features_of_signal() doesn't plot anymore
+  plt.semilogy(freq, psd)  # Log scale for better visibility
 
-  for i in sets:
-    for j in variables:
-      # butter_highpass(fs)
-      freq, psd = getWelch(i, j, fs, True)
-
-      plt.semilogy(freq, psd)  # Log scale for better visibility
-      plt.xlabel('Frequency (Hz)')
-      plt.ylabel('Power Spectral Density')
-      plt.title('Welch PSD')
-      plt.grid()
-      plt.figure()
 
 def testWelch(sets_n, variables_n, fs):
   omega_range = [10, 20, 30, 40, 50]

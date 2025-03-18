@@ -20,14 +20,14 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     
     # Compute PSD via Welch algorithm
     
-    freq, psd = getWelch(signal_t, Fs, True, 15, 3)
-    
-    # if(plot):
-    #     plt.semilogy(freq, psd)  # Log scale for better visibility
-    #     plt.xlabel('Frequency (Hz)')
-    #     plt.ylabel('Power Spectral Density')
-    #     plt.title('Welch PSD')
-    #     plt.figure()
+    freq, psd = getWelch(signal_t, Fs, False, 15, 3)
+
+    # plt.semilogy(freq, psd)  # Log scale for better visibility
+    # plt.xlabel('Frequency (Hz)')
+    # plt.ylabel('Power Spectral Density')
+    # plt.title('Welch PSD {suffix}')
+    # plt.figure()
+
 
     # Convert to [ug / sqrt(Hz)]
     psd = np.sqrt(psd) #* accel2ug

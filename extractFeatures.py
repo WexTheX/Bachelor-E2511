@@ -10,7 +10,7 @@ from Preprocessing.preprocessing import rename_data
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
 
-def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path, wantPlots):
+def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path):
     
     totalWindowsCounter = 0
     features_df = []
@@ -190,7 +190,8 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
                                 **window_features_mag_Z_Freq,
 
                                 **window_features_temp_Time,
-                                **window_features_temp_Freq}
+                                **window_features_temp_Freq
+                                }
 
             # Append the features of the current window to the list
             all_window_features.append(window_features)

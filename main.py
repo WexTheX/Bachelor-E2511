@@ -9,7 +9,7 @@ from pathlib import Path
 # from FOLDER import FILE as F
 from extractFeatures import Extract_All_Features
 # from machineLearning import 
-from plotting import plotFFT, plotWelch
+from plotting import plotFFT, plotWelch, testWelch
 
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
@@ -33,10 +33,10 @@ sets, setsLabel = fillSets(path)
 # feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path)
 # feature_df.to_csv("OutputFiles/feature_df.csv", index=False)
 
-# if "feature_df" not in globals():
-#   feature_df = pd.read_csv("OutputFiles/features_df.csv")
+if "feature_df" not in globals():
+    feature_df = pd.read_csv("OutputFiles/features_df.csv")
 
-# print(feature_df)
+print(feature_df)
 # print(windowLabels)
 
 # GRIN_features = pd.read_csv("OutputFiles/GRIN_features.csv")
@@ -60,6 +60,6 @@ FFTfeature.append("Axl.X")
 plotFFT(sets, FFTfeature)
 '''
 
-plotWelch(sets, variables, Fs)
+# plotWelch(sets, variables, Fs)
 
-plt.show()
+testWelch(sets[0], variables[0], Fs)

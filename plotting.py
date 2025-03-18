@@ -31,7 +31,7 @@ def plotFFT(sets, variables):
   for i in sets:
     for j in variables:
       #tab_txt_to_csv(i+".txt", i+".csv")
-      x_yf, x_xf, x_size = FFTofFile(i, j)
+      x_yf, x_xf, x_size = getFFT(i, j)
       plt.plot(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
       #plt.semilogy(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
       label_names.append(i + ", " + j)
@@ -56,14 +56,23 @@ def plotWelch(sets, variables, fs):
 
   # # TBD, this won't work as get_Freq_Domain_features_of_signal() doesn't plot anymore
 
-
   for i in sets:
     for j in variables:
-      butter_highpass(fs)
-      freq, psd = getWelch(i, j, fs)
+      # butter_highpass(fs)
+      freq, psd = getWelch(i, j, fs, True)
+
       plt.semilogy(freq, psd)  # Log scale for better visibility
       plt.xlabel('Frequency (Hz)')
       plt.ylabel('Power Spectral Density')
       plt.title('Welch PSD')
       plt.grid()
       plt.figure()
+
+def testWelch(sets_n, variables_n, fs):
+  omega_range = [10, 20, 30, 40, 50]
+  filter_order = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+  freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
+  
+  
+# getWelch(file, feature, fs, filterOn)

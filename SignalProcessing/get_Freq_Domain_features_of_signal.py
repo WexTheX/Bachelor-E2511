@@ -17,8 +17,7 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
         suffix = f"_{signal_name}"
     
     signal_t = np.transpose(signal)
-     
-     
+    
     # Compute PSD via Welch algorithm
     freq, psd = welch(signal_t, Fs, nperseg=1024, scaling='density')  # az
     
@@ -55,20 +54,24 @@ def getFFT(file, feature):
   x_xf = fftfreq(x_size, x_space)[:x_size//2]
   return x_yf, x_xf, x_size
 
-def getWelch(file, feature, fs):
-   df = pd.read_csv(file+".csv")
-   x = df[feature]
-   
-   signal = butter_highpass_filter(x, fs)
+# x = signal
+def getWelch(x, fs, filterOn):
 
-   freq, psd = welch(signal, fs, nperseg=1024, scaling='density')
+    if filterOn:
+        signal = butter_highpass_filter(x, fs)
+    else:
+        signal = x
 
-   return freq, psd
+    freq, psd = welch(signal, fs, nperseg=1024, scaling='density')
 
-def butter_highpass(fs, order=3):
-    return butter(order, fs=fs, btype='high', analog=False, Wn=40) # If fs is specified, Wn is in the same units as fs.
+    return freq, psd
 
-def butter_highpass_filter(data, fs, order=3):
-    b, a = butter_highpass(fs, order=order)
+# def butter_highpass(fs, order=3):
+#     return butter(order, fs=fs, btype='high', analog=False, Wn=40) # If fs is specified, Wn is in the same units as fs.
+
+def butter_highpass_filter(data, fs, omega_n, order=3):
+
+    b, a = butter(order, Wn=omega_n, fs=fs, btype='high', analog=False)
     result = lfilter(b, a, data)
+
     return result

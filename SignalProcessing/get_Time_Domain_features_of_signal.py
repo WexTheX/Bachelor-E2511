@@ -10,7 +10,7 @@ import pandas as pd
 
 def get_Time_Domain_features_of_signal(signal,signal_name):
     features = {} 
-    signal = butter(1, 100, fs=800, btype='low', analog=False)
+    # signal = butter(1, 100, fs=800, btype='low', analog=False)
 
     suffix = ""
     if signal_name:

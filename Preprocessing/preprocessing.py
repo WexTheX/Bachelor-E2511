@@ -9,23 +9,23 @@ def fillSets(path):
     sets = []
     setsLabel = []
 
-    sets.append(f"{path}/Grinding/GRIND_1")
+    # sets.append(f"{path}/Grinding/GRIND_1")
 
     # Grinding path
-    # folder_path = Path(f"{path}/Grinding")
-    # txt_files = list(folder_path.glob("*.txt"))
+    folder_path = Path(f"{path}/Grinding")
+    txt_files = list(folder_path.glob("*.txt"))
 
-    # for i in range(len(txt_files)):
-    #     sets.append(f"{path}/Grinding/GRIND_"+ str(i) )
-    #     setsLabel.append("GRIN")
+    for i in range(len(txt_files)):
+        sets.append(f"{path}/Grinding/GRIND_"+ str(i) )
+        setsLabel.append("GRIN")
 
     # # Idle path
-    # folder_path = Path(f"{path}/Idle")
-    # txt_files = list(folder_path.glob("*.txt"))
+    folder_path = Path(f"{path}/Idle")
+    txt_files = list(folder_path.glob("*.txt"))
 
-    # for i in range(len(txt_files)):
-    #     sets.append(f"{path}/Idle/IDLE_" + str(i) )
-    #     setsLabel.append("IDLE")
+    for i in range(len(txt_files)):
+        sets.append(f"{path}/Idle/IDLE_" + str(i) )
+        setsLabel.append("IDLE")
 
     # print(f"Content of sets: \n {sets}")
     # print(f"Content of setsLabel: \n {setsLabel}")

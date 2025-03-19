@@ -34,13 +34,12 @@ def fillSets(path):
  
     ''' Welding path ''' 
     # TODO Split tig, mig and electrode?
-    # TODO Remove time before welding
-    # folder_path = Path(f"{path}/Welding")
-    # txt_files = list(folder_path.glob("*.txt"))
+    folder_path = Path(f"{path}/Welding")
+    txt_files = list(folder_path.glob("*.txt"))
 
-    # for i in range(len(txt_files)):
-    #     sets.append(f"{path}/Welding/WELD_" + str(i) )
-    #     setsLabel.append("WELD")
+    for i in range(len(txt_files)):
+        sets.append(f"{path}/Welding/WELD_" + str(i) )
+        setsLabel.append("WELD")
         
     return sets, setsLabel
 

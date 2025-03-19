@@ -45,13 +45,11 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     return features, psd
 
 # Make FFT of given file, with given feature 
-def getFFT(file, feature):
-  df = pd.read_csv(file+".csv")
-  x = df[feature]
-  x_size = len(x)
+def getFFT(signal):
+  x_size = len(signal)
   x_space = 1/800
 
-  x_yf = fft(x)
+  x_yf = fft(signal)
   x_xf = fftfreq(x_size, x_space)[:x_size//2]
   return x_yf, x_xf, x_size
 

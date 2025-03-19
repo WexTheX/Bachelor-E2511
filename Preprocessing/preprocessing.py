@@ -34,14 +34,29 @@ def fillSets(path):
  
     ''' Welding path ''' 
     # TODO Split tig, mig and electrode?
-    # TODO Remove time before welding
-    # folder_path = Path(f"{path}/Welding")
+    folder_path = Path(f"{path}/Welding/")
+    txt_files = list(folder_path.glob("*.txt"))
+
+    for i in range(len(txt_files)):
+        sets.append(f"{path}/Welding/WELD_" + str(i) )
+        setsLabel.append("WELD")
+        
+    ''' Welding path split'''
+    ''' Welding Aluminum '''
+    # folder_path = Path(f"{path}/Welding/Aluminum/TIG")
     # txt_files = list(folder_path.glob("*.txt"))
 
     # for i in range(len(txt_files)):
-    #     sets.append(f"{path}/Welding/WELD_" + str(i) )
-    #     setsLabel.append("WELD")
-        
+    #     sets.append(f"{path}/Welding/Aluminum/TIG/ALUTIGWELD_" + str(i) )
+    #     setsLabel.append("ALUTIGWELD")
+
+    # folder_path = Path(f"{path}/Welding/Aluminum/MIG")
+    # txt_files = list(folder_path.glob("*.txt"))
+
+    # for i in range(len(txt_files)):
+    #     sets.append(f"{path}/Welding/Aluminum/TIG/ALUTIGWELD_" + str(i) )
+    #     setsLabel.append("ALUTIGWELD")
+
     return sets, setsLabel
 
 def convert_date_format(filename):
@@ -74,8 +89,8 @@ def find_next_available_index(folder_path, prefix):
 def rename_data(path):
 
     # Folder path for txt files
-    pathNames = ["Grinding", "Idle"]
-    activityName = ["GRIND", "IDLE"]
+    pathNames = ["Grinding", "Idle", "Welding"]
+    activityName = ["GRIND", "IDLE", "WELD"]
     path = os.path.normpath(path)
 
     for i in range(len(pathNames)):

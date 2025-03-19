@@ -24,11 +24,11 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = False
+wantFeatureExtraction = True
 wantPlots = False
-windowLengthSeconds = 0
+windowLengthSeconds = 10
 Fs = 800
-randomness = 25
+randomness = 18
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 # Load sets and label for those sets from given path
@@ -80,16 +80,16 @@ if "feature_df" not in globals():
 
 ''' SPLITTING '''
 trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabels, randomness)
-print(f"Content of training data: \n {trainData}")
-print(f"Content of training labels: \n {trainLabels}")
-print(f"Content of testing data: \n {testData}")
-print(f"Content of testing labels: \n {testLabels}")
+# print(f"Content of training data: \n {trainData}")
+# print(f"Content of training labels: \n {trainLabels}")
+# print(f"Content of testing data: \n {testData}")
+# print(f"Content of testing labels: \n {testLabels}")
     
 ''' SCALING '''
 trainDataScaled = scaleFeatures(trainData)
 testDataScaled = scaleFeatures(testData)
-print(f"Content of training data scaled: \n {trainDataScaled}")
-print(f"Content of testing data scaled: \n {testDataScaled}")
+# print(f"Content of training data scaled: \n {trainDataScaled}")
+# print(f"Content of testing data scaled: \n {testDataScaled}")
 
 
 ''' Principal Component Analysis (PCA)'''

@@ -16,14 +16,14 @@ datasets = []
 variables = []
 
 ''' ADD DATASETS '''
-datasets.append("Preprocessing/Datafiles/Grinding/GRIND_0.txt")
-datasets.append("Preprocessing/Datafiles/Grinding/GRIND_4.txt")
-datasets.append("Preprocessing/Datafiles/Grinding/GRIND_11.txt")
-datasets.append("Preprocessing/Datafiles/Idle/IDLE_0.txt")
-datasets.append("Preprocessing/Datafiles/Idle/IDLE_1.txt")
-datasets.append("Preprocessing/Datafiles/Idle/IDLE_2.txt")
-datasets.append("Preprocessing/Datafiles/Welding/18.03.2025 124422.txt")
-datasets.append("Preprocessing/Datafiles/Welding/18.03.2025 133730.txt")
+# datasets.append("Preprocessing/Datafiles/Grinding/GRIND_0.txt")
+# datasets.append("Preprocessing/Datafiles/Grinding/GRIND_4.txt")
+# datasets.append("Preprocessing/Datafiles/Grinding/GRIND_11.txt")
+# datasets.append("Preprocessing/Datafiles/Idle/IDLE_0.txt")
+# datasets.append("Preprocessing/Datafiles/Idle/IDLE_1.txt")
+# datasets.append("Preprocessing/Datafiles/Idle/IDLE_2.txt")
+datasets.append("Preprocessing/Datafiles/Welding/WELD_0.txt")
+datasets.append("Preprocessing/Datafiles/Welding/WELD_6.txt")
 datasets.append("Preprocessing/Datafiles/Welding/18.03.2025 143542.txt")
 
 ''' ADD VARIABLES '''

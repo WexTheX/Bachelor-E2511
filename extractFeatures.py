@@ -191,8 +191,7 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
                                 **window_features_mag_Z_Freq,
 
                                 **window_features_temp_Time,
-                                **window_features_temp_Freq
-                                }
+                                **window_features_temp_Freq}
 
             # Append the features of the current window to the list
             all_window_features.append(window_features)

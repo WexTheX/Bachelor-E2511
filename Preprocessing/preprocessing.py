@@ -73,8 +73,8 @@ def find_next_available_index(folder_path, prefix):
 def rename_data(path):
 
     # Folder path for txt files
-    pathNames = ["Grinding", "Idle"]
-    activityName = ["GRIND", "IDLE"]
+    pathNames = ["Grinding", "Idle", "Welding"]
+    activityName = ["GRIND", "IDLE", "WELD"]
     path = os.path.normpath(path)
 
     for i in range(len(pathNames)):

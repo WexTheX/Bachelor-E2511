@@ -20,7 +20,7 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     
     # Compute PSD via Welch algorithm
     
-    freq, psd = getWelch(signal_t, Fs, False, 15, 3)
+    freq, psd = getWelch(signal_t, Fs, True, 15, 3)
 
     # plt.semilogy(freq, psd)  # Log scale for better visibility
     # plt.xlabel('Frequency (Hz)')
@@ -42,7 +42,7 @@ def get_Freq_Domain_features_of_signal(signal, signal_name, Fs):
     features[f'psd_max(Hz)_{suffix}']       = freq[np.argmax(psd)]
     # features[f'Hz_mean{suffix}']          = freq.mean()  # This does not make sense
 
-    return features, psd
+    return features
 
 # Make FFT of given file, with given feature 
 def getFFT(signal):

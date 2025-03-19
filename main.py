@@ -8,7 +8,8 @@ from pathlib import Path
 from sklearn import svm, metrics
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-
+from sklearn.decomposition import PCA
+import seaborn as sns
 
 # Local imports
 # from FOLDER import FILE as F
@@ -90,11 +91,21 @@ testDataScaled = scaleFeatures(testData)
 print(f"Content of training data scaled: \n {trainDataScaled}")
 print(f"Content of testing data scaled: \n {testDataScaled}")
 
+
+''' Principal Component Analysis (PCA)'''
+PCATest = PCA(n_components=10)
+
+
+dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
+dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
+
+print(dfPCAtrain)
+
 ''' CLASSIFIER '''
 clf = svm.SVC(kernel='linear')
-clf.fit(trainDataScaled, trainLabels)
+clf.fit(dfPCAtrain, trainLabels)
 
-testPredict = clf.predict(testDataScaled)
+testPredict = clf.predict(dfPCAtest)
 
 ''' EVALUATION '''
 print("Accuracy:", metrics.accuracy_score(testLabels, testPredict))

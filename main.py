@@ -91,12 +91,10 @@ testDataScaled = scaleFeatures(testData)
 ## temp location
 def setHyperparams(varianceExplained):
 
-    C = np.cov(trainDataScaled, rowvar=False) # 140x140
+    C = np.cov(trainDataScaled, rowvar=False) # 140x140 Co-variance matrix
     eigenvalues, eigenvectors = np.linalg.eig(C)
 
-    # eigenvalues = np.array(eigenvalues)
     eigSum = 0
-    # TESTING
     for i in range(len(trainDataScaled)):
         
         eigSum += eigenvalues[i]
@@ -111,13 +109,12 @@ def setHyperparams(varianceExplained):
 
 PCA_components = setHyperparams(varianceExplained = 0.95)
 
-PCATest = PCA(n_components = 3) #PCA_components)
+PCATest = PCA(n_components = 3)
 
 # The training data is fitted using PCA. The training data is then transformed from 140 -> "n_components" dimensions.
 # The test data is then transformed to the same space as the test data.
 dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
 dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
-print(dfPCAtrain)
 
 ##############################
 
@@ -159,7 +156,7 @@ def biplot(score, coeff, trainLabels, labels=None):
 def biplot_3D(score, coeff, trainLabels, labels=None):
     xs = score[0]
     ys = score[1]
-    zs = score[2]  # Add PC3 for the third dimension
+    zs = score[2]
 
     # Create a 3D plot
     fig = plt.figure(figsize=(10, 8))

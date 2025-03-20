@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 from sklearn import svm, metrics
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
-import seaborn as sns
+from sklearn.model_selection import cross_val_score
 from sklearn.datasets import load_iris
+import seaborn as sns
+
 
 # Local imports
 # from FOLDER import FILE as F
@@ -25,11 +27,11 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = 0
+wantFeatureExtraction = False
 wantPlots = False
-windowLengthSeconds = 20
+windowLengthSeconds = 6
 Fs = 800
-randomness = 192
+randomness = 19
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 # Load sets and label for those sets from given path
@@ -49,7 +51,7 @@ sets, setsLabel = fillSets(path)
 
 
 ''' FEATURE EXTRACTION '''
-# TODO: Går det an å sjekke ka som allerede e extracta og kun hente ut det som ikkje e gjort fra før?
+
 if(wantFeatureExtraction):
     feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path)
     feature_df.to_csv(outputPath+"feature_df.csv", index=False)
@@ -65,6 +67,8 @@ if "feature_df" not in globals():
     windowLabels = data.split("\n")
     f.close()
     windowLabels.pop()
+
+windowLabelsNumeric = LabelEncoder().fit_transform(windowLabels)
 
 # print(f"Content of feature dataframe: \n {feature_df}")
 # print(f"Content of window label list: \n {windowLabels}")
@@ -88,7 +92,6 @@ testDataScaled = scaleFeatures(testData)
 
 ''' Principal Component Analysis (PCA)'''
 
-## temp location
 def setHyperparams(varianceExplained):
 
     C = np.cov(trainDataScaled, rowvar=False) # 140x140 Co-variance matrix
@@ -107,29 +110,20 @@ def setHyperparams(varianceExplained):
     
     return n_components
 
+# Decide nr of PC's
 PCA_components = setHyperparams(varianceExplained = 0.95)
 
-PCATest = PCA(n_components = 3)
+PCATest = PCA(n_components = PCA_components)
 
-# The training data is fitted using PCA. The training data is then transformed from 140 -> "n_components" dimensions.
-# The test data is then transformed to the same space as the test data.
 dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
 dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
 
-##############################
-
-loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
-# print("Loadings:")
-# print(loadings)
-
-# plt.figure(figsize=(10, 8))
-# sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
-# plt.title('Feature Importance in Principal Components')
-# plt.show()
-
-##############################
-
 def biplot(score, coeff, trainLabels, labels=None):
+
+    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+    plt.title('Feature Importance in Principal Components')
 
     xs = score[0]
     ys = score[1]
@@ -154,6 +148,12 @@ def biplot(score, coeff, trainLabels, labels=None):
     plt.show()
 
 def biplot_3D(score, coeff, trainLabels, labels=None):
+
+    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2', 'PC3'], yticklabels=PCATest.feature_names_in_)
+    plt.title('Feature Importance in Principal Components')
+
     xs = score[0]
     ys = score[1]
     zs = score[2]
@@ -182,21 +182,37 @@ def biplot_3D(score, coeff, trainLabels, labels=None):
 
     plt.show()
 
-biplot_3D(dfPCAtrain, PCATest.components_.T, trainLabels, PCATest.feature_names_in_)
+# Uncomment to see 2D / 3D plot of PCA
+# biplot_3D(dfPCAtrain, PCATest.components_.T, trainLabels, PCATest.feature_names_in_)
 
+print(f"New training data, fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
 
-##############################
-
-print(f"Training data fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
 
 ''' CLASSIFIER '''
-clf = svm.SVC(kernel='poly')
-clf.fit(dfPCAtrain, trainLabels)
-
-testPredict = clf.predict(dfPCAtest)
+# clf = svm.SVC(kernel='rbf')
+# clf.fit(dfPCAtrain, trainLabels)
 
 ''' EVALUATION '''
-print("Accuracy of SVM: ", metrics.accuracy_score(testLabels, testPredict))
+
+# Testing different kernels and C values for the classifier
+# Ideally should cross validate across different training sets
+C = 0
+kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
+
+print(f"Testing accurracy with different C and kernels: ")
+
+for i in range(-3, 3):
+    C = 10**(i)
+
+    for j in kernelTypes:
+        clf = svm.SVC(C = C, kernel = j)
+        clf.fit(dfPCAtrain, trainLabels)
+
+        testPredict = clf.predict(dfPCAtest)
+        print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(testLabels, testPredict))
+
+# testPredict = clf.predict(dfPCAtest)
+# print("Accuracy of assigning correct label using SVM: ", metrics.accuracy_score(testLabels, testPredict))
 
 
 ''' ALT: PIPELINE (WIP) '''
@@ -213,7 +229,7 @@ print("Accuracy of SVM: ", metrics.accuracy_score(testLabels, testPredict))
 
 # testWelch(sets[0], variables[0], Fs)
 
-if(wantPlots):
+if (wantPlots):
     for i in range(1, len(variables)):
         plotWelch(sets[0], variables[i], Fs, False)
         plotWelch(sets[0], variables[i], Fs, True)

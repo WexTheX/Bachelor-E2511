@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import math
 # SignalProcessing part is needed when this file is imported in main.py
 from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
@@ -12,15 +13,16 @@ from Preprocessing.preprocessing import rename_data
 
 def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path):
     
-    totalWindowsCounter = 0
     features_df = []
     windowLabel = []
     all_window_features = []
+    windowSum = 0
     
     # Renames data inside Datafiles/xxx folder
     rename_data(path)
 
     for i, name in enumerate(datasets):
+        
         delete_header(name + ".txt") # Deletes lines before Timestamp and does some regex
         tab_txt_to_csv(name + ".txt", name + ".csv") # Converts from .txt to .csv
 
@@ -51,18 +53,17 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
         # Calculate the number of windows
         num_samples = len(time_data) # Number of measurements
         num_windows = num_samples // WindowLength
-        # 42 = 84 322 // 2 000
 
-        # Cutting first and last 10 seconds
-        num_windows_cut = (10 * Fs) // WindowLength
-        # 4 = 10 * 800 // 2 000
+        # Cutting first and last 10+ seconds
+        num_windows_cut = math.ceil((10 * Fs) / WindowLength)
 
         print(f"Number of IMU windows in {name} after cut: {num_windows - 2 * num_windows_cut}")
+        
+        windowSum += num_windows - 2 * num_windows_cut
         
         # Only does feature extraction on windows in the middle
         for j in range(num_windows_cut, num_windows - num_windows_cut):
             
-            totalWindowsCounter += 1
             # Define the start and end index for the window
             start_idx = j * WindowLength
             end_idx = start_idx + WindowLength
@@ -197,9 +198,11 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
             all_window_features.append(window_features)
             windowLabel.append(datasetsLabel[i])
 
+        print(f"Total number on IMU windows: {windowSum}") 
+
     # Convert the list of features to a Pandas DataFrame for easy manipulation
     feature_df = pd.DataFrame(all_window_features)
 
-    print(f"Total number of windows: {totalWindowsCounter}")
+    # print(f"Total number of windows: {activityWindowsCounter}")
 
     return feature_df, windowLabel

@@ -77,8 +77,10 @@ trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabel
 # print(f"Content of testing labels: \n {testLabels}")
     
 ''' SCALING '''
-trainDataScaled = scaleFeatures(trainData)
 testDataScaled = scaleFeatures(testData)
+trainDataScaled = scaleFeatures(trainData)
+
+
 # print(f"Content of training data scaled: \n {trainDataScaled}")
 # print(f"Content of testing data scaled: \n {testDataScaled}")
 
@@ -86,7 +88,7 @@ testDataScaled = scaleFeatures(testData)
 ''' Principal Component Analysis (PCA)'''
 
 ## temp location
-def setHyperparams(varianceExplained = 0.9):
+def setHyperparams(varianceExplained):
 
     C = np.cov(trainDataScaled, rowvar=False) # 140x140
     eigenvalues, eigenvectors = np.linalg.eig(C)

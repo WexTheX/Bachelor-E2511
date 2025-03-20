@@ -85,37 +85,37 @@ testDataScaled = scaleFeatures(testData)
 
 ''' Principal Component Analysis (PCA)'''
 
-# def getHyperparams(criteria = 0.9, )
-C = np.cov(trainDataScaled, rowvar=False) # 140x140
-eigenvalues, eigenvectors = np.linalg.eig(C)
+## temp location
+def setHyperparams(varianceExplained = 0.9):
 
-print(eigenvalues[0])
-# eigenvalues = np.array(eigenvalues)
-eigSum = 0
-# TESTING
-for i in range(len(trainDataScaled)):
+    C = np.cov(trainDataScaled, rowvar=False) # 140x140
+    eigenvalues, eigenvectors = np.linalg.eig(C)
+
+    # eigenvalues = np.array(eigenvalues)
+    eigSum = 0
+    # TESTING
+    for i in range(len(trainDataScaled)):
+        
+        eigSum += eigenvalues[i]
+        totalVariance = eigSum / eigenvalues.sum()
+
+        if totalVariance >= varianceExplained:
+            n_components = i + 1
+            print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
+            break
     
-    eigSum += eigenvalues[i]
-    totalVariance = eigSum / eigenvalues.sum()
+    return n_components
 
-    if totalVariance >= 0.90:
-        print(f"Variance explained by {i} PCA components: {eigSum / eigenvalues.sum()}")
-        break
+PCA_components = setHyperparams(varianceExplained = 0.95)
 
-# print(f"Eigenvalues of Co-variance Matrix is: {eigenvalues}")
-
-##
-
-function(updatefolders = False, features = False, MLtype = 'SVM', plotting = False)
-
-PCATest = PCA(n_components=10)
+PCATest = PCA(n_components = PCA_components)
 
 # The training data is fitted using PCA. The training data is then transformed from 140 -> "n_components" dimensions.
 # The test data is then transformed to the same space as the test data.
 dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
 dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
 
-print(dfPCAtrain)
+print(f"Training data fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
 
 ''' CLASSIFIER '''
 clf = svm.SVC(kernel='linear')

@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
 import seaborn as sns
+from sklearn.datasets import load_iris
 
 # Local imports
 # from FOLDER import FILE as F
@@ -24,11 +25,11 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = False
+wantFeatureExtraction = 0
 wantPlots = False
-windowLengthSeconds = 10
+windowLengthSeconds = 20
 Fs = 800
-randomness = 18
+randomness = 192
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 # Load sets and label for those sets from given path
@@ -75,11 +76,11 @@ trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabel
 # print(f"Content of training labels: \n {trainLabels}")
 # print(f"Content of testing data: \n {testData}")
 # print(f"Content of testing labels: \n {testLabels}")
-    
-''' SCALING '''
-testDataScaled = scaleFeatures(testData)
-trainDataScaled = scaleFeatures(trainData)
 
+''' SCALING '''
+
+trainDataScaled = scaleFeatures(trainData)
+testDataScaled = scaleFeatures(testData)
 
 # print(f"Content of training data scaled: \n {trainDataScaled}")
 # print(f"Content of testing data scaled: \n {testDataScaled}")
@@ -110,17 +111,89 @@ def setHyperparams(varianceExplained):
 
 PCA_components = setHyperparams(varianceExplained = 0.95)
 
-PCATest = PCA(n_components = PCA_components)
+PCATest = PCA(n_components = 3) #PCA_components)
 
 # The training data is fitted using PCA. The training data is then transformed from 140 -> "n_components" dimensions.
 # The test data is then transformed to the same space as the test data.
 dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
 dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
+print(dfPCAtrain)
+
+##############################
+
+loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+# print("Loadings:")
+# print(loadings)
+
+# plt.figure(figsize=(10, 8))
+# sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+# plt.title('Feature Importance in Principal Components')
+# plt.show()
+
+##############################
+
+def biplot(score, coeff, trainLabels, labels=None):
+
+    xs = score[0]
+    ys = score[1]
+    plt.figure(figsize=(10, 8))
+
+    label_mapping = {'GRIN': 0  , 'IDLE': 1, 'WELD': 2}
+    y_labels = np.array(trainLabels)
+    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
+
+    plt.scatter(xs, ys, c=mappedLabels, cmap='viridis')
+
+
+    for i in range(len(coeff)):
+
+        plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
+
+        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
+
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+    plt.title("Biplot")
+    plt.show()
+
+def biplot_3D(score, coeff, trainLabels, labels=None):
+    xs = score[0]
+    ys = score[1]
+    zs = score[2]  # Add PC3 for the third dimension
+
+    # Create a 3D plot
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    label_mapping = {'GRIN': 0, 'IDLE': 1, 'WELD': 2}
+    y_labels = np.array(trainLabels)
+    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
+
+    # Create 3D scatter plot
+    sc = ax.scatter(xs, ys, zs, c=mappedLabels, cmap='inferno')
+
+    # Draw arrows for the components
+    for i in range(len(coeff)):
+        ax.quiver(0, 0, 0, coeff[i, 0], coeff[i, 1], coeff[i, 2], color='r', alpha=0.5)
+
+        ax.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, coeff[i, 2] * 1.2, labels[i], color='g')
+
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
+    ax.set_zlabel('PC3')
+    ax.set_title("3D Biplot")
+
+    plt.show()
+
+biplot_3D(dfPCAtrain, PCATest.components_.T, trainLabels, PCATest.feature_names_in_)
+
+
+##############################
 
 print(f"Training data fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
 
 ''' CLASSIFIER '''
-clf = svm.SVC(kernel='linear')
+clf = svm.SVC(kernel='poly')
 clf.fit(dfPCAtrain, trainLabels)
 
 testPredict = clf.predict(dfPCAtest)

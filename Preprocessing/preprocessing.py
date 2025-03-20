@@ -4,8 +4,15 @@ import re
 import os
 from pathlib import Path
 
+# def downsample(Hz)
+    # We should have an option to downsample to see how diff sampling frequencies affect ML accuracy
+    # This is a hyperparemeter
+    
+    # return downsampled_fs
+
 def fillSets(path):
 
+    # Creates a path in sets for each file inside "Datafiles"
     sets = []
     setsLabel = []
 

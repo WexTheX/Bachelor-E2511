@@ -19,23 +19,34 @@ variables = []
 # datasets.append("Preprocessing/Datafiles/Grinding/GRIND_0.txt")
 # datasets.append("Preprocessing/Datafiles/Grinding/GRIND_4.txt")
 # datasets.append("Preprocessing/Datafiles/Grinding/GRIND_11.txt")
-# datasets.append("Preprocessing/Datafiles/Idle/IDLE_0.txt")
-# datasets.append("Preprocessing/Datafiles/Idle/IDLE_1.txt")
-# datasets.append("Preprocessing/Datafiles/Idle/IDLE_2.txt")
+datasets.append("Preprocessing/Datafiles/Idle/IDLE_0.txt")
+datasets.append("Preprocessing/Datafiles/Idle/IDLE_1.txt")
+datasets.append("Preprocessing/Datafiles/Idle/IDLE_2.txt")
 datasets.append("Preprocessing/Datafiles/Welding/WELD_0.txt")
 datasets.append("Preprocessing/Datafiles/Welding/WELD_6.txt")
-datasets.append("Preprocessing/Datafiles/Welding/18.03.2025 143542.txt")
+datasets.append("Preprocessing/Datafiles/Welding/WELD_10.txt")
 
 ''' ADD VARIABLES '''
-# variables.append("Axl.X")
-# variables.append("Axl.Y")
-# variables.append("Axl.Z")
+variables.append("Axl.X")
+variables.append("Axl.Y")
+variables.append("Axl.Z")
 
-variables.append("Mag.X")
+# variables.append("Mag.X")
 # variables.append("Mag.Y")
 # variables.append("Mag.Z")
 
-''' WELCH PLOTTING '''
+# variables.append("Gyr.X")
+# variables.append("Gyr.Y")
+# variables.append("Gyr.Z")
+
+# variables.append("Temp")
+# variables.append("Press")
+
+# variables.append("Range")
+# variables.append("Lum")
+# variables.append("IRLum")
+
+''' FFT PLOTTING '''
 # for i in datasets:
 #   df = pd.read_csv(i, delimiter="\t")
 #   for j in variables:
@@ -49,6 +60,7 @@ variables.append("Mag.X")
 #     plt.figure()
 
 ''' WELCH PLOTTING '''
+
 legendNames = []
 for i in datasets:
   df = pd.read_csv(i, delimiter="\t")
@@ -59,14 +71,13 @@ for i in datasets:
     plt.semilogy(freq, psd)  # Log scale for better visibility
     legendNames.append(i + ", " + j)
 
-
 plt.xlabel('Frequency (Hz)')
 plt.ylabel('Power Spectral Density')
-plt.title('Welch PSD, %s' % j)
+plt.title('Welch PSD')
 plt.grid()
 plt.legend(legendNames)
 plt.figure()    
-    
+
 
 plt.show()
 

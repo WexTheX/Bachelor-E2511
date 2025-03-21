@@ -70,6 +70,7 @@ if "feature_df" not in globals():
 
 windowLabelsNumeric = LabelEncoder().fit_transform(windowLabels)
 
+
 # print(f"Content of feature dataframe: \n {feature_df}")
 # print(f"Content of window label list: \n {windowLabels}")
 
@@ -80,6 +81,8 @@ trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabel
 # print(f"Content of training labels: \n {trainLabels}")
 # print(f"Content of testing data: \n {testData}")
 # print(f"Content of testing labels: \n {testLabels}")
+
+trainLabelsNumeric = LabelEncoder().fit_transform(trainLabels)
 
 ''' SCALING '''
 
@@ -191,6 +194,11 @@ print(f"New training data, fitted and PCA-transformed with {PCA_components} comp
 ''' CLASSIFIER '''
 # clf = svm.SVC(kernel='rbf')
 # clf.fit(dfPCAtrain, trainLabels)
+clf = svm.SVC(kernel='linear', C=1, random_state=42)
+
+scores = cross_val_score(clf, trainData, trainLabelsNumeric, cv=5)
+print(scores)
+print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
 
 ''' EVALUATION '''
 
@@ -209,7 +217,7 @@ for i in range(-3, 3):
         clf.fit(dfPCAtrain, trainLabels)
 
         testPredict = clf.predict(dfPCAtest)
-        print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(testLabels, testPredict))
+        # print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(testLabels, testPredict))
 
 # testPredict = clf.predict(dfPCAtest)
 # print("Accuracy of assigning correct label using SVM: ", metrics.accuracy_score(testLabels, testPredict))

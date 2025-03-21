@@ -93,6 +93,27 @@ def find_next_available_index(folder_path, prefix):
             return i  # Return first hole in dataset
     return existing_numbers[-1] + 1  # Carries on the sequence
 
+#### Converting bin to txt ####
+def convert_bin_to_txt(input_file):
+    output_file = os.path.splitext(input_file)[0] + ".txt"
+    # Read binary data and filter out unnecessary symbols
+    with open(input_file, "rb") as bin_file:
+        raw_data = bin_file.read()
+
+    # Remove "zero bytes" and decode UTF-8
+    clean_data = raw_data.replace(b"\x00", b"").decode("utf-8", errors="ignore")
+
+    # Remove extra blank lines
+    clean_lines = [line.strip() for line in clean_data.splitlines() if line.strip()]
+
+    # Write a new text files with correct linestructure
+    with open(output_file, "w", encoding="utf-8") as txt_file:
+        txt_file.write("\n".join(clean_lines) + "\n")  # makes sure the ending is correct
+
+    print(f"File convert from .bin to .txt done. file saved as '{output_file}'.")
+    os.remove(input_file)
+
+
 def rename_data(path):
 
     # Folder path for txt files
@@ -104,7 +125,12 @@ def rename_data(path):
         folder_path = os.path.join(path, pathNames[i])
         print(f"Processing files in: {path}")
 
-        # Fetch and sort .txt files based on new date format
+        
+# Convert bin to txt file if bin file found
+        for f in os.listdir(folder_path):
+            if f.endswith(".bin") and not f.startswith(activityName[i]):
+                convert_bin_to_txt(os.path.join(folder_path, f))
+# Fetch and sort .txt files based on new date format
         files = sorted(
             [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activityName[i])],
             key=convert_date_format  # Sorts based on date YYYY / MM / DD

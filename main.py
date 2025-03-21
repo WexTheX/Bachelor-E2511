@@ -6,10 +6,13 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 from sklearn import svm, metrics
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
+from sklearn.model_selection import cross_val_score
+from sklearn.datasets import load_iris
 import seaborn as sns
+
 
 # Local imports
 # from FOLDER import FILE as F
@@ -24,11 +27,11 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = True
+wantFeatureExtraction = False
 wantPlots = False
-windowLengthSeconds = 10
+windowLengthSeconds = 6
 Fs = 800
-randomness = 18
+randomness = 19
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 # Load sets and label for those sets from given path
@@ -48,7 +51,7 @@ sets, setsLabel = fillSets(path)
 
 
 ''' FEATURE EXTRACTION '''
-# TODO: Går det an å sjekke ka som allerede e extracta og kun hente ut det som ikkje e gjort fra før?
+
 if(wantFeatureExtraction):
     feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path)
     feature_df.to_csv(outputPath+"feature_df.csv", index=False)
@@ -65,18 +68,11 @@ if "feature_df" not in globals():
     f.close()
     windowLabels.pop()
 
+windowLabelsNumeric = LabelEncoder().fit_transform(windowLabels)
+
 # print(f"Content of feature dataframe: \n {feature_df}")
 # print(f"Content of window label list: \n {windowLabels}")
 
-'''
-# GRIN_features = pd.read_csv("OutputFiles/GRIN_features.csv")
-
-# mean_accel_x = GRIN_features["mean_accel_X"]    
-# print(mean_accel_x)
-
-# 140 elements per row
-# row n = accel xyz TD, accel xyz FD, gyro xyz TD, gyro xyz FD, mag xyz TD, mag xyz FD, temp TD, temp FD from window n
-'''
 
 ''' SPLITTING '''
 trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabels, randomness)
@@ -84,31 +80,139 @@ trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabel
 # print(f"Content of training labels: \n {trainLabels}")
 # print(f"Content of testing data: \n {testData}")
 # print(f"Content of testing labels: \n {testLabels}")
-    
+
 ''' SCALING '''
+
 trainDataScaled = scaleFeatures(trainData)
 testDataScaled = scaleFeatures(testData)
+
 # print(f"Content of training data scaled: \n {trainDataScaled}")
 # print(f"Content of testing data scaled: \n {testDataScaled}")
 
 
 ''' Principal Component Analysis (PCA)'''
-PCATest = PCA(n_components=10)
 
+def setHyperparams(varianceExplained):
+
+    C = np.cov(trainDataScaled, rowvar=False) # 140x140 Co-variance matrix
+    eigenvalues, eigenvectors = np.linalg.eig(C)
+
+    eigSum = 0
+    for i in range(len(trainDataScaled)):
+        
+        eigSum += eigenvalues[i]
+        totalVariance = eigSum / eigenvalues.sum()
+
+        if totalVariance >= varianceExplained:
+            n_components = i + 1
+            print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
+            break
+    
+    return n_components
+
+# Decide nr of PC's
+PCA_components = setHyperparams(varianceExplained = 0.95)
+
+PCATest = PCA(n_components = PCA_components)
 
 dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
 dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
 
-print(dfPCAtrain)
+def biplot(score, coeff, trainLabels, labels=None):
+
+    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+    plt.title('Feature Importance in Principal Components')
+
+    xs = score[0]
+    ys = score[1]
+    plt.figure(figsize=(10, 8))
+
+    label_mapping = {'GRIN': 0  , 'IDLE': 1, 'WELD': 2}
+    y_labels = np.array(trainLabels)
+    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
+
+    plt.scatter(xs, ys, c=mappedLabels, cmap='viridis')
+
+
+    for i in range(len(coeff)):
+
+        plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
+
+        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
+
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+    plt.title("Biplot")
+    plt.show()
+
+def biplot_3D(score, coeff, trainLabels, labels=None):
+
+    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2', 'PC3'], yticklabels=PCATest.feature_names_in_)
+    plt.title('Feature Importance in Principal Components')
+
+    xs = score[0]
+    ys = score[1]
+    zs = score[2]
+
+    # Create a 3D plot
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    label_mapping = {'GRIN': 0, 'IDLE': 1, 'WELD': 2}
+    y_labels = np.array(trainLabels)
+    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
+
+    # Create 3D scatter plot
+    sc = ax.scatter(xs, ys, zs, c=mappedLabels, cmap='inferno')
+
+    # Draw arrows for the components
+    for i in range(len(coeff)):
+        ax.quiver(0, 0, 0, coeff[i, 0], coeff[i, 1], coeff[i, 2], color='r', alpha=0.5)
+
+        ax.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, coeff[i, 2] * 1.2, labels[i], color='g')
+
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
+    ax.set_zlabel('PC3')
+    ax.set_title("3D Biplot")
+
+    plt.show()
+
+# Uncomment to see 2D / 3D plot of PCA
+# biplot_3D(dfPCAtrain, PCATest.components_.T, trainLabels, PCATest.feature_names_in_)
+
+print(f"New training data, fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
+
 
 ''' CLASSIFIER '''
-clf = svm.SVC(kernel='linear')
-clf.fit(dfPCAtrain, trainLabels)
-
-testPredict = clf.predict(dfPCAtest)
+# clf = svm.SVC(kernel='rbf')
+# clf.fit(dfPCAtrain, trainLabels)
 
 ''' EVALUATION '''
-print("Accuracy:", metrics.accuracy_score(testLabels, testPredict))
+
+# Testing different kernels and C values for the classifier
+# Ideally should cross validate across different training sets
+C = 0
+kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
+
+print(f"Testing accurracy with different C and kernels: ")
+
+for i in range(-3, 3):
+    C = 10**(i)
+
+    for j in kernelTypes:
+        clf = svm.SVC(C = C, kernel = j)
+        clf.fit(dfPCAtrain, trainLabels)
+
+        testPredict = clf.predict(dfPCAtest)
+        print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(testLabels, testPredict))
+
+# testPredict = clf.predict(dfPCAtest)
+# print("Accuracy of assigning correct label using SVM: ", metrics.accuracy_score(testLabels, testPredict))
 
 
 ''' ALT: PIPELINE (WIP) '''
@@ -125,7 +229,7 @@ print("Accuracy:", metrics.accuracy_score(testLabels, testPredict))
 
 # testWelch(sets[0], variables[0], Fs)
 
-if(wantPlots):
+if (wantPlots):
     for i in range(1, len(variables)):
         plotWelch(sets[0], variables[i], Fs, False)
         plotWelch(sets[0], variables[i], Fs, True)

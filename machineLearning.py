@@ -14,6 +14,7 @@ def splitData(df, labelList, randomness):
   return xTrain, xTest, yTrain, yTest
 
 def scaleFeatures(df):
+  
   scaler = StandardScaler()
   scaler.set_output(transform="pandas")
 

@@ -27,9 +27,9 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = False
+wantFeatureExtraction = 0
 wantPlots = False
-windowLengthSeconds = 6
+windowLengthSeconds = 13
 Fs = 800
 randomness = 19
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
@@ -78,9 +78,9 @@ windowLabelsNumeric = LabelEncoder().fit_transform(windowLabels)
 ''' SPLITTING '''
 trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabels, randomness)
 # print(f"Content of training data: \n {trainData}")
-# print(f"Content of training labels: \n {trainLabels}")
+print(f"Content of training labels: \n {trainLabels}")
 # print(f"Content of testing data: \n {testData}")
-# print(f"Content of testing labels: \n {testLabels}")
+print(f"Content of testing labels: \n {testLabels}")
 
 trainLabelsNumeric = LabelEncoder().fit_transform(trainLabels)
 
@@ -110,7 +110,7 @@ def setHyperparams(varianceExplained):
             n_components = i + 1
             print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
             break
-    
+    n_components = 3
     return n_components
 
 # Decide nr of PC's
@@ -186,7 +186,7 @@ def biplot_3D(score, coeff, trainLabels, labels=None):
     plt.show()
 
 # Uncomment to see 2D / 3D plot of PCA
-# biplot_3D(dfPCAtrain, PCATest.components_.T, trainLabels, PCATest.feature_names_in_)
+biplot_3D(dfPCAtrain, PCATest.components_.T, trainLabels, PCATest.feature_names_in_)
 
 print(f"New training data, fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
 
@@ -217,7 +217,7 @@ for i in range(-3, 3):
         clf.fit(dfPCAtrain, trainLabels)
 
         testPredict = clf.predict(dfPCAtest)
-        # print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(testLabels, testPredict))
+        print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(testLabels, testPredict))
 
 # testPredict = clf.predict(dfPCAtest)
 # print("Accuracy of assigning correct label using SVM: ", metrics.accuracy_score(testLabels, testPredict))

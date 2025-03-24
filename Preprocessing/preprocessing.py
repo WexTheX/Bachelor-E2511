@@ -10,11 +10,41 @@ from pathlib import Path
     
     # return downsampled_fs
 
-def fillSets(path):
 
-    # Creates a path in sets for each file inside "Datafiles"
+def fillSets(path):
     sets = []
     setsLabel = []
+
+
+    pathNames = ["Grinding", "Idle", "Welding"]
+    activityName = ["GRIND", "IDLE", "WELD"]
+    path = os.path.normpath(path)
+
+    for i, name in enumerate(pathNames):
+        folder_path = os.path.join(path, name)
+        print(f"Processing files in: {path}")
+        
+        
+        for f in os.listdir(folder_path):
+            if f.endswith(".bin") and not f.startswith(activityName[i]):
+                convert_bin_to_txt(os.path.join(folder_path, f))
+        txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt") and os.path.isfile(os.path.join(folder_path, f))]
+        
+        
+        for j in range(len(txt_files)):
+
+            sets.append(f"{folder_path}/{activityName[i]}_" + str(j) )
+            setsLabel.append(activityName[i])
+    
+    return sets, setsLabel
+        
+
+
+#def fillSets(path):
+
+    # Creates a path in sets for each file inside "Datafiles"
+    #sets = []
+    #setsLabel = []
 
     ''' Only one set '''
     # sets.append(f"{path}/Grinding/GRIND_0")

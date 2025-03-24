@@ -90,6 +90,7 @@ trainLabelsNumeric = LabelEncoder().fit_transform(trainLabels)
 kf = KFold(n_splits=3)
 kf.get_n_splits(trainData)
 
+
 for i, (train_index, test_index) in enumerate(kf.split(trainData)):
     print(f"Fold {i}:")
     print(f"  Train: index={train_index}")

@@ -19,7 +19,7 @@ import seaborn as sns
 # from FOLDER import FILE as F
 from extractFeatures import Extract_All_Features
 from machineLearning import splitData, scaleFeatures
-from plotting import plotWelch
+from plotting import plotWelch, biplot_3D
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
 from Preprocessing.preprocessing import fillSets
@@ -172,43 +172,10 @@ def biplot(score, coeff, trainLabels, labels=None):
     plt.title("Biplot")
     plt.show()
 
-def biplot_3D(score, coeff, trainLabels, labels=None):
 
-    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2', 'PC3'], yticklabels=PCATest.feature_names_in_)
-    plt.title('Feature Importance in Principal Components')
-
-    xs = score[0]
-    ys = score[1]
-    zs = score[2]
-
-    # Create a 3D plot
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-
-    label_mapping = {'GRIND': 0, 'IDLE': 1, 'WELD': 2}
-    y_labels = np.array(trainLabels)
-    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
-
-    # Create 3D scatter plot
-    sc = ax.scatter(xs, ys, zs, c=mappedLabels, cmap='inferno')
-
-    # Draw arrows for the components
-    for i in range(len(coeff)):
-        ax.quiver(0, 0, 0, coeff[i, 0], coeff[i, 1], coeff[i, 2], color='r', alpha=0.5)
-
-        ax.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, coeff[i, 2] * 1.2, labels[i], color='g')
-
-    ax.set_xlabel('PC1')
-    ax.set_ylabel('PC2')
-    ax.set_zlabel('PC3')
-    ax.set_title("3D Biplot")
-
-    plt.show()
 
 # Uncomment to see 2D / 3D plot of PCA
-biplot_3D(dfPCAtrain, PCATest.components_.T, trainLabels, PCATest.feature_names_in_)
+biplot_3D(dfPCAtrain, trainLabels, PCATest)
 
 print(f"New training data, fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
 

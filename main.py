@@ -9,6 +9,7 @@ from sklearn import svm, metrics
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
+from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
 from sklearn.datasets import load_iris
 import seaborn as sns
@@ -27,7 +28,7 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = 1
+wantFeatureExtraction = 0
 wantPlots = False
 windowLengthSeconds = 13
 Fs = 800
@@ -83,6 +84,18 @@ print(f"Content of training labels: \n {trainLabels}")
 print(f"Content of testing labels: \n {testLabels}")
 
 trainLabelsNumeric = LabelEncoder().fit_transform(trainLabels)
+
+'''K-fold split'''
+
+kf = KFold(n_splits=3)
+kf.get_n_splits(trainData)
+
+for i, (train_index, test_index) in enumerate(kf.split(trainData)):
+    print(f"Fold {i}:")
+    print(f"  Train: index={train_index}")
+    print(f"  Test:  index={test_index}")
+
+
 
 ''' SCALING '''
 

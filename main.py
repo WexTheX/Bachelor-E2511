@@ -27,7 +27,7 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = 0
+wantFeatureExtraction = 1
 wantPlots = False
 windowLengthSeconds = 13
 Fs = 800
@@ -165,7 +165,7 @@ def biplot_3D(score, coeff, trainLabels, labels=None):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
 
-    label_mapping = {'GRIN': 0, 'IDLE': 1, 'WELD': 2}
+    label_mapping = {'GRIND': 0, 'IDLE': 1, 'WELD': 2}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 

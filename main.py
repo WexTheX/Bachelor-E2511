@@ -29,7 +29,8 @@ path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
 wantFeatureExtraction = 0
-wantPlots = 1
+wantPlots = 0
+
 windowLengthSeconds = 13
 Fs = 800
 randomness = 19
@@ -79,9 +80,9 @@ windowLabelsNumeric = LabelEncoder().fit_transform(windowLabels)
 ''' SPLITTING '''
 trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabels, randomness)
 # print(f"Content of training data: \n {trainData}")
-print(f"Content of training labels: \n {trainLabels}")
+# print(f"Content of training labels: \n {trainLabels}")
 # print(f"Content of testing data: \n {testData}")
-print(f"Content of testing labels: \n {testLabels}")
+# print(f"Content of testing labels: \n {testLabels}")
 
 trainLabelsNumeric = LabelEncoder().fit_transform(trainLabels)
 
@@ -96,15 +97,71 @@ trainLabelsNumeric = LabelEncoder().fit_transform(trainLabels)
 #     print(f"  Train: index={train_index}")
 #     print(f"  Test:  index={test_index}")
 
-
 skf = StratifiedKFold(n_splits=3)
-skf.get_n_splits(trainData)
 
+def setHyperparams(kfold_TrainDataScaled, varianceExplained):
+
+    C = np.cov(kfold_TrainDataScaled, rowvar=False) # 140x140 Co-variance matrix
+    eigenvalues, eigenvectors = np.linalg.eig(C)
+
+    eigSum = 0
+    for i in range(len(kfold_TrainDataScaled)):
+        
+        eigSum += eigenvalues[i]
+        totalVariance = eigSum / eigenvalues.sum()
+
+        if totalVariance >= varianceExplained:
+            n_components = i + 1
+            print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
+            break
+
+    # n_components = 2
+    return n_components
 
 for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels)):
+
     print(f"Fold {i}:")
     print(f"  Train: index={train_index}")
     print(f"  Test:  index={test_index}")
+    # print(f"Train labels: {trainLabels}")
+
+    kfold_trainLabels = [trainLabels[j] for j in train_index]
+    kfold_testLabels = [trainLabels[j] for j in test_index]
+
+    print(kfold_testLabels)
+   
+    kfold_TrainData = trainData.iloc[train_index]
+    kfold_ValidationData = trainData.iloc[test_index]
+
+    # Scale training and validation seperately
+    kfold_TrainDataScaled = scaleFeatures(kfold_TrainData)
+    kfold_ValidationDataScaled = scaleFeatures(kfold_ValidationData)
+
+    # 
+
+    PCA_components = setHyperparams(kfold_TrainDataScaled, varianceExplained=0.95)
+    PCATest = PCA(n_components = PCA_components)
+
+    kfold_dfPCA_train = pd.DataFrame(PCATest.fit_transform(kfold_TrainData))
+    kfold_dfPCA_validation = pd.DataFrame(PCATest.transform(kfold_ValidationDataScaled))
+
+    C = 0
+    kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
+
+    print(f"Testing accurracy with different C and kernels: ")
+
+
+    for i in range(-3, 3):
+        C = 10**(i)
+
+        for j in kernelTypes:
+            clf = svm.SVC(C = C, kernel = j)
+            clf.fit(kfold_dfPCA_train, kfold_trainLabels)
+
+            testPredict = clf.predict(kfold_dfPCA_validation)
+            print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
+
+#  dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))   
 
 ''' SCALING '''
 
@@ -117,32 +174,14 @@ testDataScaled = scaleFeatures(testData)
 
 ''' Principal Component Analysis (PCA)'''
 
-def setHyperparams(varianceExplained):
-
-    C = np.cov(trainDataScaled, rowvar=False) # 140x140 Co-variance matrix
-    eigenvalues, eigenvectors = np.linalg.eig(C)
-
-    eigSum = 0
-    for i in range(len(trainDataScaled)):
-        
-        eigSum += eigenvalues[i]
-        totalVariance = eigSum / eigenvalues.sum()
-
-        if totalVariance >= varianceExplained:
-            n_components = i + 1
-            print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
-            break
-
-    n_components = 2
-    return n_components
 
 # Decide nr of PC's
-PCA_components = setHyperparams(varianceExplained = 0.95)
+# PCA_components = setHyperparams(varianceExplained = 0.95)
 
-PCATest = PCA(n_components = PCA_components)
+# PCATest = PCA(n_components = PCA_components)
 
-dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
-dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
+# dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
+# dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
 
 # def biplot(score, coeff, trainLabels, labels=None):
 
@@ -178,37 +217,37 @@ dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
 # Uncomment to see 2D / 3D plot of PCA
 
 
-print(f"New training data, fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
+# print(f"New training data, fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
 
 
 ''' CLASSIFIER '''
 # clf = svm.SVC(kernel='rbf')
 # clf.fit(dfPCAtrain, trainLabels)
-clf = svm.SVC(kernel='linear', C=1, random_state=42)
+# clf = svm.SVC(kernel='linear', C=1, random_state=42)
 
-scores = cross_val_score(clf, trainData, trainLabelsNumeric, cv=5)
-print(scores)
-print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
+# scores = cross_val_score(clf, trainData, trainLabelsNumeric, cv=5)
+# print(scores)
+# print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
 
 ''' EVALUATION '''
 
 # Testing different kernels and C values for the classifier
 # Ideally should cross validate across different training sets
 
-C = 0
-kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
+# C = 0
+# kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
 
-print(f"Testing accurracy with different C and kernels: ")
+# print(f"Testing accurracy with different C and kernels: ")
 
-for i in range(-3, 3):
-    C = 10**(i)
+# for i in range(-3, 3):
+#     C = 10**(i)
 
-    for j in kernelTypes:
-        clf = svm.SVC(C = C, kernel = j)
-        clf.fit(dfPCAtrain, trainLabels)
+#     for j in kernelTypes:
+#         clf = svm.SVC(C = C, kernel = j)
+#         clf.fit(dfPCAtrain, trainLabels)
 
-        testPredict = clf.predict(dfPCAtest)
-        print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(testLabels, testPredict))
+#         testPredict = clf.predict(dfPCAtest)
+        # print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(testLabels, testPredict))
 
 # testPredict = clf.predict(dfPCAtest)
 # print("Accuracy of assigning correct label using SVM: ", metrics.accuracy_score(testLabels, testPredict))
@@ -239,7 +278,7 @@ if (wantPlots):
     #     plt.figure()
     # plt.show()
 
-    biplot(dfPCAtrain, trainLabels, PCATest, PCA_components)
+    # biplot(dfPCAtrain, trainLabels, PCATest, PCA_components)
 
 
     plt.show()

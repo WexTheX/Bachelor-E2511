@@ -113,7 +113,6 @@ def convert_bin_to_txt(input_file):
     print(f"File convert from .bin to .txt done. file saved as '{output_file}'.")
     os.remove(input_file)
 
-
 def rename_data(path):
 
     # Folder path for txt files
@@ -163,6 +162,9 @@ def delete_header(path):
             if "Timestamp" in line:
                 found_timestamp = True  # Start keeping lines from here
                 line = re.sub(r'[\t\s]\[ms\]\[.*?\]', '', line) # Delete Tab/space, [ms] and [xx] from Timestamp line
+                line = re.sub(r'\bTEMP\b', 'Temp', line)
+                line = re.sub(r'\bPressure\b', 'Press', line)
+                
             if found_timestamp:
                 lines_to_keep.append(line)
 

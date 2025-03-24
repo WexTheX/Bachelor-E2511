@@ -27,7 +27,7 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = 0
+wantFeatureExtraction = True
 wantPlots = False
 windowLengthSeconds = 13
 Fs = 800
@@ -204,6 +204,7 @@ print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scor
 
 # Testing different kernels and C values for the classifier
 # Ideally should cross validate across different training sets
+
 C = 0
 kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
 

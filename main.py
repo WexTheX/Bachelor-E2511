@@ -19,7 +19,7 @@ import seaborn as sns
 # from FOLDER import FILE as F
 from extractFeatures import Extract_All_Features
 from machineLearning import splitData, scaleFeatures
-from plotting import plotWelch, biplot_3D
+from plotting import plotWelch, biplot
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
 from Preprocessing.preprocessing import fillSets
@@ -29,7 +29,7 @@ path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
 wantFeatureExtraction = 0
-wantPlots = False
+wantPlots = 1
 windowLengthSeconds = 13
 Fs = 800
 randomness = 19
@@ -124,7 +124,8 @@ def setHyperparams(varianceExplained):
             n_components = i + 1
             print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
             break
-    n_components = 3
+
+    n_components = 2
     return n_components
 
 # Decide nr of PC's
@@ -135,39 +136,39 @@ PCATest = PCA(n_components = PCA_components)
 dfPCAtrain = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
 dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))
 
-def biplot(score, coeff, trainLabels, labels=None):
+# def biplot(score, coeff, trainLabels, labels=None):
 
-    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
-    plt.title('Feature Importance in Principal Components')
+#     loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+#     plt.figure(figsize=(10, 8))
+#     sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+#     plt.title('Feature Importance in Principal Components')
 
-    xs = score[0]
-    ys = score[1]
-    plt.figure(figsize=(10, 8))
+#     xs = score[0]
+#     ys = score[1]
+#     plt.figure(figsize=(10, 8))
 
-    label_mapping = {'GRIN': 0  , 'IDLE': 1, 'WELD': 2}
-    y_labels = np.array(trainLabels)
-    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
+#     label_mapping = {'GRIN': 0  , 'IDLE': 1, 'WELD': 2}
+#     y_labels = np.array(trainLabels)
+#     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
-    plt.scatter(xs, ys, c=mappedLabels, cmap='viridis')
+#     plt.scatter(xs, ys, c=mappedLabels, cmap='viridis')
 
 
-    for i in range(len(coeff)):
+#     for i in range(len(coeff)):
 
-        plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
+#         plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
 
-        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
+#         plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
 
-    plt.xlabel("PC1")
-    plt.ylabel("PC2")
-    plt.title("Biplot")
-    plt.show()
+#     plt.xlabel("PC1")
+#     plt.ylabel("PC2")
+#     plt.title("Biplot")
+#     plt.show()
 
 
 
 # Uncomment to see 2D / 3D plot of PCA
-biplot_3D(dfPCAtrain, trainLabels, PCATest)
+
 
 print(f"New training data, fitted and PCA-transformed with {PCA_components} components: \n {dfPCAtrain}")
 
@@ -220,12 +221,17 @@ for i in range(-3, 3):
 # testWelch(sets[0], variables[0], Fs)
 
 if (wantPlots):
-    for i in range(1, len(variables)):
-        plotWelch(sets[0], variables[i], Fs, False)
-        plotWelch(sets[0], variables[i], Fs, True)
-        plt.xlabel('Frequency (Hz)')
-        plt.ylabel('Power Spectral Density')
-        plt.title('Welch PSD, %s' % variables[i])
-        plt.grid()
-        plt.figure()
+    # for i in range(1, len(variables)):
+    #     plotWelch(sets[0], variables[i], Fs, False)
+    #     plotWelch(sets[0], variables[i], Fs, True)
+    #     plt.xlabel('Frequency (Hz)')
+    #     plt.ylabel('Power Spectral Density')
+    #     plt.title('Welch PSD, %s' % variables[i])
+    #     plt.grid()
+    #     plt.figure()
+    # plt.show()
+
+    biplot(dfPCAtrain, trainLabels, PCATest, PCA_components)
+
+
     plt.show()

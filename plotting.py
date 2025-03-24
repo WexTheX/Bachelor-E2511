@@ -67,7 +67,9 @@ def testWelch(sets_n, variables_n, fs):
 
 # getWelch(file, feature, fs, filterOn)
 
-def biplot_3D(score, trainLabels, PCATest):
+def biplot(score, trainLabels, PCATest, components):
+
+  if components == 3:
 
     coeff = PCATest.components_.T
     labels = PCATest.feature_names_in_
@@ -103,4 +105,39 @@ def biplot_3D(score, trainLabels, PCATest):
     ax.set_zlabel('PC3')
     ax.set_title("3D Biplot")
 
-    plt.show()
+    plt.figure()
+
+  elif components == 2:
+
+    coeff = PCATest.components_.T
+    labels = PCATest.feature_names_in_
+
+    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+    plt.title('Feature Importance in Principal Components')
+
+    xs = score[0]
+    ys = score[1]
+    plt.figure(figsize=(10, 8))
+
+    label_mapping = {'GRIND': 0  , 'IDLE': 1, 'WELD': 2}
+    y_labels = np.array(trainLabels)
+    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
+
+    plt.scatter(xs, ys, c=mappedLabels, cmap='viridis')
+
+
+    for i in range(len(coeff)):
+
+        plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
+
+        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
+
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+    plt.title("Biplot")
+    plt.figure()
+
+  else:
+    pass

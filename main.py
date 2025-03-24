@@ -204,6 +204,7 @@ print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scor
 
 # Testing different kernels and C values for the classifier
 # Ideally should cross validate across different training sets
+
 C = 0
 kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
 

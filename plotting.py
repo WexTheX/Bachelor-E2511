@@ -87,7 +87,7 @@ def biplot(score, trainLabels, PCATest, components):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
 
-    label_mapping = {'GRIND': 0, 'IDLE': 1, 'WELD': 2, 'SANDSIM':3}
+    label_mapping = {'GRIN': 0, 'IDLE': 1, 'WELD': 2, 'SAND':3}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
@@ -121,7 +121,7 @@ def biplot(score, trainLabels, PCATest, components):
     ys = score[1]
     plt.figure(figsize=(10, 8))
 
-    label_mapping = {'GRIND': 0  , 'IDLE': 1, 'WELD': 2}
+    label_mapping = {'GRIN': 0  , 'IDLE': 1, 'WELD': 2, 'SAND': 3}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 

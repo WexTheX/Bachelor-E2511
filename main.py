@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+import os
 
 from sklearn import svm, metrics
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -27,10 +28,11 @@ from Preprocessing.preprocessing import fillSets
 # Spesify path for input and output of files
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
-pathNames = ["Grinding", "Idle", "Welding", "Sand_S"]
-activityName = ["GRIND", "IDLE", "WELD", "SANDSIM"]
 
-wantFeatureExtraction = 1
+pathNames = os.listdir(path)
+activityName = [name[:4].upper() for name in pathNames]
+
+wantFeatureExtraction = 0
 wantPlots = 0
 
 windowLengthSeconds = 13
@@ -99,7 +101,7 @@ trainLabelsNumeric = LabelEncoder().fit_transform(trainLabels)
 #     print(f"  Train: index={train_index}")
 #     print(f"  Test:  index={test_index}")
 
-skf = StratifiedKFold(n_splits=3)
+skf = StratifiedKFold(n_splits=5)
 
 def setHyperparams(kfold_TrainDataScaled, varianceExplained):
 
@@ -107,7 +109,7 @@ def setHyperparams(kfold_TrainDataScaled, varianceExplained):
     eigenvalues, eigenvectors = np.linalg.eig(C)
 
     eigSum = 0
-    for i in range(len(kfold_TrainDataScaled)):
+    for i in range(len(eigenvalues)):
         
         eigSum += eigenvalues[i]
         totalVariance = eigSum / eigenvalues.sum()
@@ -147,16 +149,18 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     kfold_dfPCA_train = pd.DataFrame(PCATest.fit_transform(kfold_TrainDataScaled))
     kfold_dfPCA_validation = pd.DataFrame(PCATest.transform(kfold_ValidationDataScaled))
 
-    C = 0
-    kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
-
     biplot(kfold_dfPCA_train, kfold_trainLabels, PCATest, PCA_components)
 
+    kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
     print(f"Testing accurracy with different C and kernels: ")
 
+    # param_grid = [
+    #     {'C': [1, 10, 100, 1000], 'kernel': 'linear'},
+
+    # ]
 
     for i in range(-3, 3):
-        C = 10**(i)
+        C = 10**i
 
         for j in kernelTypes:
             clf = svm.SVC(C = C, kernel = j)
@@ -164,6 +168,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
 
             testPredict = clf.predict(kfold_dfPCA_validation)
             print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
+
 
 #  dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))   
 

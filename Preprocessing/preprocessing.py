@@ -42,19 +42,15 @@ def rename_data(path, pathNames, activityName):
 
 
 def fillSets(path, pathNames, activityName):
+    
     rename_data(path, pathNames, activityName)
 
     sets = []
     setsLabel = []
 
-
     #pathNames = ["Grinding", "Idle", "Welding"]
     #### make list of folder paths
-    pathNames = os.listdir(folder_path)
-    activityName = ["GRIND", "IDLE", "WELD"]
-    print("Folders in path", folder_path, ":")
-    print(pathNames)
-    
+    pathNames = os.listdir(path)
     path = os.path.normpath(path)
 
     for i, name in enumerate(pathNames):
@@ -134,7 +130,7 @@ def fillSets(path, pathNames, activityName):
     return sets, setsLabel
 
 def convert_date_format(filename):
-# Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename
+    # Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename
     match = re.match(r"(\d{2})\.(\d{2})\.(\d{4})", filename)  # Finds date in the file name
     if match:
         day, month, year = match.groups()

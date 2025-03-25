@@ -10,14 +10,43 @@ from pathlib import Path
     
     # return downsampled_fs
 
+def rename_data(path, pathNames, activityName):
+    path = os.path.normpath(path)
 
-def fillSets(path):
+    for i in range(len(pathNames)):
+        folder_path = os.path.join(path, pathNames[i])
+        print(f"Processing files in: {path}")
+
+        
+# Convert bin to txt file if bin file found
+        for f in os.listdir(folder_path):
+            if f.endswith(".bin") and not f.startswith(activityName[i]):
+                convert_bin_to_txt(os.path.join(folder_path, f))
+# Fetch and sort .txt files based on new date format
+        files = sorted(
+            [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activityName[i])],
+            key=convert_date_format  # Sorts based on date YYYY / MM / DD
+        )
+
+        for old_name in files:
+            new_index = find_next_available_index(folder_path, activityName[i])  # Find available index
+            new_name = f"{activityName[i]}_{new_index}.txt"
+            
+            old_path = os.path.join(folder_path, old_name)
+            new_path = os.path.join(folder_path, new_name)
+
+            os.rename(old_path, new_path)
+            print(f"Name updated from: {old_name} -> {new_name}")
+
+        print("Namechanges completed!")
+
+
+def fillSets(path, pathNames, activityName):
+    rename_data(path, pathNames, activityName)
+
     sets = []
     setsLabel = []
 
-
-    pathNames = ["Grinding", "Idle", "Welding"]
-    activityName = ["GRIND", "IDLE", "WELD"]
     path = os.path.normpath(path)
 
     for i, name in enumerate(pathNames):
@@ -142,40 +171,6 @@ def convert_bin_to_txt(input_file):
 
     print(f"File convert from .bin to .txt done. file saved as '{output_file}'.")
     os.remove(input_file)
-
-def rename_data(path):
-
-    # Folder path for txt files
-    pathNames = ["Grinding", "Idle", "Welding"]
-    activityName = ["GRIND", "IDLE", "WELD"]
-    path = os.path.normpath(path)
-
-    for i in range(len(pathNames)):
-        folder_path = os.path.join(path, pathNames[i])
-        print(f"Processing files in: {path}")
-
-        
-# Convert bin to txt file if bin file found
-        for f in os.listdir(folder_path):
-            if f.endswith(".bin") and not f.startswith(activityName[i]):
-                convert_bin_to_txt(os.path.join(folder_path, f))
-# Fetch and sort .txt files based on new date format
-        files = sorted(
-            [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activityName[i])],
-            key=convert_date_format  # Sorts based on date YYYY / MM / DD
-        )
-
-        for old_name in files:
-            new_index = find_next_available_index(folder_path, activityName[i])  # Find available index
-            new_name = f"{activityName[i]}_{new_index}.txt"
-            
-            old_path = os.path.join(folder_path, old_name)
-            new_path = os.path.join(folder_path, new_name)
-
-            os.rename(old_path, new_path)
-            print(f"Name updated from: {old_name} -> {new_name}")
-
-        print("Namechanges completed!")
 
 def delete_header(path):
 

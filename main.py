@@ -27,8 +27,10 @@ from Preprocessing.preprocessing import fillSets
 # Spesify path for input and output of files
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
+pathNames = ["Grinding", "Idle", "Welding", "Sand_S"]
+activityName = ["GRIND", "IDLE", "WELD", "SANDSIM"]
 
-wantFeatureExtraction = 0
+wantFeatureExtraction = 1
 wantPlots = 0
 
 windowLengthSeconds = 13
@@ -38,7 +40,7 @@ variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X"
 
 # Load sets and label for those sets from given path
 ''' LOAD DATASET '''
-sets, setsLabel = fillSets(path)
+sets, setsLabel = fillSets(path, pathNames, activityName)
 # print(f"Content of sets: \n {sets}")
 # print(f"Content of setsLabel: \n {setsLabel}")
 
@@ -147,6 +149,8 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
 
     C = 0
     kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
+
+    biplot(kfold_dfPCA_train, kfold_trainLabels, PCATest, PCA_components)
 
     print(f"Testing accurracy with different C and kernels: ")
 

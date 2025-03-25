@@ -35,15 +35,23 @@ activityName = [name[:4].upper() for name in pathNames]
 wantFeatureExtraction = 0
 wantPlots = 0
 
-num_folds = 5
-C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
-kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
 windowLengthSeconds = 13
 Fs = 800
 randomness = 1222
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
+
+# Hyper parameter variables
 hyper_param_list = []
-accuracyArray = np.zeros( (num_folds, len(C_list), len(kernelTypes)) )
+num_folds = 5
+C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
+gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
+coef0_list = [0, 0.5, 1]
+deg_list = [2, 3, 4, 5]
+
+accuracy_array = np.zeros( (num_folds, len(C_list), len(kernelTypes)) )
+mean_accuracy_array = np.zeros( (len(C_list), len(kernelTypes)) )
+std_accuracy_array = np.zeros( (len(C_list), len(kernelTypes)) )
 
 # Load sets and label for those sets from given path
 ''' LOAD DATASET '''
@@ -159,13 +167,14 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     biplot(kfold_dfPCA_train, kfold_trainLabels, PCATest, PCA_components)
 
     
-    print(f"Testing accurracy with different C and kernels: ")
+    # print(f"Testing accurracy with different C and kernels: ")
 
-    # param_grid = [
-    #     {'C': [1, 10, 100, 1000], 'kernel': 'linear'}
-    #     {'C': [1, 10, 100, 1000]},
-
-    # ]
+    param_grid = [
+         {'C': [1, 10, 100, 1000], 'kernel': 'linear'},
+         {'C': [1, 10, 100, 1000], 'gamma': [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2], 'coef0': [0, 0.5, 1], 'deg': [2, 3, 4, 5], 'kernel': 'poly'},
+         {'C': [1, 10, 100, 1000], 'gamma': [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2], 'coef0': [0, 0.5, 1], 'kernel': 'sigmoid'},
+         {'C': [1, 10, 100, 1000], 'gamma': [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2], 'kernel': 'rbf'},
+     ]
 
     for j, C_value in enumerate(C_list):
 
@@ -173,19 +182,34 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
 
             # Only append for fold 0
             if i == 0:
-                hyper_param_list.append((i, C_value, kernel))
+                hyper_param_list.append((C_value, kernel))
 
             # Make new SVM instance with specific hyperparams
-            clf = svm.SVC(C = C_value, kernel = kernel)
+            clf = svm.SVC(C = C_value, kernel = kernel, probability = True)
             clf.fit(kfold_dfPCA_train, kfold_trainLabels)
             testPredict = clf.predict(kfold_dfPCA_validation)
             
             # Add accuracy for params to a 3D array
-            accuracyArray[i, j, k] = metrics.accuracy_score(kfold_testLabels, testPredict)
+            accuracy_array[i, j, k] = metrics.accuracy_score(kfold_testLabels, testPredict)
             
             print(f"C = {C_value}, Kernel = {k} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
 
-print(accuracyArray)
+# print(f"Accuracy array: {accuracy_array}")
+print(clf.get_params())
+for j in range(len(C_list)):
+    for k in range(len(kernelTypes)):
+        mean_accuracy_array[j, k] = accuracy_array[:, j, k].mean()
+        std_accuracy_array[j, k] = accuracy_array[:, j, k].std()
+
+score_array = mean_accuracy_array - std_accuracy_array
+best_param = np.argmax(score_array)
+
+print(f"Mean accuracy array across all folds: {mean_accuracy_array}")
+print(f"STD accuracy array across all folds: {std_accuracy_array}")
+print(f"Array of all scores: {score_array}")
+
+print(f"Best combination of hyperparameters through exhaustive grid search {hyper_param_list[best_param]}")
+
 # print(f"Hyper param list: {hyper_param_list}")
 
 # argMaxValue = np.argmax(accuracyArray / num_folds)
@@ -193,9 +217,6 @@ print(accuracyArray)
 # print(f"Average value of accuracy: {accuracyArray / num_folds}")
 # print(f"Index of max value: {argMaxValue}")
 # print(f"Hyper param list: {hyper_param_list[argMaxValue]}")
-
-i_mean = accuracyArray[:, 0, 0].mean() 
-print(i_mean)
 # clf = svm.SVC(C = C, kernel = j)
 
 

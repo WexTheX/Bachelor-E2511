@@ -87,12 +87,13 @@ def biplot(score, trainLabels, PCATest, components):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
 
-    label_mapping = {'GRIN': 0, 'IDLE': 1, 'WELD': 2, 'SAND':3}
+    label_mapping = {'GRIND': (0.0, 0.0, 0.0)  , 'IDLE': (1.0, 0.0, 0.0), 'WELD': (0.0, 1.0, 0.0), 'SAND': (0.0, 0.0, 1.0)}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
     # Create 3D scatter plot
-    sc = ax.scatter(xs, ys, zs, c=mappedLabels, cmap='inferno')
+    sc = ax.scatter(xs, ys, zs, c=mappedLabels#, cmap='inferno'
+                    )
 
     # Draw arrows for the components
     for i in range(len(coeff)):
@@ -104,7 +105,6 @@ def biplot(score, trainLabels, PCATest, components):
     ax.set_ylabel('PC2')
     ax.set_zlabel('PC3')
     ax.set_title("3D Biplot")
-    plt.legend()
     plt.figure()
 
   elif components == 2:
@@ -121,11 +121,12 @@ def biplot(score, trainLabels, PCATest, components):
     ys = score[1]
     plt.figure(figsize=(10, 8))
 
-    label_mapping = {'GRIN': 0  , 'IDLE': 1, 'WELD': 2, 'SAND': 3}
+    label_mapping = {'GRIND': (0.0, 0.0, 0.0)  , 'IDLE': (1.0, 0.0, 0.0), 'WELD': (0.0, 1.0, 0.0), 'SANDSIM': (0.0, 0.0, 1.0)}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
-    plt.scatter(xs, ys, c=mappedLabels, cmap='viridis')
+    plt.scatter(xs, ys, c=mappedLabels#, cmap='viridis'
+                )
 
 
     for i in range(len(coeff)):

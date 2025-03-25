@@ -133,10 +133,10 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     kfold_testLabels = [trainLabels[j] for j in test_index]
 
     print(kfold_testLabels)
-   
+    
     kfold_TrainData = trainData.iloc[train_index]
     kfold_ValidationData = trainData.iloc[test_index]
-
+    #print(f"Dette er stuffet: {kfold_TrainData}")
     # Scale training and validation seperately
     kfold_TrainDataScaled = scaleFeatures(kfold_TrainData)
     kfold_ValidationDataScaled = scaleFeatures(kfold_ValidationData)
@@ -171,7 +171,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
 
 
 #  dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))   
-
+   
 ''' SCALING '''
 
 trainDataScaled = scaleFeatures(trainData)

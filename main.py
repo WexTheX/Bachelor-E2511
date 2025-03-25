@@ -30,8 +30,8 @@ outputPath = "OutputFiles/"
 pathNames = ["Grinding", "Idle", "Welding", "Sand_S"]
 activityName = ["GRIND", "IDLE", "WELD", "SANDSIM"]
 
-wantFeatureExtraction = 0
-wantPlots = 1
+wantFeatureExtraction = 1
+wantPlots = 0
 
 windowLengthSeconds = 13
 Fs = 800
@@ -107,7 +107,7 @@ def setHyperparams(kfold_TrainDataScaled, varianceExplained):
     eigenvalues, eigenvectors = np.linalg.eig(C)
 
     eigSum = 0
-    for i in range(len(kfold_TrainDataScaled)):
+    for i in range(len(eigenvalues)):
         
         eigSum += eigenvalues[i]
         totalVariance = eigSum / eigenvalues.sum()
@@ -131,10 +131,10 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     kfold_testLabels = [trainLabels[j] for j in test_index]
 
     print(kfold_testLabels)
-   
+    
     kfold_TrainData = trainData.iloc[train_index]
     kfold_ValidationData = trainData.iloc[test_index]
-
+    #print(f"Dette er stuffet: {kfold_TrainData}")
     # Scale training and validation seperately
     kfold_TrainDataScaled = scaleFeatures(kfold_TrainData)
     kfold_ValidationDataScaled = scaleFeatures(kfold_ValidationData)
@@ -166,7 +166,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
             print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
 
 #  dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))   
-
+   
 ''' SCALING '''
 
 trainDataScaled = scaleFeatures(trainData)

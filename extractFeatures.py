@@ -19,7 +19,6 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
     windowSum = 0
     
     # Renames data inside Datafiles/xxx folder
-    rename_data(path)
 
     for i, name in enumerate(datasets):
         

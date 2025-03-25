@@ -28,7 +28,7 @@ from Preprocessing.preprocessing import fillSets
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 
-wantFeatureExtraction = 0
+wantFeatureExtraction = 1
 wantPlots = 0
 
 windowLengthSeconds = 13

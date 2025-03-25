@@ -16,8 +16,13 @@ def fillSets(path):
     setsLabel = []
 
 
-    pathNames = ["Grinding", "Idle", "Welding"]
+    #pathNames = ["Grinding", "Idle", "Welding"]
+    #### make list of folder paths
+    pathNames = os.listdir(folder_path)
     activityName = ["GRIND", "IDLE", "WELD"]
+    print("Folders in path", folder_path, ":")
+    print(pathNames)
+    
     path = os.path.normpath(path)
 
     for i, name in enumerate(pathNames):

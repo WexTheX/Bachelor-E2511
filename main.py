@@ -105,7 +105,7 @@ def setHyperparams(kfold_TrainDataScaled, varianceExplained):
     eigenvalues, eigenvectors = np.linalg.eig(C)
 
     eigSum = 0
-    for i in range(len(kfold_TrainDataScaled)):
+    for i in range(len(eigenvalues)):
         
         eigSum += eigenvalues[i]
         totalVariance = eigSum / eigenvalues.sum()
@@ -115,7 +115,7 @@ def setHyperparams(kfold_TrainDataScaled, varianceExplained):
             print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
             break
 
-    # n_components = 2
+    n_components = 3
     return n_components
 
 for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels)):
@@ -129,10 +129,10 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     kfold_testLabels = [trainLabels[j] for j in test_index]
 
     print(kfold_testLabels)
-   
+    
     kfold_TrainData = trainData.iloc[train_index]
     kfold_ValidationData = trainData.iloc[test_index]
-
+    #print(f"Dette er stuffet: {kfold_TrainData}")
     # Scale training and validation seperately
     kfold_TrainDataScaled = scaleFeatures(kfold_TrainData)
     kfold_ValidationDataScaled = scaleFeatures(kfold_ValidationData)
@@ -142,7 +142,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     PCA_components = setHyperparams(kfold_TrainDataScaled, varianceExplained=0.95)
     PCATest = PCA(n_components = PCA_components)
 
-    kfold_dfPCA_train = pd.DataFrame(PCATest.fit_transform(kfold_TrainData))
+    kfold_dfPCA_train = pd.DataFrame(PCATest.fit_transform(kfold_TrainDataScaled))
     kfold_dfPCA_validation = pd.DataFrame(PCATest.transform(kfold_ValidationDataScaled))
 
     C = 0
@@ -162,7 +162,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
             print(f"C = {C}, Kernel = {j} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
 
 #  dfPCAtest = pd.DataFrame(PCATest.transform(testDataScaled))   
-
+   
 ''' SCALING '''
 
 trainDataScaled = scaleFeatures(trainData)

@@ -154,8 +154,11 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
     print(f"Testing accurracy with different C and kernels: ")
 
+    # svm.SVC.get_params()
+
     # param_grid = [
-    #     {'C': [1, 10, 100, 1000], 'kernel': 'linear'},
+    #     {'C': [1, 10, 100, 1000], 'kernel': 'linear'}
+    #     {'C': [1, 10, 100, 1000]},
 
     # ]
 

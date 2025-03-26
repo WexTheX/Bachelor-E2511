@@ -1,3 +1,7 @@
+import time
+
+start_time = time.time()  # Start timer
+
 # Main file
 # Global imports
 import numpy as np
@@ -33,25 +37,27 @@ pathNames = os.listdir(path)
 activityName = [name[:4].upper() for name in pathNames]
 
 wantFeatureExtraction = 0
-wantPlots = 0
+wantPlots = 1
 
 windowLengthSeconds = 13
 Fs = 800
-randomness = 1222
+randomness = 12533
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 # Hyper parameter variables
 hyper_param_list = []
 num_folds = 5
+
 C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
 kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
 gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
 coef0_list = [0, 0.5, 1]
 deg_list = [2, 3, 4, 5]
 
-accuracy_array = np.zeros( (num_folds, len(C_list), len(kernelTypes)) )
-mean_accuracy_array = np.zeros( (len(C_list), len(kernelTypes)) )
-std_accuracy_array = np.zeros( (len(C_list), len(kernelTypes)) )
+
+accuracy_array = np.zeros( (num_folds, len(C_list), len(kernelTypes), len(gamma_list), len(coef0_list), len(deg_list)) )
+mean_accuracy_array = np.zeros( (len(C_list), len(kernelTypes), len(gamma_list), len(coef0_list), len(deg_list)) )
+std_accuracy_array = np.zeros( (len(C_list), len(kernelTypes), len(gamma_list), len(coef0_list), len(deg_list)) )
 
 # Load sets and label for those sets from given path
 ''' LOAD DATASET '''
@@ -67,7 +73,6 @@ sets, setsLabel = fillSets(path, pathNames, activityName)
 # answerPlot = input("Do you want plots? (Y | N)")
 # if(answerPlot == "Y"):
 #     wantPlots = True
-
 
 ''' FEATURE EXTRACTION '''
 
@@ -132,7 +137,8 @@ def setHyperparams(kfold_TrainDataScaled, varianceExplained):
             print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
             break
 
-    # n_components = 3
+    n_components = 2
+
     return n_components
 
 for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels)):
@@ -164,51 +170,150 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     kfold_dfPCA_train = pd.DataFrame(PCATest.fit_transform(kfold_TrainDataScaled))
     kfold_dfPCA_validation = pd.DataFrame(PCATest.transform(kfold_ValidationDataScaled))
 
-    biplot(kfold_dfPCA_train, kfold_trainLabels, PCATest, PCA_components)
+    # biplot(kfold_dfPCA_train, kfold_trainLabels, PCATest, PCA_components)
 
+    
     
     # print(f"Testing accurracy with different C and kernels: ")
 
-    param_grid = [
-         {'C': [1, 10, 100, 1000], 'kernel': 'linear'},
-         {'C': [1, 10, 100, 1000], 'gamma': [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2], 'coef0': [0, 0.5, 1], 'deg': [2, 3, 4, 5], 'kernel': 'poly'},
-         {'C': [1, 10, 100, 1000], 'gamma': [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2], 'coef0': [0, 0.5, 1], 'kernel': 'sigmoid'},
-         {'C': [1, 10, 100, 1000], 'gamma': [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2], 'kernel': 'rbf'},
-     ]
 
     for j, C_value in enumerate(C_list):
 
         for k, kernel in enumerate(kernelTypes):
+                
+                # print("Work in progress")
 
-            # Only append for fold 0
-            if i == 0:
-                hyper_param_list.append((C_value, kernel))
+                if kernel == 'linear':
+                    
+                    clf = svm.SVC(C=C_value, kernel=kernel)
+                    clf.fit(kfold_dfPCA_train, kfold_trainLabels)
+                    testPredict = clf.predict(kfold_dfPCA_validation)
+                    # accuracy_array[i, j, k, :, :, :] = 0
+                    accuracy_array[i, j, k, 0, 0, 0] = metrics.accuracy_score(kfold_testLabels, testPredict)
+                    
+                    # Only append for fold 0
+                    if i == 0:
+                        hyper_param_list.append((C_value, kernel))
 
-            # Make new SVM instance with specific hyperparams
-            clf = svm.SVC(C = C_value, kernel = kernel, probability = True)
-            clf.fit(kfold_dfPCA_train, kfold_trainLabels)
-            testPredict = clf.predict(kfold_dfPCA_validation)
+                elif kernel == 'poly':
+                     
+                    for l, gamma_value in enumerate(gamma_list):
+                        for m, coef0_value in enumerate(coef0_list):
+                            for n, deg_value in enumerate(deg_list):
+
+                                clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)
+                                clf.fit(kfold_dfPCA_train, kfold_trainLabels)
+                                testPredict = clf.predict(kfold_dfPCA_validation)
+                                accuracy_array[i, j, k, l, m, n] = metrics.accuracy_score(kfold_testLabels, testPredict)
+                                
+                                if i == 0:
+                                    hyper_param_list.append((C_value, kernel, gamma_value, coef0_value, deg_value))
+
+                elif kernel == 'sigmoid': 
+
+                    for l, gamma_value in enumerate(gamma_list):
+                        for m, coef0_value in enumerate(coef0_list):    
+
+                            clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value)
+                            clf.fit(kfold_dfPCA_train, kfold_trainLabels)
+                            testPredict = clf.predict(kfold_dfPCA_validation)
+                            accuracy_array[i, j, k, l, m, 0] = metrics.accuracy_score(kfold_testLabels, testPredict)   
+
+                            if i == 0:
+                                hyper_param_list.append((C_value, kernel, gamma_value, coef0_value))
+
+                elif kernel == 'rbf':
+
+                    for l, gamma_value in enumerate(gamma_list):
+                        
+                        clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value)
+                        clf.fit(kfold_dfPCA_train, kfold_trainLabels)
+                        testPredict = clf.predict(kfold_dfPCA_validation)
+                        accuracy_array[i, j, k, l, m, 0] = metrics.accuracy_score(kfold_testLabels, testPredict)  
+
+                        if i == 0:
+                            hyper_param_list.append((C_value, kernel, gamma_value))
+
+            
+
+            # # Make new SVM instance with specific hyperparams
+            # clf = svm.SVC(C = C_value, kernel = kernel, probability = True)
+            # clf.fit(kfold_dfPCA_train, kfold_trainLabels)
+            # testPredict = clf.predict(kfold_dfPCA_validation)
             
             # Add accuracy for params to a 3D array
-            accuracy_array[i, j, k] = metrics.accuracy_score(kfold_testLabels, testPredict)
-            
-            print(f"C = {C_value}, Kernel = {k} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
 
-# print(f"Accuracy array: {accuracy_array}")
-print(clf.get_params())
+
+# accuracy_array[i, j, k, l, m] = metrics.accuracy_score(kfold_testLabels, testPredict)
+            
+# print(f"C = {C_value}, Kernel = {k} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
+# print(hyper_param_list)
+print(f"Length of Hyper param list: {len(hyper_param_list)}")
+
+print(f"Shape of accuracy array: {accuracy_array.shape}")
+print(f"Memory size of accuracy array: {accuracy_array.nbytes}")
+
+end_time = time.time()  # End timer
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time:.6f} seconds")
+
+# print(clf.get_params())
+
 for j in range(len(C_list)):
     for k in range(len(kernelTypes)):
-        mean_accuracy_array[j, k] = accuracy_array[:, j, k].mean()
-        std_accuracy_array[j, k] = accuracy_array[:, j, k].std()
+        for l in range(len(gamma_list)):
+            for m in range(len(coef0_list)):
+                for n in range(len(deg_list)):
+                    mean_accuracy_array[j, k, l, m, n] = accuracy_array[:, j, k, l, m, n].mean()
+                    std_accuracy_array[j, k, l, m, n] = accuracy_array[:, j, k, l, m, n].std()
 
 score_array = mean_accuracy_array - std_accuracy_array
+# print(score_array)
+
+# max_value = np.max(score_array)
+# max_index = np.where(score_array == max_value)
+
+# print(f"Indices: {max_index}")
+
+# print(f"Max value = {max_value} at index {max_index}")
 best_param = np.argmax(score_array)
+max_value = np.max(score_array)
 
-print(f"Mean accuracy array across all folds: {mean_accuracy_array}")
-print(f"STD accuracy array across all folds: {std_accuracy_array}")
-print(f"Array of all scores: {score_array}")
+multi_dim_index = np.unravel_index(best_param, score_array.shape)
 
-print(f"Best combination of hyperparameters through exhaustive grid search {hyper_param_list[best_param]}")
+print(f"Highest score: {max_value} found at index: {multi_dim_index}")
+
+# TESTING 
+C_value = C_list[multi_dim_index[0]]
+kernel = kernelTypes[multi_dim_index[1]]
+gamma_value = gamma_list[multi_dim_index[2]]
+coef0_value = coef0_list[multi_dim_index[3]]
+deg_value = deg_list[multi_dim_index[4]]
+
+# final scaling
+trainDataScaled = scaleFeatures(trainData)
+testDataScaled = scaleFeatures(testData)
+
+PCA_components = setHyperparams(trainDataScaled, varianceExplained=0.90)
+PCATest = PCA(n_components = PCA_components)
+
+dfPCA_train = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
+dfPCA_validation = pd.DataFrame(PCATest.transform(testDataScaled))
+
+
+clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)
+clf.fit(dfPCA_train, trainLabels)
+testPredict = clf.predict(dfPCA_validation)
+accuracy_score = metrics.accuracy_score(testLabels, testPredict)
+
+print(f"Accuracy on unseen test data: {accuracy_score}")
+
+
+# print(f"Mean accuracy array across all folds: {mean_accuracy_array}")
+# print(f"STD accuracy array across all folds: {std_accuracy_array}")
+# print(f"Array of all scores: {score_array}")
+
+# print(f"Best combination of hyperparameters through exhaustive grid search {hyper_param_list[best_param]}")
 
 # print(f"Hyper param list: {hyper_param_list}")
 
@@ -224,8 +329,8 @@ print(f"Best combination of hyperparameters through exhaustive grid search {hype
    
 ''' SCALING '''
 
-trainDataScaled = scaleFeatures(trainData)
-testDataScaled = scaleFeatures(testData)
+# trainDataScaled = scaleFeatures(trainData)
+# testDataScaled = scaleFeatures(testData)
 
 # print(f"Content of training data scaled: \n {trainDataScaled}")
 # print(f"Content of testing data scaled: \n {testDataScaled}")

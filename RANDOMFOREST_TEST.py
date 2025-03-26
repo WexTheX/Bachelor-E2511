@@ -6,6 +6,8 @@ from Preprocessing.preprocessing import fillSets
 import os
 from sklearn import svm, metrics
 import pandas as pd
+from sklearn.decomposition import PCA
+import numpy as np
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
 windowLengthSeconds = 13
@@ -41,13 +43,43 @@ trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabel
 print(trainData)
 
 
+def setHyperparams(kfold_TrainDataScaled, varianceExplained):
+
+    C = np.cov(kfold_TrainDataScaled, rowvar=False) # 140x140 Co-variance matrix
+    eigenvalues, eigenvectors = np.linalg.eig(C)
+
+    eigSum = 0
+    for i in range(len(eigenvalues)):
+        
+        eigSum += eigenvalues[i]
+        totalVariance = eigSum / eigenvalues.sum()
+
+        if totalVariance >= varianceExplained:
+            n_components = i + 1
+            print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
+            break
+
+    # n_components = 3
+    return n_components
+
+
 trainDataScaled = scaleFeatures(trainData)
 testDataScaled = scaleFeatures(testData)
+
+
+
+
+PCA_components = setHyperparams(trainDataScaled, varianceExplained=0.90)
+PCATest = PCA(n_components = PCA_components)
+
+
+RF_dfPCA_train = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
+RF_dfPCA_test = pd.DataFrame(PCATest.transform(testDataScaled))
+
+
 for i in range(1, 100):
-    clf = RandomForestClassifier(max_depth=1, random_state=i)
-    clf.fit(trainDataScaled, trainLabels)
-    testPredict = clf.predict(testDataScaled)
+    clf = RandomForestClassifier(max_depth=3, random_state=i)
+    clf.fit(RF_dfPCA_train, trainLabels)
+    testPredict = clf.predict(RF_dfPCA_test)
 
     print(metrics.accuracy_score(testLabels, testPredict))
-
-

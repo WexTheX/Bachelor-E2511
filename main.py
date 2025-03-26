@@ -1,8 +1,7 @@
 import time
 start_time = time.time()  # Start timer
 
-# Main file
-# Global imports
+''' IMPORTS '''
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -28,19 +27,21 @@ from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
 from Preprocessing.preprocessing import fillSets
 
+''' GLOBAL VARIABLES '''
 # Spesify path for input and output of files
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"
-
 pathNames = os.listdir(path)
 activityName = [name[:4].upper() for name in pathNames]
 
-wantFeatureExtraction = 0
-wantPlots = 1
+# Input variables
+want_feature_extraction = 0
+want_plots = 1
 
+# Dataset parameters
+randomness = 12533
 windowLengthSeconds = 13
 Fs = 800
-randomness = 99332
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 # Hyper parameter variables
@@ -56,24 +57,26 @@ accuracy_array = np.zeros( (num_folds, len(C_list), len(kernelTypes), len(gamma_
 mean_accuracy_array = np.zeros( (len(C_list), len(kernelTypes), len(gamma_list), len(coef0_list), len(deg_list)) )
 std_accuracy_array = np.zeros( (len(C_list), len(kernelTypes), len(gamma_list), len(coef0_list), len(deg_list)) )
 
-# Load sets and label for those sets from given path
+
 ''' LOAD DATASET '''
 sets, setsLabel = fillSets(path, pathNames, activityName)
 # print(f"Content of sets: \n {sets}")
 # print(f"Content of setsLabel: \n {setsLabel}")
 
-# User inputs, expand or ditch?
-# answerFE = input("Do you want feature extraction? (Y | N)")
-# if(answerFE == "Y"):
-#     wantFeatureExtraction = True
 
-# answerPlot = input("Do you want plots? (Y | N)")
-# if(answerPlot == "Y"):
-#     wantPlots = True
+''' USER INPUTS '''
+# answer_FE = input("Do you want feature extraction? (Y | N)")
+# if(answer_FE == "Y"):
+#     want_feature_extraction = True
+
+# answer_plot = input("Do you want plots? (Y | N)")
+# if(answer_plot == "Y"):
+#     want_lots = True
+
 
 ''' FEATURE EXTRACTION '''
 
-if(wantFeatureExtraction):
+if(want_feature_extraction):
     feature_df, windowLabels = Extract_All_Features(sets, setsLabel, windowLengthSeconds*Fs, False, 800, path)
     feature_df.to_csv(outputPath+"feature_df.csv", index=False)
     with open(outputPath+"windowLabels.txt", "w") as fp:
@@ -89,33 +92,24 @@ if "feature_df" not in globals():
     f.close()
     windowLabels.pop()
 
-windowLabelsNumeric = LabelEncoder().fit_transform(windowLabels)
-
-
 # print(f"Content of feature dataframe: \n {feature_df}")
 # print(f"Content of window label list: \n {windowLabels}")
 
+windowLabelsNumeric = LabelEncoder().fit_transform(windowLabels)
 
-''' SPLITTING '''
+
+''' SPLITTING TEST/TRAIN '''
 trainData, testData, trainLabels, testLabels = splitData(feature_df, windowLabels, randomness)
 # print(f"Content of training data: \n {trainData}")
 # print(f"Content of training labels: \n {trainLabels}")
+
 # print(f"Content of testing data: \n {testData}")
 # print(f"Content of testing labels: \n {testLabels}")
 
 trainLabelsNumeric = LabelEncoder().fit_transform(trainLabels)
 
-'''K-fold split'''
 
-# kf = KFold(n_splits=3)
-# kf.get_n_splits(trainData)
-
-
-# for i, (train_index, test_index) in enumerate(kf.split(trainData)):
-#     print(f"Fold {i}:")
-#     print(f"  Train: index={train_index}")
-#     print(f"  Test:  index={test_index}")
-
+''' K-FOLD SPLIT '''
 skf = StratifiedKFold(n_splits = num_folds)
 
 def setHyperparams(kfold_TrainDataScaled, varianceExplained):
@@ -134,11 +128,11 @@ def setHyperparams(kfold_TrainDataScaled, varianceExplained):
             print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
             break
 
-    # n_components = 3
+    # n_components = 2
 
     return n_components
 
-print(f"\n")
+''' HYPERPARAMETER OPTIMIZATION '''
 for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels)):
 
     index = 0
@@ -245,7 +239,6 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
             # testPredict = clf.predict(kfold_dfPCA_validation)
             
             # Add accuracy for params to a 3D array
-
 
 # accuracy_array[i, j, k, l, m] = metrics.accuracy_score(kfold_testLabels, testPredict)
             
@@ -437,7 +430,7 @@ print(f"Accuracy on unseen test data: {accuracy_score}")
 
 # testWelch(sets[0], variables[0], Fs)
 
-if (wantPlots):
+if (want_plots):
     # for i in range(1, len(variables)):
     #     plotWelch(sets[0], variables[i], Fs, False)
     #     plotWelch(sets[0], variables[i], Fs, True)

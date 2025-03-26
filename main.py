@@ -1,5 +1,4 @@
 import time
-
 start_time = time.time()  # Start timer
 
 # Main file
@@ -41,19 +40,17 @@ wantPlots = 1
 
 windowLengthSeconds = 13
 Fs = 800
-randomness = 12533
+randomness = 99332
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 # Hyper parameter variables
 hyper_param_list = []
 num_folds = 5
-
 C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
 kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
 gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
 coef0_list = [0, 0.5, 1]
 deg_list = [2, 3, 4, 5]
-
 
 accuracy_array = np.zeros( (num_folds, len(C_list), len(kernelTypes), len(gamma_list), len(coef0_list), len(deg_list)) )
 mean_accuracy_array = np.zeros( (len(C_list), len(kernelTypes), len(gamma_list), len(coef0_list), len(deg_list)) )
@@ -137,15 +134,16 @@ def setHyperparams(kfold_TrainDataScaled, varianceExplained):
             print(f"Variance explained by {i + 1} PCA components: {eigSum / eigenvalues.sum()}")
             break
 
-    n_components = 2
+    # n_components = 3
 
     return n_components
 
+print(f"\n")
 for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels)):
 
     index = 0
 
-    print(f"Fold {i}:")
+    print(f"PCA fitting on fold {i}")
     # print(f"  Train: index={train_index}")
     # print(f"  Test:  index={test_index}")
     # print(f"Train labels: {trainLabels}")
@@ -163,14 +161,15 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     kfold_ValidationDataScaled = scaleFeatures(kfold_ValidationData)
 
     # 
-
+    
     PCA_components = setHyperparams(kfold_TrainDataScaled, varianceExplained=0.90)
+    
     PCATest = PCA(n_components = PCA_components)
-
+    
     kfold_dfPCA_train = pd.DataFrame(PCATest.fit_transform(kfold_TrainDataScaled))
     kfold_dfPCA_validation = pd.DataFrame(PCATest.transform(kfold_ValidationDataScaled))
-
-    # biplot(kfold_dfPCA_train, kfold_trainLabels, PCATest, PCA_components)
+    
+    biplot(kfold_dfPCA_train, kfold_trainLabels, PCATest, PCA_components)
 
     
     
@@ -184,7 +183,8 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
                 # print("Work in progress")
 
                 if kernel == 'linear':
-                    
+
+                    # print(f"Working on {j} {k}")
                     clf = svm.SVC(C=C_value, kernel=kernel)
                     clf.fit(kfold_dfPCA_train, kfold_trainLabels)
                     testPredict = clf.predict(kfold_dfPCA_validation)
@@ -201,6 +201,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
                         for m, coef0_value in enumerate(coef0_list):
                             for n, deg_value in enumerate(deg_list):
 
+                                # print(f"Working on {j} {k} {l} {m} {n}")
                                 clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)
                                 clf.fit(kfold_dfPCA_train, kfold_trainLabels)
                                 testPredict = clf.predict(kfold_dfPCA_validation)
@@ -210,10 +211,11 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
                                     hyper_param_list.append((C_value, kernel, gamma_value, coef0_value, deg_value))
 
                 elif kernel == 'sigmoid': 
-
+                    
                     for l, gamma_value in enumerate(gamma_list):
-                        for m, coef0_value in enumerate(coef0_list):    
+                        for m, coef0_value in enumerate(coef0_list):  
 
+                            # print(f"Working on {j} {k} {l} {m}")
                             clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value)
                             clf.fit(kfold_dfPCA_train, kfold_trainLabels)
                             testPredict = clf.predict(kfold_dfPCA_validation)
@@ -225,7 +227,8 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
                 elif kernel == 'rbf':
 
                     for l, gamma_value in enumerate(gamma_list):
-                        
+
+                        # print(f"Working on {j} {k} {l}")
                         clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value)
                         clf.fit(kfold_dfPCA_train, kfold_trainLabels)
                         testPredict = clf.predict(kfold_dfPCA_validation)
@@ -248,10 +251,10 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
             
 # print(f"C = {C_value}, Kernel = {k} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
 # print(hyper_param_list)
+print(f"\n")
 print(f"Length of Hyper param list: {len(hyper_param_list)}")
-
 print(f"Shape of accuracy array: {accuracy_array.shape}")
-print(f"Memory size of accuracy array: {accuracy_array.nbytes}")
+print(f"Memory size of accuracy array in bytes: {accuracy_array.nbytes}")
 
 end_time = time.time()  # End timer
 elapsed_time = end_time - start_time
@@ -278,10 +281,10 @@ score_array = mean_accuracy_array - std_accuracy_array
 # print(f"Max value = {max_value} at index {max_index}")
 best_param = np.argmax(score_array)
 max_value = np.max(score_array)
-
 multi_dim_index = np.unravel_index(best_param, score_array.shape)
 
-print(f"Highest score: {max_value} found at index: {multi_dim_index}")
+print(f"\n")
+print(f"Highest score of mean - std: {max_value}")
 
 # TESTING 
 C_value = C_list[multi_dim_index[0]]
@@ -290,15 +293,18 @@ gamma_value = gamma_list[multi_dim_index[2]]
 coef0_value = coef0_list[multi_dim_index[3]]
 deg_value = deg_list[multi_dim_index[4]]
 
-# final scaling
+print(f"Optimal hyperparams through extensive grid search: C = {C_value}, Kernel =  {kernel}, Gamma = {gamma_value}, coef0 = {coef0_value}, degree = {deg_value}")
+
+# Final scaling
+print(f"\n")
+print("Final test on unseen data: ")
 trainDataScaled = scaleFeatures(trainData)
 testDataScaled = scaleFeatures(testData)
 
 PCA_components = setHyperparams(trainDataScaled, varianceExplained=0.90)
-PCATest = PCA(n_components = PCA_components)
-
-dfPCA_train = pd.DataFrame(PCATest.fit_transform(trainDataScaled))
-dfPCA_validation = pd.DataFrame(PCATest.transform(testDataScaled))
+PCA_Test = PCA(n_components = PCA_components)
+dfPCA_train = pd.DataFrame(PCA_Test.fit_transform(trainDataScaled))
+dfPCA_validation = pd.DataFrame(PCA_Test.transform(testDataScaled))
 
 
 clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)

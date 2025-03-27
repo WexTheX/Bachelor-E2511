@@ -56,10 +56,7 @@ def testWelch(sets_n, variables_n, fs):
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
   
 
-# getWelch(file, feature, fs, filterOn)
-
 def biplot(score, trainLabels, PCATest, components):
-
   if components == 3:
 
     coeff = PCATest.components_.T
@@ -128,5 +125,15 @@ def biplot(score, trainLabels, PCATest, components):
     plt.title("Biplot")
     # plt.figure()
 
+  elif 3 < components < 10:
+    coeff = PCATest.components_.T
+    labels = PCATest.feature_names_in_
+
+    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+    plt.title('Feature Importance in Principal Components')
+
   else:
+
     pass

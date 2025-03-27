@@ -133,7 +133,8 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
                                 **window_features_mag_Z_Freq,
 
                                 **window_features_temp_Time,
-                                **window_features_temp_Freq}
+                                # **window_features_temp_Freq
+                                }
                         
             if Norm_Accel == False:
 

@@ -48,7 +48,6 @@ def fillSets(path, pathNames, activityName):
     sets = []
     setsLabel = []
 
-    #pathNames = ["Grinding", "Idle", "Welding"]
     #### make list of folder paths
     pathNames = os.listdir(path)
     path = os.path.normpath(path)
@@ -208,5 +207,5 @@ def delete_header(path):
 def tab_txt_to_csv(txt_file, csv_file):
     # Convert tab seperated txt file to csv file
     # txt_file, csv_file format : "filename.txt", "filename.csv"
-    df_txt = pd.read_csv(txt_file, delimiter=r'\s+', engine='python') # Delimiter is now all whitespace (tab and space etc)
+    df_txt = pd.read_csv(txt_file, delimiter=r'\t', engine='python') # Delimiter is now all whitespace (tab and space etc)
     df_txt.to_csv(csv_file, index = None)

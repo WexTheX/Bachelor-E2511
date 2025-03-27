@@ -21,14 +21,15 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
     # Renames data inside Datafiles/xxx folder
 
     for i, name in enumerate(datasets):
-        
+        ''' PREPROCESS FILES '''
         delete_header(name + ".txt") # Deletes lines before Timestamp and does some regex
         tab_txt_to_csv(name + ".txt", name + ".csv") # Converts from .txt to .csv
 
+        ''' LOAD .CSV DATAFILES '''
         df = pd.read_csv(name+".csv")
 
         # 1, 2, 4, 5, or 10 data points must be selected
-        time_data   = df["Timestamp"]  # Assuming 1st column is time
+        time_data   = df["Timestamp"]  # Timedata, only used to measure amount of samples
         
         gyro_X      = df["Gyr.X"]  # Gyroscope data in the X direction
         gyro_Y      = df["Gyr.Y"]  # Gyroscope data in the Y direction
@@ -49,19 +50,19 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
         # lum     = df["Lum"]    # Light intensity (lux)
         # IR_lum  = df["IRLum"]  # Infrared light intensity
 
-        # Calculate the number of windows
         num_samples = len(time_data) # Number of measurements
-        num_windows = num_samples // WindowLength
 
-        # Cutting first and last 10+ seconds
-        num_windows_cut = math.ceil((10 * Fs) / WindowLength)
-
-        print(f"Number of IMU windows in {name} after cut: {num_windows - 2 * num_windows_cut}")
+        ''' REMOVE 10 SECONDS '''
+        df.drop(df.index[:Fs*10]) # Drop everything before 10 seconds
+        df.drop(df.index[Fs*10:]) # Drop everything after 10 seconds
         
-        windowSum += num_windows - 2 * num_windows_cut
+        ''' LOAD WINDOWS '''
+        num_windows = num_samples // WindowLength # Rounds down when deciding numbers
+        print(f"Number of IMU windows in {name} after cut: {num_windows}")
+        windowSum += num_windows
         
         # Only does feature extraction on windows in the middle
-        for j in range(num_windows_cut, num_windows - num_windows_cut):
+        for j in range(0, num_windows):
             
             # Define the start and end index for the window
             start_idx = j * WindowLength
@@ -109,7 +110,7 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
                 window_features_mag_X_Freq      = get_Freq_Domain_features_of_signal(window_mag_X, "mag_X", Fs)
                 window_features_mag_Y_Freq      = get_Freq_Domain_features_of_signal(window_mag_Y, "mag_Y", Fs)
                 window_features_mag_Z_Freq      = get_Freq_Domain_features_of_signal(window_mag_Z, "mag_Z", Fs)
-                window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", Fs)
+                # window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", Fs)
 
 
                 ## merge all
@@ -164,7 +165,7 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
                 window_features_mag_X_Freq      = get_Freq_Domain_features_of_signal(window_mag_X, "mag_X", Fs)
                 window_features_mag_Y_Freq      = get_Freq_Domain_features_of_signal(window_mag_Y, "mag_Y", Fs)
                 window_features_mag_Z_Freq      = get_Freq_Domain_features_of_signal(window_mag_Z, "mag_Z", Fs)
-                window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", Fs)
+                # window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", Fs)
 
 
                 # Merge all
@@ -190,8 +191,9 @@ def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, 
                                 **window_features_mag_Y_Freq,
                                 **window_features_mag_Z_Freq,
 
-                                **window_features_temp_Time,
-                                **window_features_temp_Freq}
+                                **window_features_temp_Time
+                                # , **window_features_temp_Freq
+                                }
 
             # Append the features of the current window to the list
             all_window_features.append(window_features)

@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 def splitData(df, labelList, randomness):
 
   xTrain, xTest, yTrain, yTest = train_test_split(
-    df, labelList, test_size=0.25, random_state=randomness, stratify=labelList
+    df, labelList, test_size=0.50, random_state=randomness, stratify=labelList
   )
 
   return xTrain, xTest, yTrain, yTest

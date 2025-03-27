@@ -16,15 +16,6 @@ def normDistPlot(dataset, size):
   plt.axvline(values.mean(), color='k', linestyle='dashed', linewidth=2)
   plt.figure()
 
-'''
-df = pd.read_csv("OutputFiles/features4.csv")
-size = 10
-print(df)
-
-normDistPlot(df[:1], 800*size)
-plt.show()
-'''
-
 # Plot of FFT of sets and variables, REDO needed
 def plotFFT(sets, variables):
   label_names = []
@@ -87,7 +78,7 @@ def biplot(score, trainLabels, PCATest, components):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
 
-    label_mapping = {'GRIN': (0.0, 0.0, 0.0)  , 'IDLE': (1.0, 0.0, 0.0), 'WELD': (0.0, 1.0, 0.0), 'SAND': (0.0, 0.0, 1.0)}
+    label_mapping = {'GRIN': (0.0, 0.0, 0.0)  , 'IDLE': (1.0, 0.0, 0.0), 'WELD': (0.0, 1.0, 0.0), 'SSAN': (0.0, 0.0, 1.0)}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
@@ -105,7 +96,7 @@ def biplot(score, trainLabels, PCATest, components):
     ax.set_ylabel('PC2')
     ax.set_zlabel('PC3')
     ax.set_title("3D Biplot")
-    plt.figure()
+    # plt.figure()
 
   elif components == 2:
 
@@ -121,24 +112,21 @@ def biplot(score, trainLabels, PCATest, components):
     ys = score[1]
     plt.figure(figsize=(10, 8))
 
-    label_mapping = {'GRIN': (0.0, 0.0, 0.0)  , 'IDLE': (1.0, 0.0, 0.0), 'WELD': (0.0, 1.0, 0.0), 'SAND': (0.0, 0.0, 1.0)}
+    label_mapping = {'GRIN': (0.0, 0.0, 0.0)  , 'IDLE': (1.0, 0.0, 0.0), 'WELD': (0.0, 1.0, 0.0), 'SSAN': (0.0, 0.0, 1.0)}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
     plt.scatter(xs, ys, c=mappedLabels#, cmap='viridis'
                 )
 
-
     for i in range(len(coeff)):
-
         plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
-
         plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
 
     plt.xlabel("PC1")
     plt.ylabel("PC2")
     plt.title("Biplot")
-    plt.figure()
+    # plt.figure()
 
   else:
     pass

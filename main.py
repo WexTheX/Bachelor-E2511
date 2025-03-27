@@ -51,7 +51,6 @@ variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X"
 # Hyper parameter variables
 hyper_param_list = []
 num_folds = 5
-
 C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
 kernelTypes = ['linear', 'poly', 'rbf', 'sigmoid']
 gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
@@ -144,7 +143,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
 
     index = 0
 
-    print(f"Fold {i}:")
+    print(f"PCA fitting on fold {i}")
     # print(f"  Train: index={train_index}")
     # print(f"  Test:  index={test_index}")
     # print(f"Train labels: {trainLabels}")
@@ -162,10 +161,11 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
     kfold_ValidationDataScaled = scaleFeatures(kfold_ValidationData)
 
     # 
-
+    
     PCA_components = setHyperparams(kfold_TrainDataScaled, varianceExplained=0.90)
+    
     PCATest = PCA(n_components = PCA_components)
-
+    
     kfold_dfPCA_train = pd.DataFrame(PCATest.fit_transform(kfold_TrainDataScaled))
     kfold_dfPCA_validation = pd.DataFrame(PCATest.transform(kfold_ValidationDataScaled))
 
@@ -201,6 +201,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
                         for m, coef0_value in enumerate(coef0_list):
                             for n, deg_value in enumerate(deg_list):
 
+                                # print(f"Working on {j} {k} {l} {m} {n}")
                                 clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)
                                 clf.fit(kfold_dfPCA_train, kfold_trainLabels)
                                 testPredict = clf.predict(kfold_dfPCA_validation)
@@ -210,7 +211,7 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
                                     hyper_param_list.append((C_value, kernel, gamma_value, coef0_value, deg_value))
 
                 elif kernel == 'sigmoid': 
-
+                    
                     for l, gamma_value in enumerate(gamma_list):
                         for m, coef0_value in enumerate(coef0_list):    
                             n = 0
@@ -247,10 +248,10 @@ for i, (train_index, test_index) in enumerate(skf.split(trainData, trainLabels))
             
 # print(f"C = {C_value}, Kernel = {k} \t\t ", metrics.accuracy_score(kfold_testLabels, testPredict))
 # print(hyper_param_list)
+print(f"\n")
 print(f"Length of Hyper param list: {len(hyper_param_list)}")
-
 print(f"Shape of accuracy array: {accuracy_array.shape}")
-print(f"Memory size of accuracy array: {accuracy_array.nbytes}")
+print(f"Memory size of accuracy array in bytes: {accuracy_array.nbytes}")
 
 end_time = time.time()  # End timer
 elapsed_time = end_time - start_time
@@ -277,10 +278,10 @@ score_array = mean_accuracy_array - std_accuracy_array
 # print(f"Max value = {max_value} at index {max_index}")
 best_param = np.argmax(score_array)
 max_value = np.max(score_array)
-
 multi_dim_index = np.unravel_index(best_param, score_array.shape)
 
-print(f"Highest score: {max_value} found at index: {multi_dim_index}")
+print(f"\n")
+print(f"Highest score of mean - std: {max_value}")
 
 # TESTING 
 C_value = C_list[multi_dim_index[0]]

@@ -87,10 +87,10 @@ def biplot(score, trainLabels, PCATest, components):
                     )
 
     # Draw arrows for the components
-    for i in range(len(coeff)):
-        ax.quiver(0, 0, 0, coeff[i, 0], coeff[i, 1], coeff[i, 2], color='r', alpha=0.5)
+    # for i in range(len(coeff)):
+    #     ax.quiver(0, 0, 0, coeff[i, 0], coeff[i, 1], coeff[i, 2], color='r', alpha=0.5)
 
-        ax.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, coeff[i, 2] * 1.2, labels[i], color='g')
+    #     ax.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, coeff[i, 2] * 1.2, labels[i], color='g')
 
     ax.set_xlabel('PC1')
     ax.set_ylabel('PC2')

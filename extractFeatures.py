@@ -11,7 +11,7 @@ from Preprocessing.preprocessing import rename_data
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
 
-def Extract_All_Features(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path):
+def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path):
     
     features_df = []
     windowLabel = []

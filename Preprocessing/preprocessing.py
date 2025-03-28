@@ -9,28 +9,35 @@ from pathlib import Path
     # This is a hyperparemeter
     
     # return downsampled_fs
+def convert_date_format(filename):
+    # Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename
+    match = re.match(r"(\d{2})\.(\d{2})\.(\d{4})", filename)  # Finds date in the file name
+    if match:
+        day, month, year = match.groups()
+        return f"{year}.{month}.{day} " + filename[len(match.group(0)):]  # Keeps the rest of the filename
+    return filename  # Returns date if nothing is changed
 
-def rename_data(path, pathNames, activityName):
+def rename_data(path, path_names, activity_name):
     path = os.path.normpath(path)
 
-    for i in range(len(pathNames)):
-        folder_path = os.path.join(path, pathNames[i])
+    for i in range(len(path_names)):
+        folder_path = os.path.join(path, path_names[i])
         print(f"Processing files in: {path}")
 
         
 # Convert bin to txt file if bin file found
         for f in os.listdir(folder_path):
-            if f.endswith(".bin") and not f.startswith(activityName[i]):
+            if f.endswith(".bin") and not f.startswith(activity_name[i]):
                 convert_bin_to_txt(os.path.join(folder_path, f))
 # Fetch and sort .txt files based on new date format
         files = sorted(
-            [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activityName[i])],
+            [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activity_name[i])],
             key=convert_date_format  # Sorts based on date YYYY / MM / DD
         )
 
         for old_name in files:
-            new_index = find_next_available_index(folder_path, activityName[i])  # Find available index
-            new_name = f"{activityName[i]}_{new_index}.txt"
+            new_index = find_next_available_index(folder_path, activity_name[i])  # Find available index
+            new_name = f"{activity_name[i]}_{new_index}.txt"
             
             old_path = os.path.join(folder_path, old_name)
             new_path = os.path.join(folder_path, new_name)
@@ -41,101 +48,44 @@ def rename_data(path, pathNames, activityName):
         print("Namechanges completed!")
 
 
-def fillSets(path, pathNames, activityName):
+
+def fillSets(path, path_names, activity_name, seperate_types):
     
-    rename_data(path, pathNames, activityName)
+    rename_data(path, path_names, activity_name)
 
     sets = []
-    setsLabel = []
+    sets_label = []
 
     #### make list of folder paths
-    pathNames = os.listdir(path)
+    path_names = os.listdir(path)
     path = os.path.normpath(path)
 
-    for i, name in enumerate(pathNames):
+    ''' SEPERATE BY TYPE'''
+    if seperate_types == 1:
+        print("WIP")
+      
+    else: 
+        for i, name in enumerate(path_names):
+            folder_path = os.path.join(path,name)
+
+    for i, name in enumerate(path_names):
         folder_path = os.path.join(path, name)
         print(f"Processing files in: {path}")
         
         
         for f in os.listdir(folder_path):
-            if f.endswith(".bin") and not f.startswith(activityName[i]):
+            if f.endswith(".bin") and not f.startswith(activity_name[i]):
                 convert_bin_to_txt(os.path.join(folder_path, f))
         txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt") and os.path.isfile(os.path.join(folder_path, f))]
         
         
         for j in range(len(txt_files)):
 
-            sets.append(f"{folder_path}/{activityName[i]}_" + str(j) )
-            setsLabel.append(activityName[i])
+            sets.append(f"{folder_path}/{activity_name[i]}_" + str(j) )
+            sets_label.append(activity_name[i])
     
-    return sets, setsLabel
+    return sets, sets_label
         
-
-
-#def fillSets(path):
-
-    # Creates a path in sets for each file inside "Datafiles"
-    #sets = []
-    #setsLabel = []
-
-    ''' Only one set '''
-    # sets.append(f"{path}/Grinding/GRIND_0")
-    # setsLabel.append("GRIND")
-
-    # sets.append(f"{path}/Idle/IDLE_0")
-    # setsLabel.append("IDLE")
-
-    ''' Grinding path '''
-    folder_path = Path(f"{path}/Grinding")
-    txt_files = list(folder_path.glob("*.txt"))
-
-    for i in range(len(txt_files)):
-        sets.append(f"{path}/Grinding/GRIND_"+ str(i) )
-        setsLabel.append("GRIN")
-
-    ''' Idle path '''
-    folder_path = Path(f"{path}/Idle")
-    txt_files = list(folder_path.glob("*.txt"))
-
-    for i in range(len(txt_files)):
-        sets.append(f"{path}/Idle/IDLE_" + str(i) )
-        setsLabel.append("IDLE")
- 
-    ''' Welding path ''' 
-    # TODO Split tig, mig and electrode?
-    folder_path = Path(f"{path}/Welding/")
-    txt_files = list(folder_path.glob("*.txt"))
-
-    for i in range(len(txt_files)):
-        sets.append(f"{path}/Welding/WELD_" + str(i) )
-        setsLabel.append("WELD")
-        
-    ''' Welding path split'''
-    ''' Welding Aluminum '''
-    # folder_path = Path(f"{path}/Welding/Aluminum/TIG")
-    # txt_files = list(folder_path.glob("*.txt"))
-
-    # for i in range(len(txt_files)):
-    #     sets.append(f"{path}/Welding/Aluminum/TIG/ALUTIGWELD_" + str(i) )
-    #     setsLabel.append("ALUTIGWELD")
-
-    # folder_path = Path(f"{path}/Welding/Aluminum/MIG")
-    # txt_files = list(folder_path.glob("*.txt"))
-
-    # for i in range(len(txt_files)):
-    #     sets.append(f"{path}/Welding/Aluminum/TIG/ALUTIGWELD_" + str(i) )
-    #     setsLabel.append("ALUTIGWELD")
-
-    return sets, setsLabel
-
-def convert_date_format(filename):
-    # Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename
-    match = re.match(r"(\d{2})\.(\d{2})\.(\d{4})", filename)  # Finds date in the file name
-    if match:
-        day, month, year = match.groups()
-        return f"{year}.{month}.{day} " + filename[len(match.group(0)):]  # Keeps the rest of the filename
-    return filename  # Returns date if nothing is changed
-
 def find_next_available_index(folder_path, prefix):
     # Finds next available index for files with a given prefix
     existing_numbers = []

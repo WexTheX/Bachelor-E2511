@@ -30,30 +30,27 @@ from Preprocessing.preprocessing import fillSets
 
 
 ''' GLOBAL VARIABLES '''
-# Spesify path for input and output of files
-path = "Preprocessing/Datafiles"
-output_path = "OutputFiles/"
-path_names = os.listdir(path)
-activity_name = [name[:4].upper() for name in path_names]
-
 # Input variables
 want_feature_extraction = 0
-want_plots = 1
+seperate_types = 0
+want_plots = 0
 ML_models = ["SVM"]
 ML_models = 0
+
 
 # Dataset parameters
 randomness = 0
 window_length_seconds = 30
+split_value = 0.75
 Fs = 800
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
-split_value = 0.75
 
 # Hyper parameter variables
 hyper_param_list = []
 num_folds = 5
 C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
-kernel_types = ['linear', 'poly', 'rbf', 'sigmoid']
+kernel_types = ['linear', 'poly',
+                 'rbf', 'sigmoid']
 gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
 coef0_list = [0, 0.5, 1]
 deg_list = [2, 3, 4, 5]
@@ -63,22 +60,39 @@ mean_accuracy_array = np.zeros( (len(C_list), len(kernel_types), len(gamma_list)
 std_accuracy_array = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
 
 
-''' LOAD DATASET '''
-sets, sets_labels = fillSets(path, path_names, activity_name)
-# print(f"Content of sets: \n {sets}")
-# print(f"Content of sets_labels: \n {sets_labels}")
-
-
 ''' USER INPUTS '''
+
 # answer_FE = input("Do you want feature extraction? (Y | N)")
 # if(answer_FE == "Y"):
 #     want_feature_extraction = True
+
+# if(answer_FE):
+#     answer_ST = input("Do you want to seperate by type (TIG and MIG vs only welding)? (Y | N)")
+#     if(answer_ST == "Y"):
+#         seperate_types = True
+
 
 # answer_ML = input(f"Choose ML model: {ML_models}")
 
 # answer_plot = input("Do you want plots? (Y | N)")
 # if(answer_plot == "Y"):
 #     want_lots = True
+
+
+''' LOAD DATASET '''
+# Spesify path for input and output of files
+if(seperate_types):
+    path = "Preprocessing/DatafilesSeperated" 
+else:
+    path = "Preprocessing/Datafiles"
+output_path = "OutputFiles/"   
+path_names = os.listdir(path)
+activity_name = [name.upper() for name in path_names]
+
+sets, sets_labels = fillSets(path, path_names, activity_name, seperate_types)
+# print(f"Content of sets: \n {sets}")
+# print(f"Content of sets_labels: \n {sets_labels}")
+
 
 
 ''' FEATURE EXTRACTION '''
@@ -115,7 +129,7 @@ if(want_plots):
 
 
 ''' SPLITTING TEST/TRAIN '''
-train_data, test_data, train_labels, test_labels = splitData(feature_df, window_labels, randomness)
+train_data, test_data, train_labels, test_labels = splitData(feature_df, window_labels, randomness, split_value)
 # print(f"Content of training data: \n {train_data}")
 # print(f"Content of training labels: \n {train_labels}")
 
@@ -262,15 +276,17 @@ for j in range(len(C_list)):
 score_array = mean_accuracy_array - std_accuracy_array
 # print(score_array)
 
-# max_value = np.max(score_array)
-# max_index = np.where(score_array == max_value)
+max_value = np.max(score_array)
+max_index = np.where(score_array == max_value)
 
-# print(f"Indices: {max_index}")
-# print(f"Max value = {max_value} at index {max_index}")
+print(f"Indices: {max_index}")
+print(f"Max value = {max_value} at index {max_index}")
 
-best_param = np.argmax(score_array)
+best_param = score_array.argmax()
+print(f"Best_param = {best_param}")
 max_value = np.max(score_array)
 multi_dim_index = np.unravel_index(best_param, score_array.shape)
+print(multi_dim_index)
 
 print(f"\n")
 print(f"Highest score of mean - std: {max_value}")
@@ -288,7 +304,7 @@ deg_value = deg_list[multi_dim_index[4]]
 # print(f"STD accuracy array across all folds: {std_accuracy_array}")
 # print(f"Array of all scores: {score_array}")
 
-print(f"Best combination of hyperparameters through exhaustive grid search {hyper_param_list[best_param]}")
+# print(f"Best combination of hyperparameters through exhaustive grid search {hyper_param_list[best_param]}")
 
 # print(f"Hyper param list: {hyper_param_list}")
 

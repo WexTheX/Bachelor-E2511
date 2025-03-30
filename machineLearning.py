@@ -61,12 +61,12 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
   
     start_time = time.time()
 
-  # Initialize arrays for evaluating score = (mean - std)
-  metrics_matrix = np.zeros( (num_folds, len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
-  metrics_matrix_mean = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
-  metrics_matrix_std = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
-  
-  hyper_param_list = []
+    # Initialize arrays for evaluating score = (mean - std)
+    metrics_matrix = np.zeros( (num_folds, len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
+    metrics_matrix_mean = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
+    metrics_matrix_std = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
+    
+    hyper_param_list = []
 
     ''' K-FOLD SPLIT '''
 
@@ -76,7 +76,7 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
     for i, (train_index, test_index) in enumerate(skf.split(train_data, train_labels)):
 
       print(f"PCA fitting on fold {i}")
-      
+        
       # Debug prints
       # print(f"  Train: index={train_index}")
       # print(f"  Test:  index={test_index}")
@@ -88,106 +88,106 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
       # unique, counts = np.unique(kfold_train_labels, return_counts=True)
       # print(dict(zip(unique, counts)))
 
-        # print(kfold_testLabels)
-        
-        kfold_train_data = train_data.iloc[train_index]
-        kfold_validation_data = train_data.iloc[test_index]
-        #print(f"Dette er stuffet: {kfold_TrainData}")
-        # Scale training and validation separately
-        kfold_train_data_scaled = scaleFeatures(kfold_train_data)
-        kfold_validation_data_scaled = scaleFeatures(kfold_validation_data)
-        
-        PCA_components = setNComponents(kfold_train_data_scaled, variance_explained=0.90)
-        
-        PCA_fold = PCA(n_components = PCA_components)
-        
-        kfold_PCA_train_df = pd.DataFrame(PCA_fold.fit_transform(kfold_train_data_scaled))
-        kfold_PCA_validation_df = pd.DataFrame(PCA_fold.transform(kfold_validation_data_scaled))
+      # print(kfold_testLabels)
+      
+      kfold_train_data = train_data.iloc[train_index]
+      kfold_validation_data = train_data.iloc[test_index]
+      #print(f"Dette er stuffet: {kfold_TrainData}")
+      # Scale training and validation separately
+      kfold_train_data_scaled = scaleFeatures(kfold_train_data)
+      kfold_validation_data_scaled = scaleFeatures(kfold_validation_data)
+      
+      PCA_components = setNComponents(kfold_train_data_scaled, variance_explained=0.90)
+      
+      PCA_fold = PCA(n_components = PCA_components)
+      
+      kfold_PCA_train_df = pd.DataFrame(PCA_fold.fit_transform(kfold_train_data_scaled))
+      kfold_PCA_validation_df = pd.DataFrame(PCA_fold.transform(kfold_validation_data_scaled))
 
-        if (want_plots):
-            print(f"Plotting PCA plots for fold {i}")
-            biplot(kfold_PCA_train_df, kfold_train_labels, PCA_fold, PCA_components)
+      if (want_plots):
+        print(f"Plotting PCA plots for fold {i}")
+        biplot(kfold_PCA_train_df, kfold_train_labels, PCA_fold, PCA_components)
 
 
-        for j, C_value in enumerate(C_list):
+      for j, C_value in enumerate(C_list):
 
-            for k, kernel in enumerate(kernel_types):
+          for k, kernel in enumerate(kernel_types):
+                  
+              # print("Work in progress")
+
+            if kernel == 'linear':
+              l, m, n = 0, 0, 0
                     
-                    # print("Work in progress")
+              clf = svm.SVC(C=C_value, kernel=kernel)
+              clf.fit(kfold_PCA_train_df, kfold_train_labels)
+              test_predict = clf.predict(kfold_PCA_validation_df)
+              # accuracy_array[i, j, k, :, :, :] = 0
+              metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")
+              
+              # Only append for fold 0
+              if i == 0:
+                  hyper_param_list.append((C_value, kernel))
 
-                  if kernel == 'linear':
-                      l, m, n = 0, 0, 0
-                      
-                      clf = svm.SVC(C=C_value, kernel=kernel)
+            elif kernel == 'poly':
+                    
+              for l, gamma_value in enumerate(gamma_list):
+                  for m, coef0_value in enumerate(coef0_list):
+                      for n, deg_value in enumerate(deg_list):
+
+                        # print(f"Working on {j} {k} {l} {m} {n}")
+                        clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)
+                        clf.fit(kfold_PCA_train_df, kfold_train_labels)
+                        test_predict = clf.predict(kfold_PCA_validation_df)
+                        metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")
+                        
+                        if i == 0:
+                            hyper_param_list.append((C_value, kernel, gamma_value, coef0_value, deg_value))
+
+            elif kernel == 'sigmoid': 
+                
+              for l, gamma_value in enumerate(gamma_list):
+                  for m, coef0_value in enumerate(coef0_list):    
+                      n = 0
+                      clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value)
                       clf.fit(kfold_PCA_train_df, kfold_train_labels)
                       test_predict = clf.predict(kfold_PCA_validation_df)
-                      # accuracy_array[i, j, k, :, :, :] = 0
-                      metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")
-                      
-                      # Only append for fold 0
+                      metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")   
+
                       if i == 0:
-                          hyper_param_list.append((C_value, kernel))
+                          hyper_param_list.append((C_value, kernel, gamma_value, coef0_value))
 
-                    elif kernel == 'poly':
-                        
-                        for l, gamma_value in enumerate(gamma_list):
-                            for m, coef0_value in enumerate(coef0_list):
-                                for n, deg_value in enumerate(deg_list):
+            elif kernel == 'rbf':
 
-                                  # print(f"Working on {j} {k} {l} {m} {n}")
-                                  clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)
-                                  clf.fit(kfold_PCA_train_df, kfold_train_labels)
-                                  test_predict = clf.predict(kfold_PCA_validation_df)
-                                  metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")
-                                  
-                                  if i == 0:
-                                      hyper_param_list.append((C_value, kernel, gamma_value, coef0_value, deg_value))
+              for l, gamma_value in enumerate(gamma_list):
+                  m, n = 0, 0
+                  clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value)
+                  clf.fit(kfold_PCA_train_df, kfold_train_labels)
+                  test_predict = clf.predict(kfold_PCA_validation_df)
+                  metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")  
 
-                  elif kernel == 'sigmoid': 
-                      
-                      for l, gamma_value in enumerate(gamma_list):
-                          for m, coef0_value in enumerate(coef0_list):    
-                              n = 0
-                              clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value)
-                              clf.fit(kfold_PCA_train_df, kfold_train_labels)
-                              test_predict = clf.predict(kfold_PCA_validation_df)
-                              metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")   
+                  if i == 0:
+                      hyper_param_list.append((C_value, kernel, gamma_value))
 
-                                if i == 0:
-                                    hyper_param_list.append((C_value, kernel, gamma_value, coef0_value))
+      print("\n")
 
-                    elif kernel == 'rbf':
+    # Exhaustive grid search: calculate which hyperparams gives highest score = max|mean - std|
+    for j in range(len(C_list)):
+        for k in range(len(kernel_types)):
+            for l in range(len(gamma_list)):
+                for m in range(len(coef0_list)):
+                    for n in range(len(deg_list)):
+                        metrics_matrix_mean[j, k, l, m, n] = metrics_matrix[:, j, k, l, m, n].mean()
+                        metrics_matrix_std[j, k, l, m, n] = metrics_matrix[:, j, k, l, m, n].std()
 
-                      for l, gamma_value in enumerate(gamma_list):
-                          m, n = 0, 0
-                          clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value)
-                          clf.fit(kfold_PCA_train_df, kfold_train_labels)
-                          test_predict = clf.predict(kfold_PCA_validation_df)
-                          metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")  
+    score_matrix = metrics_matrix_mean - metrics_matrix_std
 
-                            if i == 0:
-                                hyper_param_list.append((C_value, kernel, gamma_value))
-
-    print("\n")
-
-  # Exhaustive grid search: calculate which hyperparams gives highest score = max|mean - std|
-  for j in range(len(C_list)):
-      for k in range(len(kernel_types)):
-          for l in range(len(gamma_list)):
-              for m in range(len(coef0_list)):
-                  for n in range(len(deg_list)):
-                      metrics_matrix_mean[j, k, l, m, n] = metrics_matrix[:, j, k, l, m, n].mean()
-                      metrics_matrix_std[j, k, l, m, n] = metrics_matrix[:, j, k, l, m, n].std()
-
-  score_matrix = metrics_matrix_mean - metrics_matrix_std
-
-  # Find location and value of highest score
-  max_value_index = np.argmax(score_matrix)
-  max_value = np.max(score_matrix)
-  multi_dim_index = np.unravel_index(max_value_index, score_matrix.shape)
-  # print(score_array.shape)
-  # print(best_param)
-  # print(len(multi_dim_index))
+    # Find location and value of highest score
+    max_value_index = np.argmax(score_matrix)
+    max_value = np.max(score_matrix)
+    multi_dim_index = np.unravel_index(max_value_index, score_matrix.shape)
+    # print(score_array.shape)
+    # print(best_param)
+    # print(len(multi_dim_index))
 
     # Unknown error !!!!!!!!!!!!!!! ^ must be investigated
 

@@ -168,7 +168,7 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
                   if i == 0:
                       hyper_param_list.append((C_value, kernel, gamma_value))
 
-      print("\n")
+    print("\n")
 
     # Exhaustive grid search: calculate which hyperparams gives highest score = max|mean - std|
     for j in range(len(C_list)):
@@ -197,12 +197,12 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
     Potensielt bevis: score_array uten alle 0 verdier er like lang som hyper_param_list
     Videre gir multi_dim_index og hyper_param_list(best_param_test) like parametre
     '''
-    score_array_test = score_array.flatten()
+    score_array_test = score_matrix.flatten()
     score_array_test = [i for i in score_array_test if i != 0]
     # print(score_array_1D)
     print(f"Size of score_array_test: {len(score_array_test)}")
     # Find location and value of highest score
-    best_param = np.argmax(score_array)
+    best_param = np.argmax(score_matrix)
     print(f"Index of best parameter, converted to 2D array (cube): {best_param}")
     best_param_test = np.argmax(score_array_test) 
     print(f"Index of best parameter, converted to 2D array (not cube): {best_param_test}")

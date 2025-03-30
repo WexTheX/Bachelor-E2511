@@ -84,6 +84,8 @@ def fillSets(path, path_names, activity_name, seperate_types):
             sets.append(f"{folder_path}/{activity_name[i]}_" + str(j) )
             sets_label.append(activity_name[i])
     
+    print("Done filling sets")
+    print("\n")
     return sets, sets_label
         
 def find_next_available_index(folder_path, prefix):

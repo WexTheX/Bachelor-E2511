@@ -22,7 +22,7 @@ def rename_data(path, path_names, activity_name):
 
     for i in range(len(path_names)):
         folder_path = os.path.join(path, path_names[i])
-        print(f"Processing files in: {path}")
+        print(f"Re-naming files in: {folder_path}")
 
         
 # Convert bin to txt file if bin file found
@@ -70,7 +70,7 @@ def fillSets(path, path_names, activity_name, seperate_types):
 
     for i, name in enumerate(path_names):
         folder_path = os.path.join(path, name)
-        print(f"Processing files in: {path}")
+        print(f"Finding files in: {folder_path}")
         
         
         for f in os.listdir(folder_path):

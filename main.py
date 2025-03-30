@@ -80,6 +80,7 @@ if(seperate_types):
     path = "Preprocessing/DatafilesSeperated" 
 else:
     path = "Preprocessing/Datafiles"
+
 output_path = "OutputFiles/"   
 path_names = os.listdir(path)
 activity_name = [name.upper() for name in path_names]
@@ -235,7 +236,7 @@ for i, (train_index, test_index) in enumerate(skf.split(train_data, train_labels
 
                         if i == 0:
                             hyper_param_list.append((C_value, kernel, gamma_value))
-
+print("\n")
 
 # Exhaustive grid search: calculate which hyperparams gives highest score = max|mean - std|
 for j in range(len(C_list)):
@@ -246,15 +247,37 @@ for j in range(len(C_list)):
                     mean_accuracy_array[j, k, l, m, n] = accuracy_array[:, j, k, l, m, n].mean()
                     std_accuracy_array[j, k, l, m, n] = accuracy_array[:, j, k, l, m, n].std()
 
-score_array = mean_accuracy_array - std_accuracy_array
 
-print(f"Indices: {max_index}")
-print(f"Max value = {max_value} at index {max_index}")
+score_array = mean_accuracy_array - std_accuracy_array
+# print(score_array)
+print(f"Dimensions of score_array: {score_array.shape}")
+
+'''
+Tror problemet ligger i at score_array er en cube med mange 0 verdier
+0 for alle verdier som ikke settes i loopen (degree 2,3,4 for 'linear' fr.eks)
+Potensielt bevis: score_array uten alle 0 verdier er like lang som hyper_param_list
+Videre gir multi_dim_index og hyper_param_list(best_param_test) like parametre
+'''
+score_array_test = score_array.flatten()
+score_array_test = [i for i in score_array_test if i != 0]
+# print(score_array_1D)
+print(f"Size of score_array_test: {len(score_array_test)}")
+
+# print(f"Indices: {max_index}")
+# print(f"Max value = {max_value} at index {max_index}")
 
 # Find location and value of highest score
 best_param = np.argmax(score_array)
+print(f"Index of best parameter, converted to 2D array (cube): {best_param}")
+best_param_test = np.argmax(score_array_test) 
+print(f"Index of best parameter, converted to 2D array (not cube): {best_param}")
+
 max_value = np.max(score_array)
 multi_dim_index = np.unravel_index(best_param, score_array.shape)
+print(f"Max value: {max_value} at {multi_dim_index}")
+print("\n")
+
+
 # print(score_array.shape)
 # print(best_param)
 # print(len(multi_dim_index))
@@ -264,11 +287,10 @@ multi_dim_index = np.unravel_index(best_param, score_array.shape)
 end_time = time.time()  # End timer
 elapsed_time = end_time - start_time
 
-print(f"\n")
 print(f"All combinations of hyper params: {len(hyper_param_list)}")
 print(f"Created and evaluated {len(hyper_param_list) * num_folds} instances of SVM classifiers in seconds: {elapsed_time:.6f}")
 print(f"Highest score found (mean - std): {max_value}")
-print(f"Best combination of hyperparameters (C, kernel, gamma, coef0, degree): {hyper_param_list[best_param]}")
+print(f"Best combination of hyperparameters (C, kernel, gamma, coef0, degree): {hyper_param_list[best_param_test]}")
 print(f"\n")
 
 # TESTING 

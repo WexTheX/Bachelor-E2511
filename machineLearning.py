@@ -305,5 +305,50 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
     return clf
 
 
-# def optimizeHyperparamsRF
+def makeRFClassifier(method, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, seperate_types):
+  from sklearn.ensemble import RandomForestClassifier
+  
+  
+  if method == 'GridSearchCV':
 
+    print(f"Using GridSearchCV from sklearn to find best hyperparams")
+
+    param_grid = { 
+    'n_estimators': [200, 500],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth' : [4,5,6,7,8],
+    'criterion' :['gini', 'entropy']
+       }
+    
+
+   
+    clf = GridSearchCV(estimator=RandomForestClassifier(),
+                       param_grid=param_grid,
+                       cv=5) 
+    
+    
+    clf.fit(PCA_train_df, train_labels)
+
+    for param, value in clf.best_params_.items():
+      print(f"{param}: {value}")
+    
+  elif method == 'HalvingGridSearchCV':
+    print(f"Using HalvingGridSearchCV from sklearn to find best hyperparams")
+
+    param_grid = { 
+    'n_estimators': [200, 500],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth' : [4,5,6,7,8],
+    'criterion' :['gini', 'entropy']
+       }
+
+    clf = HalvingGridSearchCV(
+          estimator=RandomForestClassifier(),
+          param_grid = param_grid,
+          cv=5
+          )
+    
+    clf.fit(PCA_train_df, train_labels)
+
+    for param, value in clf.best_params_.items():
+      print(f"{param}: {value}")

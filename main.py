@@ -78,6 +78,7 @@ if(separate_types):
     path = "Preprocessing/DatafilesSeparated" 
 else:
     path = "Preprocessing/Datafiles"
+
 output_path = "OutputFiles/"   
 path_names = os.listdir(path)
 activity_name = [name.upper() for name in path_names]

@@ -62,9 +62,9 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
   start_time = time.time()
 
   # Initialize arrays for evaluating score = (mean - std)
-  accuracy_array = np.zeros( (num_folds, len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
-  mean_accuracy_array = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
-  std_accuracy_array = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
+  metrics_matrix = np.zeros( (num_folds, len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
+  metrics_matrix_mean = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
+  metrics_matrix_std = np.zeros( (len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
   
   hyper_param_list = []
 
@@ -76,7 +76,7 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
   for i, (train_index, test_index) in enumerate(skf.split(train_data, train_labels)):
 
       print(f"PCA fitting on fold {i}")
-
+      
       # Debug prints
       # print(f"  Train: index={train_index}")
       # print(f"  Test:  index={test_index}")
@@ -84,6 +84,9 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
 
       kfold_train_labels = [train_labels[j] for j in train_index]
       kfold_test_labels = [train_labels[j] for j in test_index]
+
+      # unique, counts = np.unique(kfold_train_labels, return_counts=True)
+      # print(dict(zip(unique, counts)))
 
       # print(kfold_testLabels)
       
@@ -119,7 +122,7 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
                       clf.fit(kfold_PCA_train_df, kfold_train_labels)
                       test_predict = clf.predict(kfold_PCA_validation_df)
                       # accuracy_array[i, j, k, :, :, :] = 0
-                      accuracy_array[i, j, k, l, m, n] = metrics.accuracy_score(kfold_test_labels, test_predict)
+                      metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")
                       
                       # Only append for fold 0
                       if i == 0:
@@ -135,7 +138,7 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
                                   clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)
                                   clf.fit(kfold_PCA_train_df, kfold_train_labels)
                                   test_predict = clf.predict(kfold_PCA_validation_df)
-                                  accuracy_array[i, j, k, l, m, n] = metrics.accuracy_score(kfold_test_labels, test_predict)
+                                  metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")
                                   
                                   if i == 0:
                                       hyper_param_list.append((C_value, kernel, gamma_value, coef0_value, deg_value))
@@ -148,7 +151,7 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
                               clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value)
                               clf.fit(kfold_PCA_train_df, kfold_train_labels)
                               test_predict = clf.predict(kfold_PCA_validation_df)
-                              accuracy_array[i, j, k, l, m, n] = metrics.accuracy_score(kfold_test_labels, test_predict)   
+                              metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")   
 
                               if i == 0:
                                   hyper_param_list.append((C_value, kernel, gamma_value, coef0_value))
@@ -160,7 +163,7 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
                           clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value)
                           clf.fit(kfold_PCA_train_df, kfold_train_labels)
                           test_predict = clf.predict(kfold_PCA_validation_df)
-                          accuracy_array[i, j, k, l, m, n] = metrics.accuracy_score(kfold_test_labels, test_predict)  
+                          metrics_matrix[i, j, k, l, m, n] = metrics.f1_score(kfold_test_labels, test_predict, average="micro")  
 
                           if i == 0:
                               hyper_param_list.append((C_value, kernel, gamma_value))
@@ -172,15 +175,15 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
           for l in range(len(gamma_list)):
               for m in range(len(coef0_list)):
                   for n in range(len(deg_list)):
-                      mean_accuracy_array[j, k, l, m, n] = accuracy_array[:, j, k, l, m, n].mean()
-                      std_accuracy_array[j, k, l, m, n] = accuracy_array[:, j, k, l, m, n].std()
+                      metrics_matrix_mean[j, k, l, m, n] = metrics_matrix[:, j, k, l, m, n].mean()
+                      metrics_matrix_std[j, k, l, m, n] = metrics_matrix[:, j, k, l, m, n].std()
 
-  score_array = mean_accuracy_array - std_accuracy_array
+  score_matrix = metrics_matrix_mean - metrics_matrix_std
 
   # Find location and value of highest score
-  max_value_index = np.argmax(score_array)
-  max_value = np.max(score_array)
-  multi_dim_index = np.unravel_index(max_value_index, score_array.shape)
+  max_value_index = np.argmax(score_matrix)
+  max_value = np.max(score_matrix)
+  multi_dim_index = np.unravel_index(max_value_index, score_matrix.shape)
   # print(score_array.shape)
   # print(best_param)
   # print(len(multi_dim_index))

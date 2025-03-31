@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 
-from sklearn import svm, metrics
+from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
@@ -35,7 +35,7 @@ ML_models = 0
 ''' DATASET VARIABLES '''
 
 variance_explained = 0.9
-randomness = 12380
+randomness = 131
 window_length_seconds = 30
 split_value = 0.75
 Fs = 800
@@ -43,7 +43,7 @@ variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X"
 
 ''' HYPER PARAMETER VARIABLES '''
 
-num_folds = 5
+num_folds = 3
 C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
 kernel_types = ['linear', 'poly',
                  'rbf', 'sigmoid']
@@ -136,11 +136,6 @@ test_data_scaled = scaleFeatures(test_data)
 # print(f"Content of training data scaled: \n {train_data_scaled}")
 # print(f"Content of testing data scaled: \n {test_data_scaled}")
 
-
-''' HYPERPARAMETER OPTIMIZATION '''
-best_hyperparams = hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
-                                              want_plots, train_data, train_labels)
-
 ''' Principal Component Analysis (PCA)'''
 PCA_components = setNComponents(train_data_scaled, variance_explained=0.90)
 PCA_final = PCA(n_components = PCA_components)
@@ -148,6 +143,9 @@ PCA_final = PCA(n_components = PCA_components)
 PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
 PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
+''' HYPERPARAMETER OPTIMIZATION '''
+best_hyperparams = hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
+                                              want_plots, train_data, train_labels)
 
 ''' CLASSIFIER '''
 clf = svm.SVC(**best_hyperparams)
@@ -157,16 +155,22 @@ clf.fit(PCA_train_df, train_labels)
 ''' EVALUATION '''
 # Total accuracy
 test_predict = clf.predict(PCA_test_df)
+
 accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-print(f"Accuracy on unseen test data: {accuracy_score}")
+precision_score = metrics.precision_score(test_labels, test_predict, average=None)  
+recall_score = metrics.recall_score(test_labels, test_predict, average=None)
+f1_score = metrics.f1_score(test_labels, test_predict, average=None)
 
-recall_macro = metrics.recall_score(test_labels, test_predict, average='macro')  # Treats all classes equally
-recall_micro = metrics.recall_score(test_labels, test_predict, average='micro')  # Global recall
-recall_weighted = metrics.recall_score(test_labels, test_predict, average='weighted')  # Weighted by support (class freq)
+print(f"Accuracy: {accuracy_score}")
+print(f"Precision {precision_score}")
+print(f"Recall: {recall_score}")
+print(f"f1: {f1_score}")
 
-print("Macro Recall:", recall_macro)
-print("Micro Recall:", recall_micro)
-print("Weighted Recall:", recall_weighted)
+dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
+dummy_clf.fit(PCA_train_df, train_labels)
+dummy_score = dummy_clf.score(PCA_test_df, test_labels)
+
+print("Baseline Accuracy (Dummy Classifier):", dummy_score)
 
 # Confusion matrix
 conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)

@@ -1,18 +1,19 @@
+import time
 import numpy as np
 import pandas as pd
 import math
 # SignalProcessing part is needed when this file is imported in main.py
 from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
-from Preprocessing.preprocessing import tab_txt_to_csv
-from Preprocessing.preprocessing import delete_header
-from Preprocessing.preprocessing import rename_data
+from Preprocessing.preprocessing import tab_txt_to_csv, delete_header, rename_data, compare_bin_and_txt
 
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
 
 def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path):
     
+    start_time = time.time()
+
     features_df = []
     windowLabel = []
     all_window_features = []
@@ -206,5 +207,9 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, pa
     feature_df = pd.DataFrame(all_window_features)
 
     # print(f"Total number of windows: {activityWindowsCounter}")
+
+    end_time = time.time()  # End timer
+    elapsed_time = end_time - start_time
+    print(f"Features extracted in {elapsed_time} seconds")
 
     return feature_df, windowLabel

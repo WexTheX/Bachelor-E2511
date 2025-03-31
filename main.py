@@ -35,7 +35,7 @@ ML_models = 0
 ''' DATASET VARIABLES '''
 
 variance_explained = 0.9
-randomness = 131
+randomness = 13102
 window_length_seconds = 30
 split_value = 0.75
 Fs = 800
@@ -158,14 +158,14 @@ clf.fit(PCA_train_df, train_labels)
 test_predict = clf.predict(PCA_test_df)
 
 accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-precision_score = metrics.precision_score(test_labels, test_predict, average=None)  
+precision_score = metrics.precision_score(test_labels, test_predict, average=None)
 recall_score = metrics.recall_score(test_labels, test_predict, average=None)
 f1_score = metrics.f1_score(test_labels, test_predict, average=None)
 
-print(f"Accuracy: {accuracy_score}")
-print(f"Precision {precision_score}")
-print(f"Recall: {recall_score}")
-print(f"f1: {f1_score}")
+print(f"Accuracy: \t {accuracy_score}")
+print(f"Precision: \t {precision_score}")
+print(f"Recall: \t {recall_score}")
+print(f"f1: \t {f1_score}")
 
 dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
 dummy_clf.fit(PCA_train_df, train_labels)

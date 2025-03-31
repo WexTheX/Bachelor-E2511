@@ -290,10 +290,10 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
         print(f"{param}: {value}")
 
     else: 
-      print("Optimizer {method} not recognized, choosing default Support Vector Classifier.")
+      print(f"Optimizer {method} not recognized, choosing default Support Vector Classifier.")
       clf = svm.SVC()
       clf.fit(PCA_train_df, train_labels)
-      return 
+      return clf
 
 
     end_time = time.time()  # End timer

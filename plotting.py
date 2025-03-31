@@ -56,25 +56,25 @@ def testWelch(sets_n, variables_n, fs):
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
   
 
-def biplot(score, trainLabels, PCATest, components, seperate_types):
+def biplot(X, trainLabels, PCATest, components, separate_types, clf):
   if components == 3:
 
     coeff = PCATest.components_.T
     labels = PCATest.feature_names_in_
 
-    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2', 'PC3'], yticklabels=PCATest.feature_names_in_)
-    plt.title('Feature Importance in Principal Components')
+    # loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    # plt.figure(figsize=(10, 8))
+    # sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2', 'PC3'], yticklabels=PCATest.feature_names_in_)
+    # plt.title('Feature Importance in Principal Components')
 
-    xs = score[0]
-    ys = score[1]
-    zs = score[2]
+    xs = X[0]
+    ys = X[1]
+    zs = X[2]
 
     # Create a 3D plot
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
-    if(seperate_types):
+    if(separate_types):
       label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
                        'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (0.6, 0.0, 0.0), 'GRINDSMALL': (0.3, 0.0, 0.0),
                        'SANDSIM': (0.0, 1.0, 0.0), 
@@ -105,31 +105,34 @@ def biplot(score, trainLabels, PCATest, components, seperate_types):
     coeff = PCATest.components_.T
     labels = PCATest.feature_names_in_
 
-    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
-    plt.title('Feature Importance in Principal Components')
+    # loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    # plt.figure(figsize=(10, 8))
+    # sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+    # plt.title('Feature Importance in Principal Components')
+   
+    xs = X[0]
+    ys = X[1]
 
-    xs = score[0]
-    ys = score[1]
     plt.figure(figsize=(10, 8))
 
-    if(seperate_types):
+    if(separate_types):
       label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.0, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.0),
+                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (0.6, 0.0, 0.0), 'GRINDSMALL': (0.3, 0.0, 0.0),
                        'SANDSIM': (0.0, 1.0, 0.0), 
-                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.0, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.0, 1.0)}
+                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.0, 0.0, 0.6), 'WELDSTTIG': (0.0, 0.0, 0.3)}
     else:
       label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
     plt.scatter(xs, ys, c=mappedLabels#, cmap='viridis'
                 )
 
-    for i in range(len(coeff)):
-        plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
-        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
+    # Uncomment if you want arrows
+    # for i in range(len(coeff)):
+    #     plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
+    #     plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
 
     plt.xlabel("PC1")
     plt.ylabel("PC2")
@@ -146,5 +149,4 @@ def biplot(score, trainLabels, PCATest, components, seperate_types):
     plt.title('Feature Importance in Principal Components')
 
   else:
-
     pass

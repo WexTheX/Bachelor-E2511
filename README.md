@@ -22,3 +22,13 @@ antall .txt filer i hver Datafiles mappe blir telt, og navnet blir lagt inn i li
 ...
 
 1000) CNN
+
+
+# for i in range(1, len(variables)):
+    #     plotWelch(sets[0], variables[i], Fs, False)
+    #     plotWelch(sets[0], variables[i], Fs, True)
+    #     plt.xlabel('Frequency (Hz)')
+    #     plt.ylabel('Power Spectral Density')
+    #     plt.title('Welch PSD, %s' % variables[i])
+    #     plt.grid()
+    #     plt.figure()

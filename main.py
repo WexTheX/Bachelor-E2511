@@ -28,7 +28,7 @@ from Preprocessing.preprocessing import fillSets
 
 want_feature_extraction = 0
 separate_types = 1
-want_plots = 0
+want_plots = 1
 ML_models = ["SVM"]
 ML_models = 0
 method = 'ManualGridSearch'
@@ -123,28 +123,6 @@ if "feature_df" not in globals():
 # print(f"Content of feature dataframe: \n {feature_df}")
 # print(f"Content of window label list: \n {window_labels}")
 
-''' PCA CHECK '''
-if(want_plots):
-    print("Printing PCA compontents for entire set")
-    total_data_scaled = pd.DataFrame(scaleFeatures(feature_df))
-    PCA_plot = PCA(n_components = 5)
-    print(f"Total amount of features: {len(total_data_scaled.columns)}")
-
-    for i in range(len(total_data_scaled.columns) // 34):
-        PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
-        # print(f"List of columns: {PCA_total_columns_part}")
-        PCA_total_part = total_data_scaled[PCA_total_columns_part]
-        PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
-        
-        biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types)
-    
-
-    PCA_plot3D = PCA(n_components = 3)
-    PCA_plot_df = pd.DataFrame(PCA_plot3D.fit_transform(total_data_scaled))
-    biplot(PCA_plot_df, window_labels, PCA_plot3D, 3, separate_types)
-    plt.show()
-    print("Done. \n")
-
 
 ''' SPLITTING TEST/TRAIN '''
 train_data, test_data, train_labels, test_labels = splitData(feature_df, window_labels, randomness, split_value)
@@ -170,7 +148,7 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-clf1 = makeSVMClassifier('ManualGridSearch', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf1 = makeSVMClassifier('O_o', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
 clf2 = makeSVMClassifier('GridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
 clf3 = makeSVMClassifier('HalvingGridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
 clf4 = makeSVMClassifier('BayesSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
@@ -199,53 +177,48 @@ print(f"Precision: \t {precision_score}")
 print(f"Recall: \t {recall_score}")
 print(f"f1: \t {f1_score}")
 
-
-test_predict_grid_search = clf_grid_search.predict(PCA_test_df)
-print("GridSearchCV: ")
-accuracy_score = metrics.accuracy_score(test_labels, test_predict_grid_search)
-precision_score = metrics.precision_score(test_labels, test_predict_grid_search, average=None)
-recall_score = metrics.recall_score(test_labels, test_predict_grid_search, average=None)
-f1_score = metrics.f1_score(test_labels, test_predict_grid_search, average=None)
- 
-print(f"Accuracy: \t {accuracy_score}")
-print(f"Precision: \t {precision_score}")
-print(f"Recall: \t {recall_score}")
-print(f"f1: \t {f1_score}")
-
 dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
 dummy_clf.fit(PCA_train_df, train_labels)
 dummy_score = dummy_clf.score(PCA_test_df, test_labels)
 
 print("Baseline Accuracy (Dummy Classifier):", dummy_score)
 
-# Confusion matrix
-conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
 
 if(want_plots):
+
+    ''' PCA CHECK '''
+    # print("Printing PCA compontents for entire set")
+    total_data_scaled = pd.DataFrame(scaleFeatures(feature_df))
+    PCA_plot = PCA(n_components = 5)
+    print(f"Total amount of features: {len(total_data_scaled.columns)}")
+
+    # Displays tables for how much each feature is contributing to PC1-5
+    for i in range(len(total_data_scaled.columns) // 34):
+        PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
+        # print(f"List of columns: {PCA_total_columns_part}")
+        PCA_total_part = total_data_scaled[PCA_total_columns_part]
+        PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
+        
+        biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types)
+
+
+    PCA_plot = PCA(n_components = 2)
+    PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
+    biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, clf1)
+
+    conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
+
     plt.figure(figsize=(10, 8))
     sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
     plt.title('Confusion matrix')
-    # print(conf_matrix)
-
-if (want_plots):
-    # for i in range(1, len(variables)):
-    #     plotWelch(sets[0], variables[i], Fs, False)
-    #     plotWelch(sets[0], variables[i], Fs, True)
-    #     plt.xlabel('Frequency (Hz)')
-    #     plt.ylabel('Power Spectral Density')
-    #     plt.title('Welch PSD, %s' % variables[i])
-    #     plt.grid()
-    #     plt.figure()
-
-    # biplot(dfPCAtrain, train_labels, PCATest, PCA_components, separate_types)
     plt.show()
 
 
 ''' Real time streaming '''
-import pickle
-from muse_api_main import ble_conn, Muse_Utils, ble_TESTING
-from bleak import BleakScanner, BleakClient
-import asyncio
+# import pickle
+# from muse_api_main import ble_conn, Muse_Utils, ble_TESTING
+# from bleak import BleakScanner, BleakClient
+# import asyncio
 

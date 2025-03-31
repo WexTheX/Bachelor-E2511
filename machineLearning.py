@@ -45,8 +45,13 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
         if total_variance >= variance_explained:
             n_components = i + 1
             print(f"Variance explained by {n_components} PCA components: {eig_sum / eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[0]/eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[1]/eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[2]/eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[3]/eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[4]/eigenvalues.sum()}")
             break
-
+    
     return n_components
 
 def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained):

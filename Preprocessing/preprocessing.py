@@ -9,6 +9,7 @@ from pathlib import Path
     # This is a hyperparemeter
     
     # return downsampled_fs
+
 def convert_date_format(filename):
     # Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename
     match = re.match(r"(\d{2})\.(\d{2})\.(\d{4})", filename)  # Finds date in the file name
@@ -45,9 +46,7 @@ def rename_data(path, path_names, activity_name):
             os.rename(old_path, new_path)
             print(f"Name updated from: {old_name} -> {new_name}")
 
-        print("Namechanges completed!")
-
-
+    print("Namechanges completed!")
 
 def fillSets(path, path_names, activity_name, seperate_types):
     
@@ -59,17 +58,9 @@ def fillSets(path, path_names, activity_name, seperate_types):
     #### make list of folder paths
     path_names = os.listdir(path)
     path = os.path.normpath(path)
-
-    ''' SEPERATE BY TYPE'''
-    if seperate_types == 1:
-        print("WIP")
-      
-    else: 
-        for i, name in enumerate(path_names):
-            folder_path = os.path.join(path,name)
-
+    
     for i, name in enumerate(path_names):
-        folder_path = os.path.join(path, name)
+        folder_path = os.path.join(path,name)
         print(f"Finding files in: {folder_path}")
         
         
@@ -83,7 +74,20 @@ def fillSets(path, path_names, activity_name, seperate_types):
 
             sets.append(f"{folder_path}/{activity_name[i]}_" + str(j) )
             sets_label.append(activity_name[i])
-    
+
+    ''' TODO: ONLY USE ONE DATAFILES FOLDER '''
+    # for i, name in enumerate(path_names):
+    #     folder_path = os.path.join(path,name)
+    #     print(f"Finding files in: {folder_path}")
+    #     for f in os.listdir(folder_path):
+    #         if f.endswith(".bin") and not f.startswith(activity_name[i]):
+    #             convert_bin_to_txt(os.path.join(folder_path, f))
+    #         if os.path.isdir(f):
+    #             for j in os.listdir(f):
+    #                 if f.endswith(".bin") and not f.startswith(activity_name[i]):
+    #                     convert_bin_to_txt(os.path.join(folder_path, f))
+    #     txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt") and os.path.isfile(os.path.join(folder_path, f))]
+        
     print("Done filling sets")
     print("\n")
     return sets, sets_label
@@ -116,7 +120,6 @@ def convert_bin_to_txt(input_file):
 
     # Remove "zero bytes" and decode UTF-8
     clean_data = raw_data.replace(b"\x00", b"").decode("utf-8", errors="ignore")
-
     # Remove extra blank lines
     clean_lines = [line.strip() for line in clean_data.splitlines() if line.strip()]
 
@@ -124,8 +127,46 @@ def convert_bin_to_txt(input_file):
     with open(output_file, "w", encoding="utf-8") as txt_file:
         txt_file.write("\n".join(clean_lines) + "\n")  # makes sure the ending is correct
 
+    compare_bin_and_txt(input_file, output_file)
+
     print(f"File convert from .bin to .txt done. file saved as '{output_file}'.")
+    bin_file.close()
+    txt_file.close()
     os.remove(input_file)
+
+def compare_bin_and_txt(input_file, output_file):
+    # Les innholdet fra begge filene som tekst
+    with open(input_file, "rb") as f_bin:
+        bin_lines = f_bin.read().replace(b"\x00", b"").decode("utf-8", errors="ignore").splitlines()
+    with open(output_file, "r", encoding="utf-8") as f_txt:
+        txt_lines = f_txt.read().splitlines()
+
+    # Sammenlign linje for linje
+    max_lines = max(len(bin_lines), len(txt_lines))  # Håndterer ulik lengde
+    differences = []
+
+    for i in range(8, max_lines):
+        bin_line = bin_lines[i] if i < len(bin_lines) else "<Mangler i .bin>"
+        txt_line = txt_lines[i] if i < len(txt_lines) else "<Mangler i .txt>"
+
+        if bin_line != txt_line:
+            differences.append(f"Forskjell på linje {i+1}:\n  BIN: '{bin_line}'\n  TXT: '{txt_line}'\n")
+
+    # Skriv ut resultatet
+    if differences:
+        print(f"Fil {input_file}:")
+        print(f"{len(differences)} forskjeller funnet mellom filene:\n")
+        for diff in differences[:10]:  # Vis maks 10 forskjeller for oversikt
+            print(diff)
+        
+        with open("differences_log.txt", "w", encoding="utf-8") as log_file:
+            log_file.writelines(differences)
+        print("Alle forskjeller er lagret i 'differences_log.txt'.")
+
+        quit()
+
+    f_txt.close()
+    f_bin.close()
 
 def delete_header(path):
 

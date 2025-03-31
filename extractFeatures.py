@@ -4,9 +4,7 @@ import math
 # SignalProcessing part is needed when this file is imported in main.py
 from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
-from Preprocessing.preprocessing import tab_txt_to_csv
-from Preprocessing.preprocessing import delete_header
-from Preprocessing.preprocessing import rename_data
+from Preprocessing.preprocessing import tab_txt_to_csv, delete_header, rename_data, compare_bin_and_txt
 
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"

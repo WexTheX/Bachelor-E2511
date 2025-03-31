@@ -1,0 +1,21 @@
+Forskjell på linje 1:
+  BIN: 'Information								'
+  TXT: 'Information'
+Forskjell på linje 2:
+  BIN: 'Date	28.03.2025							'
+  TXT: 'Date	28.03.2025'
+Forskjell på linje 3:
+  BIN: 'Time	08:23:49							'
+  TXT: 'Time	08:23:49'
+Forskjell på linje 5:
+  BIN: '"							'
+  TXT: '"'
+Forskjell på linje 6:
+  BIN: 'Mode	GYRO | AXL | MAGN | TEMP+PRESS | RANGE							'
+  TXT: 'Mode	GYRO | AXL | MAGN | TEMP+PRESS | RANGE'
+Forskjell på linje 7:
+  BIN: 'Sampling frequency [Hz]	800 Hz							'
+  TXT: 'Sampling frequency [Hz]	800 Hz'
+Forskjell på linje 8:
+  BIN: 'Gyr FS:	2000 dps;	Axl FS: 32 g;	Mag FS: 8 G;	Hdr FS: 100 g							'
+  TXT: 'Gyr FS:	2000 dps;	Axl FS: 32 g;	Mag FS: 8 G;	Hdr FS: 100 g'

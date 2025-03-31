@@ -68,7 +68,7 @@ hyper_param_list = []
 
 # answer_plot = input("Do you want plots? (Y | N)")
 # if(answer_plot == "Y"):
-#     want_lots = True
+#     want_plots = True
 
 
 ''' LOAD DATASET '''
@@ -227,7 +227,7 @@ accuracy_score = metrics.accuracy_score(test_labels, test_predict_grid_search)
 precision_score = metrics.precision_score(test_labels, test_predict_grid_search, average=None)
 recall_score = metrics.recall_score(test_labels, test_predict_grid_search, average=None)
 f1_score = metrics.f1_score(test_labels, test_predict_grid_search, average=None)
-
+ 
 print(f"Accuracy: \t {accuracy_score}")
 print(f"Precision: \t {precision_score}")
 print(f"Recall: \t {recall_score}")
@@ -277,3 +277,11 @@ if (want_plots):
 
     # biplot(dfPCAtrain, train_labels, PCATest, PCA_components)
     plt.show()
+
+
+''' Real time streaming '''
+import pickle
+from muse_api_main import ble_conn, Muse_Utils, ble_TESTING
+from bleak import BleakScanner, BleakClient
+import asyncio
+

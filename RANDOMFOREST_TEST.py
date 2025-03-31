@@ -9,6 +9,9 @@ import pandas as pd
 from sklearn.decomposition import PCA
 import numpy as np
 from sklearn.model_selection import GridSearchCV 
+from skopt import BayesSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC, SVC
 
 path = "Preprocessing/Datafiles"
 outputPath = "OutputFiles/"

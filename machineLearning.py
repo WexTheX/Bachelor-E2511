@@ -11,7 +11,6 @@ from sklearn import svm, metrics
 from plotting import biplot
 
 
-
 ''' PRE PROCESSING '''
 def splitData(df, label_list, randomness, split_value):
 
@@ -48,19 +47,10 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
 
     return n_components
 
-
-# num_folds = 5
-# C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
-# kernel_types = ['linear', 'poly',
-#                  'rbf', 'sigmoid']
-# gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
-# coef0_list = [0, 0.5, 1]
-# deg_list = [2, 3, 4, 5]
-
-def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
-                               want_plots, train_data, train_labels):
-  
-    start_time = time.time()
+def optimizeHyperparamsSVM(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
+                               want_plots, train_data, train_labels, variance_explained):
+    
+    # start_time = time.time()
 
     # Initialize arrays for evaluating score = (mean - std)
     metrics_matrix = np.zeros( (num_folds, len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
@@ -93,12 +83,12 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
       
       kfold_train_data = train_data.iloc[train_index]
       kfold_validation_data = train_data.iloc[test_index]
-      #print(f"Dette er stuffet: {kfold_TrainData}")
+
       # Scale training and validation separately
       kfold_train_data_scaled = scaleFeatures(kfold_train_data)
       kfold_validation_data_scaled = scaleFeatures(kfold_validation_data)
       
-      PCA_components = setNComponents(kfold_train_data_scaled, variance_explained=0.90)
+      PCA_components = setNComponents(kfold_train_data_scaled, variance_explained=variance_explained)
       
       PCA_fold = PCA(n_components = PCA_components)
       
@@ -210,12 +200,12 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
     print(f"Best combination of hyperparameters (C, kernel, gamma, coef0, degree): {hyper_param_list[best_param_test]}")
     ''' Ser en del endringer ble gjort, legger denne her for nå, kan slettes '''
 
-    end_time = time.time()  # End timer
-    elapsed_time = end_time - start_time
+    # end_time = time.time()  # End timer
+    # elapsed_time = end_time - start_time
 
     print(f"\n")
     print(f"All combinations of hyper params: {len(hyper_param_list)}")
-    print(f"Created and evaluated {len(hyper_param_list) * num_folds} instances of SVM classifiers in seconds: {elapsed_time:.6f}")
+    # print(f"Created and evaluated {len(hyper_param_list) * num_folds} instances of SVM classifiers in seconds: {elapsed_time:.6f}")
     print(f"Highest score found (mean - std): {max_value}")
     
 
@@ -234,3 +224,6 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
        plt.show()
 
     return best_hyperparams
+
+# def optimizeHyperparamsRF
+

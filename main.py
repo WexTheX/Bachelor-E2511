@@ -11,13 +11,12 @@ from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
-from sklearn.model_selection import KFold, StratifiedKFold
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, GridSearchCV
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures
-from machineLearning import splitData, scaleFeatures, setNComponents, hyperParameterOptimization
+from machineLearning import splitData, scaleFeatures, setNComponents, optimizeHyperparamsSVM
 from plotting import plotWelch, biplot
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
@@ -28,14 +27,14 @@ from Preprocessing.preprocessing import fillSets
 
 want_feature_extraction = 0
 separate_types = 0
-want_plots = 1
+want_plots = 0
 ML_models = ["SVM"]
 ML_models = 0
 
 ''' DATASET VARIABLES '''
 
 variance_explained = 0.9
-randomness = 13102
+randomness = 123334
 window_length_seconds = 30
 split_value = 0.75
 Fs = 800
@@ -51,6 +50,7 @@ gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
 coef0_list = [0, 0.5, 1]
 deg_list = [2, 3, 4, 5]
 hyper_param_list = []
+
 
 ''' USER INPUTS '''
 
@@ -153,23 +153,80 @@ PCA_final = PCA(n_components = PCA_components)
 PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
 PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
+start_time = time.time()
+
 ''' HYPERPARAMETER OPTIMIZATION '''
-best_hyperparams = hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
-                                              want_plots, train_data, train_labels)
+best_hyperparams = optimizeHyperparamsSVM(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
+                                              want_plots, train_data, train_labels, variance_explained)
+
+hyperparams_dict = {
+    "C": [0.001, 0.01, 0.1, 1, 10, 100, 1000],
+    "kernel": ["linear", "poly", "rbf", "sigmoid"],
+    "gamma": [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2],
+    "coef0": [0, 0.5, 1],
+    "degree": [2, 3, 4, 5]
+}
+
+clf_grid_search = GridSearchCV(
+    estimator = svm.SVC(),
+    param_grid = hyperparams_dict,
+    scoring = 'accuracy',
+    cv = 3, 
+    verbose = 0,
+    n_jobs = 1
+)
+
 
 ''' CLASSIFIER '''
 clf = svm.SVC(**best_hyperparams)
 clf.fit(PCA_train_df, train_labels)
 
+end_time = time.time()  # End timer
+elapsed_time = end_time - start_time
+print(f"Manual grid search time {elapsed_time}")
+
+
+start_time = time.time()
+
+clf_grid_search = GridSearchCV(
+    estimator = svm.SVC(),
+    param_grid = hyperparams_dict,
+    scoring = 'accuracy',
+    cv = 3, 
+    verbose = 0,
+    n_jobs = 1
+)
+
+clf_grid_search.fit(PCA_train_df, train_labels)
+print(clf_grid_search.best_params_)
+
+end_time = time.time()  # End timer
+elapsed_time = end_time - start_time
+
+print(f"GridSearchCV time elapsed: {elapsed_time}")
+
 
 ''' EVALUATION '''
 # Total accuracy
 test_predict = clf.predict(PCA_test_df)
-
+print("Manual grid search: ")
 accuracy_score = metrics.accuracy_score(test_labels, test_predict)
 precision_score = metrics.precision_score(test_labels, test_predict, average=None)
 recall_score = metrics.recall_score(test_labels, test_predict, average=None)
 f1_score = metrics.f1_score(test_labels, test_predict, average=None)
+
+print(f"Accuracy: \t {accuracy_score}")
+print(f"Precision: \t {precision_score}")
+print(f"Recall: \t {recall_score}")
+print(f"f1: \t {f1_score}")
+
+
+test_predict_grid_search = clf_grid_search.predict(PCA_test_df)
+print("GridSearchCV: ")
+accuracy_score = metrics.accuracy_score(test_labels, test_predict_grid_search)
+precision_score = metrics.precision_score(test_labels, test_predict_grid_search, average=None)
+recall_score = metrics.recall_score(test_labels, test_predict_grid_search, average=None)
+f1_score = metrics.f1_score(test_labels, test_predict_grid_search, average=None)
 
 print(f"Accuracy: \t {accuracy_score}")
 print(f"Precision: \t {precision_score}")

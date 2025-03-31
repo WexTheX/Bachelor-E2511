@@ -15,7 +15,6 @@ Fs = 800
 randomness = 1222
 
 
-
 pathNames = os.listdir(path)
 activityName = [name[:4].upper() for name in pathNames]
 

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import time
 
 from sklearn.preprocessing import StandardScaler
@@ -228,5 +229,8 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
 
     print(f"Best combination of hyperparameters: {best_hyperparams}")  
     print(f"\n")
+
+    if(want_plots):
+       plt.show()
 
     return best_hyperparams

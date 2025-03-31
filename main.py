@@ -115,13 +115,22 @@ if "feature_df" not in globals():
 
 ''' PCA CHECK '''
 if(want_plots):
-    total_data_scaled = scaleFeatures(feature_df)
-    PCA_components = setNComponents(total_data_scaled, variance_explained=variance_explained)
+    print("Printing PCA compontents for entire set")
+    total_data_scaled = pd.DataFrame(scaleFeatures(feature_df))
+    PCA_total = PCA(n_components = 5)
+    print(f"Total amount of features: {len(total_data_scaled.columns)}")
 
-    PCA_check = PCA(n_components = PCA_components)    
-    PCA_train_df = pd.DataFrame(PCA_check.fit_transform(total_data_scaled))
-    
-    biplot(PCA_train_df, window_labels, PCA_check, PCA_components)
+    for i in range(len(total_data_scaled.columns) // 20):
+        PCA_total_columns_part = total_data_scaled.columns[i*20:(i*20+20)]
+        # print(f"List of columns: {PCA_total_columns_part}")
+        PCA_total_part = total_data_scaled[PCA_total_columns_part]
+        PCA_total_df = pd.DataFrame(PCA_total.fit_transform(PCA_total_part))
+        
+        biplot(PCA_total_df, window_labels, PCA_total, 5)
+
+    plt.show()
+    print("Done. \n")
+
 
 ''' SPLITTING TEST/TRAIN '''
 train_data, test_data, train_labels, test_labels = splitData(feature_df, window_labels, randomness, split_value)

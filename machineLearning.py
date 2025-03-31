@@ -45,19 +45,17 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
         if total_variance >= variance_explained:
             n_components = i + 1
             print(f"Variance explained by {n_components} PCA components: {eig_sum / eigenvalues.sum()}")
-            print(f"Varaince explained by {eigenvalues[0]/eigenvalues.sum()}")
-            print(f"Varaince explained by {eigenvalues[1]/eigenvalues.sum()}")
-            print(f"Varaince explained by {eigenvalues[2]/eigenvalues.sum()}")
-            print(f"Varaince explained by {eigenvalues[3]/eigenvalues.sum()}")
-            print(f"Varaince explained by {eigenvalues[4]/eigenvalues.sum()}")
+            # print(f"Varaince explained by {eigenvalues[0]/eigenvalues.sum()}")
+            # print(f"Varaince explained by {eigenvalues[1]/eigenvalues.sum()}")
+            # print(f"Varaince explained by {eigenvalues[2]/eigenvalues.sum()}")
+            # print(f"Varaince explained by {eigenvalues[3]/eigenvalues.sum()}")
+            # print(f"Varaince explained by {eigenvalues[4]/eigenvalues.sum()}")
             break
     
     return n_components
 
-def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained):
+def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, seperate_types):
     
-    print(f"\n")
-
     # Unpack dictionary into lists
     C_list, kernel_types, gamma_list, coef0_list, deg_list = [list(values) for values in hyperparams_dict.values()]
     hyperparams_list = []
@@ -109,7 +107,7 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
 
         if (want_plots):
           print(f"Plotting PCA plots for fold {i}")
-          biplot(kfold_PCA_train_df, kfold_train_labels, PCA_fold, PCA_components)
+          biplot(kfold_PCA_train_df, kfold_train_labels, PCA_fold, PCA_components, seperate_types)
 
 
         for j, C_value in enumerate(C_list):
@@ -200,17 +198,17 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
       Potensielt bevis: score_array uten alle 0 verdier er like lang som hyper_param_list
       Videre gir multi_dim_index og hyper_param_list(best_param_test) like parametre
       '''
-      score_array_test = score_matrix.flatten()
-      score_array_test = [i for i in score_array_test if i != 0]
-      # print(score_array_1D)
-      print(f"Size of score_array_test: {len(score_array_test)}")
-      # Find location and value of highest score
-      best_param = np.argmax(score_matrix)
-      print(f"Index of best parameter, converted to 2D array (cube): {best_param}")
-      best_param_test = np.argmax(score_array_test) 
-      print(f"Index of best parameter, converted to 2D array (not cube): {best_param_test}")
-      print(f"Best combination of hyperparameters (C, kernel, gamma, coef0, degree): {hyperparams_list[best_param_test]}")
-      ''' Ser en del endringer ble gjort, legger denne her for nå, kan slettes '''
+      # score_array_test = score_matrix.flatten()
+      # score_array_test = [i for i in score_array_test if i != 0]
+      # # print(score_array_1D)
+      # print(f"Size of score_array_test: {len(score_array_test)}")
+      # # Find location and value of highest score
+      # best_param = np.argmax(score_matrix)
+      # print(f"Index of best parameter, converted to 2D array (cube): {best_param}")
+      # best_param_test = np.argmax(score_array_test) 
+      # print(f"Index of best parameter, converted to 2D array (not cube): {best_param_test}")
+      # print(f"Best combination of hyperparameters (C, kernel, gamma, coef0, degree): {hyperparams_list[best_param_test]}")
+      # ''' Ser en del endringer ble gjort, legger denne her for nå, kan slettes '''
 
       print(f"\n")
       print(f"All combinations of hyper params: {len(hyperparams_list)}")
@@ -225,30 +223,36 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
           "degree": deg_list[multi_dim_index[4]]
       }
 
-      print(f"Best combination of hyperparameters: {best_hyperparams}")  
-      print(f"\n")
+      print(f"Using ManualGridSearch to find best hyperparams: {best_hyperparams}")  
 
       if(want_plots):
         plt.show()
 
       clf = svm.SVC(**best_hyperparams)
+      clf.fit(PCA_train_df, train_labels)
+
 
     elif method == 'GridSearchCV':
 
-      print(f"Using sklearn's GridSearchCV to find best hyperparams")
+      print(f"Using GridSearchCV from sklearn to find best hyperparams")
 
       clf = GridSearchCV(
             estimator = svm.SVC(),
             param_grid = hyperparams_dict,
             scoring = 'accuracy',
             cv = num_folds, 
-            verbose = 1,
+            verbose = 0,
             n_jobs = -1
             )
       
+      clf.fit(PCA_train_df, train_labels)
+
+      for param, value in clf.best_params_.items():
+        print(f"{param}: {value}")
+      
     elif method == 'HalvingGridSearchCV':
       
-      print(f"Using sklearn's HalvingGridSearchCV to find best hyperparams")
+      print(f"Using HalvingGridSearchCV from sklearn to find best hyperparams")
 
       clf = HalvingGridSearchCV(
             estimator = svm.SVC(),
@@ -256,26 +260,41 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
             factor = 2,
             scoring = 'accuracy',
             cv = num_folds,
-            verbose = 1,
+            verbose = 0,
             n_jobs = -1
             )
       
+      clf.fit(PCA_train_df, train_labels)
+
+      for param, value in clf.best_params_.items():
+        print(f"{param}: {value}")
+
+      
     elif method == 'BayesSearchCV':
       
+      print(f"Using BayesSearchCV from scikit optimize to find best hyperparams")
+
       clf = BayesSearchCV(
             estimator = svm.SVC(),
             search_spaces = hyperparams_space,
             n_iter = 30,
             scoring = 'accuracy',
             cv = num_folds,
-            verbose = 1,
+            verbose = 0,
             n_jobs = -1
             )
+      
+      clf.fit(PCA_train_df, train_labels)
+    
+      for param, value in clf.best_params_.items():
+        print(f"{param}: {value}")
 
     else: 
-      pass
+      print("Optimizer {method} not recognized, choosing default Support Vector Classifier.")
+      clf = svm.SVC()
+      clf.fit(PCA_train_df, train_labels)
+      return 
 
-    clf.fit(PCA_train_df, train_labels)
 
     end_time = time.time()  # End timer
     elapsed_time = end_time - start_time

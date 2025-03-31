@@ -28,7 +28,7 @@ from Preprocessing.preprocessing import fillSets
 
 want_feature_extraction = 0
 separate_types = 1
-want_plots = 1
+want_plots = 0
 ML_models = ["SVM"]
 ML_models = 0
 method = 'ManualGridSearch'
@@ -36,8 +36,8 @@ method = 'ManualGridSearch'
 ''' DATASET VARIABLES '''
 
 variance_explained = 0.9
-randomness = 123334
-window_length_seconds = 30
+randomness = 1245
+window_length_seconds = 15
 split_value = 0.75
 Fs = 800
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
@@ -45,13 +45,6 @@ variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X"
 ''' HYPER PARAMETER VARIABLES '''
 
 num_folds = 3
-C_list = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
-kernel_types = ['linear', 'poly',
-                 'rbf', 'sigmoid']
-gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
-coef0_list = [0, 0.5, 1]
-deg_list = [2, 3, 4, 5]
-hyperparams_list = []
 
 hyperparams_dict = {
     "C": [0.001, 0.01, 0.1, 1, 10, 100, 1000],
@@ -174,79 +167,96 @@ PCA_final = PCA(n_components = PCA_components)
 PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
 PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
-start_time = time.time()
-
-''' HYPERPARAMETER OPTIMIZATION '''
-# best_hyperparams = makeSVMClassifier(method, num_folds, hyperparams_dict, C_list, kernel_types, gamma_list, coef0_list, deg_list,
-#                                     want_plots, train_data, train_labels, variance_explained)
-
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-clf1 = makeSVMClassifier('ManualGridSearch', num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained)
-clf2 = makeSVMClassifier('GridSearchCV', num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained)
-clf3 = makeSVMClassifier('HalvingGridSearchCV', num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained)
-clf4 = makeSVMClassifier('BayesSearchCV', num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained)
+clf1 = makeSVMClassifier('ManualGridSearch', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf2 = makeSVMClassifier('GridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf3 = makeSVMClassifier('HalvingGridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf4 = makeSVMClassifier('BayesSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+
+clf_dict = {
+    'ManualGridSearch': clf1,
+    'GridSearchCV': clf2,
+    'HalvingGridSearchCV': clf3,
+    'BayesSearchCV': clf4
+    }
 
 ''' EVALUATION '''
 
-print("ManualGridSearch: ")
+for name, clf in clf_dict.items():
+    
+    print(f"Evaluating {name}: ")
 
-test_predict = clf1.predict(PCA_test_df)
+    test_predict = clf.predict(PCA_test_df)   
+    accuracy_score = metrics.balanced_accuracy_score(test_labels, test_predict)
+    precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
+    recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
+    f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
 
-accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-precision_score = metrics.precision_score(test_labels, test_predict, average=None)
-recall_score = metrics.recall_score(test_labels, test_predict, average=None)
-f1_score = metrics.f1_score(test_labels, test_predict, average=None)
+    print(f"Accuracy: \t {accuracy_score}")
+    print(f"Precision: \t {precision_score}")
+    print(f"Recall: \t {recall_score}")
+    print(f"f1: \t \t {f1_score}")
+    print("\n")
 
-print(f"Accuracy: \t {accuracy_score}")
-print(f"Precision: \t {precision_score}")
-print(f"Recall: \t {recall_score}")
-print(f"f1: \t {f1_score}")
+# print("ManualGridSearch: ")
 
+# test_predict = clf1.predict(PCA_test_df)
 
-print("GridSearchCV: ")
+# accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+# precision_score = metrics.precision_score(test_labels, test_predict, average=None)
+# recall_score = metrics.recall_score(test_labels, test_predict, average=None)
+# f1_score = metrics.f1_score(test_labels, test_predict, average=None)
 
-test_predict = clf2.predict(PCA_test_df)
-
-accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-precision_score = metrics.precision_score(test_labels, test_predict, average=None)
-recall_score = metrics.recall_score(test_labels, test_predict, average=None)
-f1_score = metrics.f1_score(test_labels, test_predict, average=None)
-
-print(f"Accuracy: \t {accuracy_score}")
-print(f"Precision: \t {precision_score}")
-print(f"Recall: \t {recall_score}")
-print(f"f1: \t {f1_score}")
+# print(f"Accuracy: \t {accuracy_score}")
+# print(f"Precision: \t {precision_score}")
+# print(f"Recall: \t {recall_score}")
+# print(f"f1: \t {f1_score}")
 
 
-print("HalvingGridSearchCV: ")
+# print("GridSearchCV: ")
 
-test_predict = clf3.predict(PCA_test_df)
+# test_predict = clf2.predict(PCA_test_df)
 
-accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-precision_score = metrics.precision_score(test_labels, test_predict, average=None)
-recall_score = metrics.recall_score(test_labels, test_predict, average=None)
-f1_score = metrics.f1_score(test_labels, test_predict, average=None)
+# accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+# precision_score = metrics.precision_score(test_labels, test_predict, average=None)
+# recall_score = metrics.recall_score(test_labels, test_predict, average=None)
+# f1_score = metrics.f1_score(test_labels, test_predict, average=None)
 
-print(f"Accuracy: \t {accuracy_score}")
-print(f"Precision: \t {precision_score}")
-print(f"Recall: \t {recall_score}")
-print(f"f1: \t {f1_score}")
+# print(f"Accuracy: \t {accuracy_score}")
+# print(f"Precision: \t {precision_score}")
+# print(f"Recall: \t {recall_score}")
+# print(f"f1: \t {f1_score}")
 
-print("BayesSearchCV: ")
 
-test_predict = clf4.predict(PCA_test_df)
+# print("HalvingGridSearchCV: ")
 
-accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-precision_score = metrics.precision_score(test_labels, test_predict, average=None)
-recall_score = metrics.recall_score(test_labels, test_predict, average=None)
-f1_score = metrics.f1_score(test_labels, test_predict, average=None)
+# test_predict = clf3.predict(PCA_test_df)
 
-print(f"Accuracy: \t {accuracy_score}")
-print(f"Precision: \t {precision_score}")
-print(f"Recall: \t {recall_score}")
-print(f"f1: \t {f1_score}")
+# accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+# precision_score = metrics.precision_score(test_labels, test_predict, average=None)
+# recall_score = metrics.recall_score(test_labels, test_predict, average=None)
+# f1_score = metrics.f1_score(test_labels, test_predict, average=None)
+
+# print(f"Accuracy: \t {accuracy_score}")
+# print(f"Precision: \t {precision_score}")
+# print(f"Recall: \t {recall_score}")
+# print(f"f1: \t {f1_score}")
+
+# print("BayesSearchCV: ")
+
+# test_predict = clf4.predict(PCA_test_df)
+
+# accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+# precision_score = metrics.precision_score(test_labels, test_predict, average=None)
+# recall_score = metrics.recall_score(test_labels, test_predict, average=None)
+# f1_score = metrics.f1_score(test_labels, test_predict, average=None)
+
+# print(f"Accuracy: \t {accuracy_score}")
+# print(f"Precision: \t {precision_score}")
+# print(f"Recall: \t {recall_score}")
+# print(f"f1: \t {f1_score}")
 
 
 dummy_clf = dummy.DummyClassifier(strategy="most_frequent")

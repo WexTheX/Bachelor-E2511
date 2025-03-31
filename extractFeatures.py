@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import pandas as pd
 import math
@@ -11,6 +12,8 @@ from Preprocessing.preprocessing import tab_txt_to_csv, delete_header, rename_da
 
 def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path):
     
+    start_time = time.time()
+
     features_df = []
     windowLabel = []
     all_window_features = []
@@ -204,5 +207,9 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, pa
     feature_df = pd.DataFrame(all_window_features)
 
     # print(f"Total number of windows: {activityWindowsCounter}")
+
+    end_time = time.time()  # End timer
+    elapsed_time = end_time - start_time
+    print(f"Features extracted in {elapsed_time} seconds")
 
     return feature_df, windowLabel

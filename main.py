@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 
+from skopt.space import Real, Categorical, Integer
 from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
@@ -16,7 +17,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, Gri
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures
-from machineLearning import splitData, scaleFeatures, setNComponents, optimizeHyperparamsSVM
+from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier
 from plotting import plotWelch, biplot
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
@@ -30,6 +31,7 @@ separate_types = 0
 want_plots = 0
 ML_models = ["SVM"]
 ML_models = 0
+method = 'ManualGridSearch'
 
 ''' DATASET VARIABLES '''
 
@@ -49,8 +51,23 @@ kernel_types = ['linear', 'poly',
 gamma_list = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]
 coef0_list = [0, 0.5, 1]
 deg_list = [2, 3, 4, 5]
-hyper_param_list = []
+hyperparams_list = []
 
+hyperparams_dict = {
+    "C": [0.001, 0.01, 0.1, 1, 10, 100, 1000],
+    "kernel": ["linear", "poly", "rbf", "sigmoid"],
+    "gamma": [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2],
+    "coef0": [0, 0.5, 1],
+    "degree": [2, 3, 4, 5]
+}
+
+hyperparams_space = {
+    "C": Real(1e-3, 1e3, prior="log-uniform"),  # Continuous log-scale for C
+    "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
+    "gamma": Real(1e-3, 1e2, prior="log-uniform"),  # Log-uniform scale for gamma
+    "coef0": Real(0, 1),
+    "degree": Integer(2, 5)
+}
 
 ''' USER INPUTS '''
 
@@ -156,60 +173,23 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 start_time = time.time()
 
 ''' HYPERPARAMETER OPTIMIZATION '''
-best_hyperparams = optimizeHyperparamsSVM(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
-                                              want_plots, train_data, train_labels, variance_explained)
-
-hyperparams_dict = {
-    "C": [0.001, 0.01, 0.1, 1, 10, 100, 1000],
-    "kernel": ["linear", "poly", "rbf", "sigmoid"],
-    "gamma": [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2],
-    "coef0": [0, 0.5, 1],
-    "degree": [2, 3, 4, 5]
-}
-
-clf_grid_search = GridSearchCV(
-    estimator = svm.SVC(),
-    param_grid = hyperparams_dict,
-    scoring = 'accuracy',
-    cv = 3, 
-    verbose = 0,
-    n_jobs = 1
-)
+# best_hyperparams = makeSVMClassifier(method, num_folds, hyperparams_dict, C_list, kernel_types, gamma_list, coef0_list, deg_list,
+#                                     want_plots, train_data, train_labels, variance_explained)
 
 
-''' CLASSIFIER '''
-clf = svm.SVC(**best_hyperparams)
-clf.fit(PCA_train_df, train_labels)
+''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-end_time = time.time()  # End timer
-elapsed_time = end_time - start_time
-print(f"Manual grid search time {elapsed_time}")
-
-
-start_time = time.time()
-
-clf_grid_search = GridSearchCV(
-    estimator = svm.SVC(),
-    param_grid = hyperparams_dict,
-    scoring = 'accuracy',
-    cv = 3, 
-    verbose = 0,
-    n_jobs = 1
-)
-
-clf_grid_search.fit(PCA_train_df, train_labels)
-print(clf_grid_search.best_params_)
-
-end_time = time.time()  # End timer
-elapsed_time = end_time - start_time
-
-print(f"GridSearchCV time elapsed: {elapsed_time}")
-
+clf1 = makeSVMClassifier('ManualGridSearch', num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained)
+clf2 = makeSVMClassifier('GridSearchCV', num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained)
+clf3 = makeSVMClassifier('HalvingGridSearchCV', num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained)
+clf4 = makeSVMClassifier('BayesSearchCV', num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained)
 
 ''' EVALUATION '''
-# Total accuracy
-test_predict = clf.predict(PCA_test_df)
-print("Manual grid search: ")
+
+print("ManualGridSearch: ")
+
+test_predict = clf1.predict(PCA_test_df)
+
 accuracy_score = metrics.accuracy_score(test_labels, test_predict)
 precision_score = metrics.precision_score(test_labels, test_predict, average=None)
 recall_score = metrics.recall_score(test_labels, test_predict, average=None)
@@ -221,17 +201,49 @@ print(f"Recall: \t {recall_score}")
 print(f"f1: \t {f1_score}")
 
 
-test_predict_grid_search = clf_grid_search.predict(PCA_test_df)
 print("GridSearchCV: ")
-accuracy_score = metrics.accuracy_score(test_labels, test_predict_grid_search)
-precision_score = metrics.precision_score(test_labels, test_predict_grid_search, average=None)
-recall_score = metrics.recall_score(test_labels, test_predict_grid_search, average=None)
-f1_score = metrics.f1_score(test_labels, test_predict_grid_search, average=None)
+
+test_predict = clf2.predict(PCA_test_df)
+
+accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+precision_score = metrics.precision_score(test_labels, test_predict, average=None)
+recall_score = metrics.recall_score(test_labels, test_predict, average=None)
+f1_score = metrics.f1_score(test_labels, test_predict, average=None)
 
 print(f"Accuracy: \t {accuracy_score}")
 print(f"Precision: \t {precision_score}")
 print(f"Recall: \t {recall_score}")
 print(f"f1: \t {f1_score}")
+
+
+print("HalvingGridSearchCV: ")
+
+test_predict = clf3.predict(PCA_test_df)
+
+accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+precision_score = metrics.precision_score(test_labels, test_predict, average=None)
+recall_score = metrics.recall_score(test_labels, test_predict, average=None)
+f1_score = metrics.f1_score(test_labels, test_predict, average=None)
+
+print(f"Accuracy: \t {accuracy_score}")
+print(f"Precision: \t {precision_score}")
+print(f"Recall: \t {recall_score}")
+print(f"f1: \t {f1_score}")
+
+print("BayesSearchCV: ")
+
+test_predict = clf4.predict(PCA_test_df)
+
+accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+precision_score = metrics.precision_score(test_labels, test_predict, average=None)
+recall_score = metrics.recall_score(test_labels, test_predict, average=None)
+f1_score = metrics.f1_score(test_labels, test_predict, average=None)
+
+print(f"Accuracy: \t {accuracy_score}")
+print(f"Precision: \t {precision_score}")
+print(f"Recall: \t {recall_score}")
+print(f"f1: \t {f1_score}")
+
 
 dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
 dummy_clf.fit(PCA_train_df, train_labels)

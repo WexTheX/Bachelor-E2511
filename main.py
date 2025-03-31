@@ -172,10 +172,10 @@ for name, clf in clf_dict.items():
     recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
     f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
 
-print(f"Accuracy: \t {accuracy_score}")
-print(f"Precision: \t {precision_score}")
-print(f"Recall: \t {recall_score}")
-print(f"f1: \t {f1_score}")
+    print(f"Accuracy: \t {accuracy_score}")
+    print(f"Precision: \t {precision_score}")
+    print(f"Recall: \t {recall_score}")
+    print(f"f1: \t {f1_score}")
 
 dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
 dummy_clf.fit(PCA_train_df, train_labels)
@@ -199,7 +199,7 @@ if(want_plots):
         PCA_total_part = total_data_scaled[PCA_total_columns_part]
         PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
         
-        biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types)
+        biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, clf1)
 
 
     PCA_plot = PCA(n_components = 2)

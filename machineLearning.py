@@ -44,8 +44,13 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
         if total_variance >= variance_explained:
             n_components = i + 1
             print(f"Variance explained by {n_components} PCA components: {eig_sum / eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[0]/eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[1]/eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[2]/eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[3]/eigenvalues.sum()}")
+            print(f"Varaince explained by {eigenvalues[4]/eigenvalues.sum()}")
             break
-
+    
     return n_components
 
 
@@ -58,7 +63,7 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
 # deg_list = [2, 3, 4, 5]
 
 def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
-                               want_plots, train_data, train_labels):
+                               want_plots, train_data, train_labels, separate_types):
   
     start_time = time.time()
 
@@ -107,7 +112,7 @@ def hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef
 
       if (want_plots):
         print(f"Plotting PCA plots for fold {i}")
-        biplot(kfold_PCA_train_df, kfold_train_labels, PCA_fold, PCA_components)
+        biplot(kfold_PCA_train_df, kfold_train_labels, PCA_fold, PCA_components, separate_types)
 
 
       for j, C_value in enumerate(C_list):

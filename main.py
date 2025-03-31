@@ -27,7 +27,7 @@ from Preprocessing.preprocessing import fillSets
 ''' GLOBAL VARIABLES '''
 
 want_feature_extraction = 0
-separate_types = 0
+separate_types = 1
 want_plots = 1
 ML_models = ["SVM"]
 ML_models = 0
@@ -117,17 +117,21 @@ if "feature_df" not in globals():
 if(want_plots):
     print("Printing PCA compontents for entire set")
     total_data_scaled = pd.DataFrame(scaleFeatures(feature_df))
-    PCA_total = PCA(n_components = 5)
+    PCA_plot = PCA(n_components = 5)
     print(f"Total amount of features: {len(total_data_scaled.columns)}")
 
-    for i in range(len(total_data_scaled.columns) // 20):
-        PCA_total_columns_part = total_data_scaled.columns[i*20:(i*20+20)]
+    for i in range(len(total_data_scaled.columns) // 34):
+        PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
         # print(f"List of columns: {PCA_total_columns_part}")
         PCA_total_part = total_data_scaled[PCA_total_columns_part]
-        PCA_total_df = pd.DataFrame(PCA_total.fit_transform(PCA_total_part))
+        PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
         
-        biplot(PCA_total_df, window_labels, PCA_total, 5)
+        biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types)
+    
 
+    PCA_plot3D = PCA(n_components = 3)
+    PCA_plot_df = pd.DataFrame(PCA_plot3D.fit_transform(total_data_scaled))
+    biplot(PCA_plot_df, window_labels, PCA_plot3D, 3, separate_types)
     plt.show()
     print("Done. \n")
 
@@ -155,7 +159,7 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION '''
 best_hyperparams = hyperParameterOptimization(num_folds, C_list, kernel_types, gamma_list, coef0_list, deg_list,
-                                              want_plots, train_data, train_labels)
+                                              want_plots, train_data, train_labels, separate_types)
 
 ''' CLASSIFIER '''
 clf = svm.SVC(**best_hyperparams)
@@ -193,21 +197,6 @@ if(want_plots):
     plt.title('Confusion matrix')
     # print(conf_matrix)
 
-
-''' ALT: PIPELINE (WIP) '''
-# clf = make_pipeline(StandardScaler(), LinearSVC(random_state=0, tol=1e-5))
-# clf.fit(train_data,train_labels)
-
-# print(clf.named_steps['linearsvc'].coef_)
-
-# Plotting part:
-# Plot FFT:
-# variables = ["Axl.X", "Axl.Y", "Axl.Z"]
-
-# plotWelch(sets, variables, Fs)
-
-# testWelch(sets[0], variables[0], Fs)
-
 if (want_plots):
     # for i in range(1, len(variables)):
     #     plotWelch(sets[0], variables[i], Fs, False)
@@ -218,5 +207,5 @@ if (want_plots):
     #     plt.grid()
     #     plt.figure()
 
-    # biplot(dfPCAtrain, train_labels, PCATest, PCA_components)
+    # biplot(dfPCAtrain, train_labels, PCATest, PCA_components, separate_types)
     plt.show()

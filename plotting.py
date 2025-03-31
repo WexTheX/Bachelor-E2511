@@ -56,7 +56,7 @@ def testWelch(sets_n, variables_n, fs):
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
   
 
-def biplot(score, trainLabels, PCATest, components):
+def biplot(score, trainLabels, PCATest, components, seperate_types):
   if components == 3:
 
     coeff = PCATest.components_.T
@@ -74,8 +74,13 @@ def biplot(score, trainLabels, PCATest, components):
     # Create a 3D plot
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
-
-    label_mapping = {'GRIN': (0.0, 0.0, 0.0)  , 'IDLE': (1.0, 0.0, 0.0), 'WELD': (0.0, 1.0, 0.0), 'SSAN': (0.0, 0.0, 1.0)}
+    if(seperate_types):
+      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
+                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (0.6, 0.0, 0.0), 'GRINDSMALL': (0.3, 0.0, 0.0),
+                       'SANDSIM': (0.0, 1.0, 0.0), 
+                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.0, 0.0, 0.6), 'WELDSTTIG': (0.0, 0.0, 0.3)}
+    else:
+      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
@@ -109,7 +114,13 @@ def biplot(score, trainLabels, PCATest, components):
     ys = score[1]
     plt.figure(figsize=(10, 8))
 
-    label_mapping = {'GRIN': (0.0, 0.0, 0.0)  , 'IDLE': (1.0, 0.0, 0.0), 'WELD': (0.0, 1.0, 0.0), 'SSAN': (0.0, 0.0, 1.0)}
+    if(seperate_types):
+      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
+                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.0, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.0),
+                       'SANDSIM': (0.0, 1.0, 0.0), 
+                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.0, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.0, 1.0)}
+    else:
+      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
     y_labels = np.array(trainLabels)
     mappedLabels = np.array([label_mapping[label] for label in trainLabels])
 
@@ -131,7 +142,7 @@ def biplot(score, trainLabels, PCATest, components):
 
     loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
     plt.figure(figsize=(10, 8))
-    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2', '...'], yticklabels=PCATest.feature_names_in_)
     plt.title('Feature Importance in Principal Components')
 
   else:

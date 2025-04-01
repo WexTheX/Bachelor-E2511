@@ -352,3 +352,5 @@ def makeRFClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wan
 
     for param, value in clf.best_params_.items():
       print(f"{param}: {value}")
+
+def makeNai

@@ -47,8 +47,16 @@ async def data_notification_handler(sender: int, data: bytearray):
     # decode packet data
     tempData = Muse_Utils.DecodePacket(data[header_offset:], 0, stream_mode.value, gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity)
     # print data as: device_ID, axl_X, axl_Y, axl_Z, gyr_X, gyr_Y, gyr_Z
+
     print("{0} {1} {2} {3} {4} {5} {6}".format(device_ID,tempData.axl[0],tempData.axl[1],tempData.axl[2],tempData.gyr[0],tempData.gyr[1],tempData.gyr[2]))
     
+    imu_features = [
+        tempData.axl[0], tempData.axl[1], tempData.axl[2],  # Accelerometer
+        tempData.gyr[0], tempData.gyr[1], tempData.gyr[2],  # Gyroscope
+        tempData.mag[0], tempData.mag[1], tempData.mag[2],  # Magnetometer
+        tempData.tp[0], tempData.tp[1],                     # Temperature pressure
+        tempData.light[0], tempData.light[1]                # Light (range, lum, irlum)
+    ]
 
     return
 
@@ -106,7 +114,7 @@ async def main():
             
             # Set up the command
             stream_mode = MH.DataMode.DATA_MODE_IMU
-            cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_25Hz, enableDirect=True)
+            cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=True)
 
             # Start notify on data characteristic
             await client.start_notify(DATA_UUID, data_notification_handler)

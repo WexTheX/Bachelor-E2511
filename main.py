@@ -148,6 +148,8 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
+# comment out here + in clf_dict to remove 
+
 clf1 = makeSVMClassifier('O_o', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
 clf2 = makeSVMClassifier('GridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
 clf3 = makeSVMClassifier('HalvingGridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)

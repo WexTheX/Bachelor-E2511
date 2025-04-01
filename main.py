@@ -29,7 +29,7 @@ from Preprocessing.preprocessing import fillSets
 want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
-ML_models = ["SVM"]
+ML_models = ["SVM", "RF"]
 ML_models = 0
 method = 'ManualGridSearch'
 
@@ -64,32 +64,36 @@ hyperparams_space = {
 
 ''' USER INPUTS '''
 
-# answer_FE = input("Do you want feature extraction? (Y | N)")
+# answer_FE = input("Do you want feature extraction? (Y | N) (Default N)")
 # if(answer_FE == "Y"):
 #     want_feature_extraction = True
 
 # if(answer_FE):
-#     answer_ST = input("Do you want to separate by type (TIG and MIG vs only welding)? (Y | N)")
+#     answer_ST = input("Do you want to separate by type (TIG and MIG vs only welding)? (Y | N) (Default N)")
 #     if(answer_ST == "Y"):
 #         separate_types = True
 
 
-# answer_ML = input(f"Choose ML model: {ML_models}")
 
-# answer_plot = input("Do you want plots? (Y | N)")
+# answer_ML = input(f"Choose ML model (Default SVM): {ML_models}.")
+# if(answer_ML = "RF"):
+#     ML_model = ML_models[0]
+
+# answer_plot = input("Do you want plots? (Y | N) (Default N)")
 # if(answer_plot == "Y"):
 #     want_plots = True
 
 
 ''' LOAD DATASET '''
 
-# Spesify path for input and output of files
+# Different folder for separated and not separated
 if(separate_types):
     path = "Preprocessing/DatafilesSeparated" 
+    output_path = "OutputFiles/Separated/"
 else:
     path = "Preprocessing/Datafiles"
+    output_path = "OutputFiles/"
 
-output_path = "OutputFiles/"   
 path_names = os.listdir(path)
 activity_name = [name.upper() for name in path_names]
 

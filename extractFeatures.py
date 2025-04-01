@@ -68,7 +68,7 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, pa
             # Define the start and end index for the window
             start_idx = j * WindowLength
             end_idx = start_idx + WindowLength
-            print(f"Getting features from window {start_idx} to {end_idx}")  
+            # print(f"Getting features from window {start_idx} to {end_idx}")  
                     
             # Windowing the signals
             window_gyro_X  = gyro_X[start_idx:end_idx]

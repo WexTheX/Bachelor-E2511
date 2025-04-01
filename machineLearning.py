@@ -9,6 +9,7 @@ from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import train_test_split, KFold, StratifiedKFold, GridSearchCV, HalvingGridSearchCV
 from sklearn.decomposition import PCA
 from sklearn import svm, metrics
+from sklearn.ensemble import RandomForestClassifier
 
 from plotting import biplot
 
@@ -45,16 +46,11 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
         if total_variance >= variance_explained:
             n_components = i + 1
             print(f"Variance explained by {n_components} PCA components: {eig_sum / eigenvalues.sum()}")
-            # print(f"Varaince explained by {eigenvalues[0]/eigenvalues.sum()}")
-            # print(f"Varaince explained by {eigenvalues[1]/eigenvalues.sum()}")
-            # print(f"Varaince explained by {eigenvalues[2]/eigenvalues.sum()}")
-            # print(f"Varaince explained by {eigenvalues[3]/eigenvalues.sum()}")
-            # print(f"Varaince explained by {eigenvalues[4]/eigenvalues.sum()}")
             break
     
     return n_components
 
-def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, seperate_types):
+def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types):
     
     # Unpack dictionary into lists
     C_list, kernel_types, gamma_list, coef0_list, deg_list = [list(values) for values in hyperparams_dict.values()]
@@ -105,9 +101,9 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
         kfold_PCA_train_df = pd.DataFrame(PCA_fold.fit_transform(kfold_train_data_scaled))
         kfold_PCA_validation_df = pd.DataFrame(PCA_fold.transform(kfold_validation_data_scaled))
 
-        if (want_plots):
-          print(f"Plotting PCA plots for fold {i}")
-          biplot(kfold_PCA_train_df, kfold_train_labels, PCA_fold, PCA_components, seperate_types)
+        # if (want_plots):
+        #   print(f"Plotting PCA plots for fold {i}")
+        #   biplot(kfold_PCA_train_df, kfold_train_labels, PCA_fold, PCA_components, separate_types)
 
 
         for j, C_value in enumerate(C_list):
@@ -231,13 +227,12 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
       clf = svm.SVC(**best_hyperparams)
       clf.fit(PCA_train_df, train_labels)
 
-
     elif method == 'GridSearchCV':
 
       print(f"Using GridSearchCV from sklearn to find best hyperparams")
 
       clf = GridSearchCV(
-            estimator = svm.SVC(),
+            estimator = base_estimator,
             param_grid = hyperparams_dict,
             scoring = 'accuracy',
             cv = num_folds, 
@@ -255,7 +250,7 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
       print(f"Using HalvingGridSearchCV from sklearn to find best hyperparams")
 
       clf = HalvingGridSearchCV(
-            estimator = svm.SVC(),
+            estimator = base_estimator,
             param_grid = hyperparams_dict,
             factor = 2,
             scoring = 'accuracy',
@@ -269,19 +264,18 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
       for param, value in clf.best_params_.items():
         print(f"{param}: {value}")
 
-      
     elif method == 'BayesSearchCV':
       
       print(f"Using BayesSearchCV from scikit optimize to find best hyperparams")
 
       clf = BayesSearchCV(
-            estimator = svm.SVC(),
+            estimator = base_estimator,
             search_spaces = hyperparams_space,
             n_iter = 30,
             scoring = 'accuracy',
             cv = num_folds,
             verbose = 0,
-            n_jobs = -1
+            n_jobs = 5
             )
       
       clf.fit(PCA_train_df, train_labels)
@@ -291,57 +285,44 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
 
     else: 
       print(f"Optimizer {method} not recognized, choosing default Support Vector Classifier.")
-      clf = svm.SVC()
+      clf = base_estimator
       clf.fit(PCA_train_df, train_labels)
-      return clf
 
 
     end_time = time.time()  # End timer
     elapsed_time = end_time - start_time
 
-    print(f"Created and evaluated {len(hyperparams_list) * num_folds} instances of SVM classifiers in {elapsed_time} seconds")
+    print(f"Created and evaluated {len(hyperparams_list) * num_folds} instances of SVM classifiers using {method} in {elapsed_time} seconds")
     print(f"\n")
 
     return clf
 
-
-
-def makeRFClassifier(method, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, seperate_types):
-  from sklearn.ensemble import RandomForestClassifier
+def makeRFClassifier(method, base_estimator, num_folds, param_grid, PCA_train_df, train_labels):
   
+  start_time = time.time()
   
   if method == 'GridSearchCV':
-    start_time = time.time()
-    print(f"Using GridSearchCV from sklearn to find best hyperparams")
+    print(f"Using GridSearchCV from sklearn to find best RF hyperparams")
 
-
-   
-    clf = GridSearchCV(estimator=RandomForestClassifier(),
+    clf = GridSearchCV(estimator=base_estimator,
                        param_grid=param_grid,
-                       cv=5) 
-    
+                       cv=num_folds,
+                       n_jobs=-1
+                       ) 
     
     clf.fit(PCA_train_df, train_labels)
 
     for param, value in clf.best_params_.items():
       print(f"{param}: {value}")
-    
-
-    end_time = time.time()  # End timer
-    elapsed_time = end_time - start_time
-
-    print(f"RF took {elapsed_time} seconds to run")
-    return clf
-
 
   elif method == 'HalvingGridSearchCV':
-    print(f"Using HalvingGridSearchCV from sklearn to find best hyperparams")
-
+    print(f"Using HalvingGridSearchCV from sklearn to find best RF hyperparams")
 
     clf = HalvingGridSearchCV(
-          estimator=RandomForestClassifier(),
+          estimator=base_estimator,
           param_grid = param_grid,
-          cv=5
+          cv=num_folds,
+          n_jobs=-1
           )
     
     clf.fit(PCA_train_df, train_labels)
@@ -349,26 +330,15 @@ def makeRFClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wan
     for param, value in clf.best_params_.items():
       print(f"{param}: {value}")
 
-    end_time = time.time()  # End timer
-    elapsed_time = end_time - start_time
-
-    print(f"RF took {elapsed_time} seconds to run")
-    return clf
-
   else:
-     clf = RandomForestClassifier()
+     print(f"Method {method} not recognized, fitting default RF")
+
+     clf = base_estimator
      clf.fit(PCA_train_df,train_labels)
-     return clf
+  
+  end_time = time.time()  # End timer
+  elapsed_time = end_time - start_time
 
-    end_time = time.time()  # End timer
-    elapsed_time = end_time - start_time
+  print(f"RF optimized and fitted using {method} in {elapsed_time} seconds")
 
-    print(f"RF took {elapsed_time} seconds to run")
-    return clf
-
-  else:
-     clf = RandomForestClassifier()
-     clf.fit(PCA_train_df,train_labels)
-     return clf
-
-def makeNai
+  return clf

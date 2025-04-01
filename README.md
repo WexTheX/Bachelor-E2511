@@ -10,8 +10,8 @@ antall .txt filer i hver Datafiles mappe blir telt, og navnet blir lagt inn i li
 
 1) Separer typer uten å måtte ha en folder for hver (unngå dobbelt opp med filer)
 2) Implementer K-nearest og Naive-Bayers, Gradient boosting
-3) Skisser boundary conditions i SVM
-4) Legge RF inn i machineLearning.py
+3) Skisser boundary conditions i SVM [Problem med 2d PCA]
+4) Legge RF inn i machineLearning.py [Ferdig]
 5) Kode som tar inn test som logger aktiviteter
 
 ...

@@ -17,7 +17,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, Gri
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures
-from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier
+from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier
 from plotting import plotWelch, biplot
 from SignalProcessing import ExtractIMU_Features as IMU_F
 from SignalProcessing import get_Freq_Domain_features_of_signal as freq
@@ -60,6 +60,17 @@ hyperparams_space = {
     "gamma": Real(1e-3, 1e2, prior="log-uniform"),  # Log-uniform scale for gamma
     "coef0": Real(0, 1),
     "degree": Integer(2, 5)
+}
+
+
+hyperparams_RF = {
+    'n_estimators': [50, 100, 200],  # Number of trees in the forest
+    'max_depth': [10, 20, 30, None],  # Maximum depth of each tree
+    'min_samples_split': [2, 5, 10],  # Minimum samples required to split a node
+    'min_samples_leaf': [1, 2, 4],  # Minimum samples required in a leaf node
+    'max_features': ['sqrt', 'log2'],  # Number of features considered for splitting
+    'bootstrap': [True, False],  # Whether to use bootstrapped samples
+    'criterion': ['gini', 'entropy']  # Splitting criteria
 }
 
 ''' USER INPUTS '''
@@ -154,10 +165,10 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 # comment out here + in clf_dict to remove 
 
-clf1 = makeSVMClassifier('O_o', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf2 = makeSVMClassifier('GridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf3 = makeSVMClassifier('HalvingGridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf4 = makeSVMClassifier('BayesSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf1 = makeRFClassifier('O_o', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf2 = makeRFClassifier('GridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf3 = makeRFClassifier('HalvingGridSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf4 = makeRFClassifier('BayesSearchCV', num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
 
 clf_dict = {
     'ManualGridSearch': clf1,

@@ -305,21 +305,15 @@ def makeSVMClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wa
     return clf
 
 
+
 def makeRFClassifier(method, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, seperate_types):
   from sklearn.ensemble import RandomForestClassifier
   
   
   if method == 'GridSearchCV':
-
+    start_time = time.time()
     print(f"Using GridSearchCV from sklearn to find best hyperparams")
 
-    param_grid = { 
-    'n_estimators': [200, 500],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth' : [4,5,6,7,8],
-    'criterion' :['gini', 'entropy']
-       }
-    
 
    
     clf = GridSearchCV(estimator=RandomForestClassifier(),
@@ -332,15 +326,17 @@ def makeRFClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wan
     for param, value in clf.best_params_.items():
       print(f"{param}: {value}")
     
+
+    end_time = time.time()  # End timer
+    elapsed_time = end_time - start_time
+
+    print(f"RF took {elapsed_time} seconds to run")
+    return clf
+
+
   elif method == 'HalvingGridSearchCV':
     print(f"Using HalvingGridSearchCV from sklearn to find best hyperparams")
 
-    param_grid = { 
-    'n_estimators': [200, 500],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth' : [4,5,6,7,8],
-    'criterion' :['gini', 'entropy']
-       }
 
     clf = HalvingGridSearchCV(
           estimator=RandomForestClassifier(),
@@ -349,6 +345,17 @@ def makeRFClassifier(method, num_folds, hyperparams_space, hyperparams_dict, wan
           )
     
     clf.fit(PCA_train_df, train_labels)
-
+    
     for param, value in clf.best_params_.items():
       print(f"{param}: {value}")
+
+    end_time = time.time()  # End timer
+    elapsed_time = end_time - start_time
+
+    print(f"RF took {elapsed_time} seconds to run")
+    return clf
+
+  else:
+     clf = RandomForestClassifier()
+     clf.fit(PCA_train_df,train_labels)
+     return clf

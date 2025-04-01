@@ -81,8 +81,8 @@ hyperparams_RF = {
 
 # if(answer_FE):
 #     answer_ST = input("Do you want to separate by type (TIG and MIG vs only welding)? (Y | N) (Default N)")
-#     if(answer_ST == "Y"):
-#         separate_types = True
+# if(answer_ST == "Y"):
+#     separate_types = True
 
 
 

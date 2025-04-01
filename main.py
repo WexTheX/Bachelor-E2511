@@ -36,7 +36,7 @@ method = 'ManualGridSearch'
 ''' DATASET VARIABLES '''
 
 variance_explained = 0.9
-randomness = 1245
+randomness = 11
 window_length_seconds = 15
 split_value = 0.75
 Fs = 800
@@ -192,7 +192,7 @@ for name, clf in clf_dict.items():
     print(f"Accuracy: \t {accuracy_score}")
     print(f"Precision: \t {precision_score}")
     print(f"Recall: \t {recall_score}")
-    print(f"f1: \t {f1_score}")
+    print(f"f1: \t\t {f1_score}")
 
 dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
 dummy_clf.fit(PCA_train_df, train_labels)

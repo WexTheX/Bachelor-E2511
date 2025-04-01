@@ -8,9 +8,8 @@ antall .txt filer i hver Datafiles mappe blir telt, og navnet blir lagt inn i li
 
 # TODO 
 
-1) Separer datafiles
+1) Separer typer uten å måtte ha en folder for hver (unngå dobbelt opp med filer)
 2) Implementer K-nearest og Naive-Bayers, Gradient boosting
-2.1) og gjøre det enkelt å velge imellom dem (IF ML_model == RF ... etc)
 3) Skisser boundary conditions i SVM
 4) Legge RF inn i machineLearning.py
 5) Kode som tar inn test som logger aktiviteter
@@ -23,7 +22,7 @@ antall .txt filer i hver Datafiles mappe blir telt, og navnet blir lagt inn i li
 
 1000) CNN
 
-
+old want_plots
 # for i in range(1, len(variables)):
     #     plotWelch(sets[0], variables[i], Fs, False)
     #     plotWelch(sets[0], variables[i], Fs, True)

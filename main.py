@@ -31,7 +31,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 want_feature_extraction = 0
 separate_types = 1
-want_plots = 1
+want_plots = 0
 ML_models = ["SVM", "RF"]
 ML_models = 0
 accuracy_list = []
@@ -127,9 +127,11 @@ hyperparams_RF = {
 if(separate_types):
     path = "Preprocessing/DatafilesSeparated" 
     output_path = "OutputFiles/Separated/"
+    test_path = "testFiles/"
 else:
     path = "Preprocessing/Datafiles"
     output_path = "OutputFiles/"
+    test_path = "testFiles/"
 
 path_names = os.listdir(path)
 activity_name = [name.upper() for name in path_names]
@@ -144,7 +146,7 @@ sets, sets_labels = fillSets(path, path_names, activity_name, separate_types)
 if (want_feature_extraction):
     # Create dataframe "feature_df" containing all features deemed relevant from the raw sensor data
     # One row in feature_df is all features from one window
-    feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds*Fs, False, 800, path)
+    feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds*Fs, False, 800)
     feature_df.to_csv(output_path+"feature_df.csv", index=False)
     with open(output_path+"window_labels.txt", "w") as fp:
         for item in window_labels:
@@ -206,7 +208,7 @@ for name, clf in clf_dict.items():
     
     print(f"Evaluating {name}: ")
 
-    test_predict = clf.predict(PCA_test_df)   
+    test_predict = clf.predict(PCA_test_df)
 
     accuracy_score = metrics.balanced_accuracy_score(test_labels, test_predict)
     precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
@@ -228,7 +230,6 @@ print("Baseline Accuracy (Dummy Classifier):", dummy_score)
 print(accuracy_list)
 
 if(want_plots):
-
 
     # # Set-up 2x2 grid for plotting.
     # fig, sub = plt.subplots(2, 2)
@@ -311,3 +312,22 @@ if(want_plots):
 # from bleak import BleakScanner, BleakClient
 # import asyncio
 
+''' REAL TEST '''
+
+'''
+# File path to testing file
+# test_data_df = pd.read_csv(test_path+"test_data.csv")
+
+test_feature, windowLabel = extractAllFeatures('testFiles/06-03-2025 123529', sets_labels, window_length_seconds*Fs, False, 800)
+
+# Scale incoming data
+test_data_scaled = scaleFeatures(test_feature)
+
+# PCA transform test_data_scaled using already fitted PCA
+PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
+
+# Use best CLF
+guess = clf1.predict(PCA_test_df)
+
+guess = guess.sort()
+'''

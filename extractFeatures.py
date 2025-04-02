@@ -10,7 +10,7 @@ from Preprocessing.preprocessing import tab_txt_to_csv, delete_header, rename_da
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
 
-def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, path):
+def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs):
     
     start_time = time.time()
 
@@ -23,7 +23,7 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs, pa
 
     for i, name in enumerate(datasets):
         ''' PREPROCESS FILES '''
-        delete_header(name + ".txt") # Deletes lines before Timestamp and does some regex
+        # delete_header(name + ".txt") # Deletes lines before Timestamp and does some regex
         tab_txt_to_csv(name + ".txt", name + ".csv") # Converts from .txt to .csv
 
         ''' LOAD .CSV DATAFILES '''

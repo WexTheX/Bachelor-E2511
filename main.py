@@ -34,6 +34,7 @@ separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF"]
 ML_models = 0
+accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
@@ -211,6 +212,8 @@ for name, clf in clf_dict.items():
     precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
     recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
     f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
+    
+    accuracy_list.append(np.round(accuracy_score, 3))
 
     print(f"Accuracy: \t {accuracy_score}")
     print(f"Precision: \t {precision_score}")
@@ -222,7 +225,7 @@ dummy_clf.fit(PCA_train_df, train_labels)
 dummy_score = dummy_clf.score(PCA_test_df, test_labels)
 
 print("Baseline Accuracy (Dummy Classifier):", dummy_score)
-
+print(accuracy_list)
 
 if(want_plots):
 
@@ -290,7 +293,7 @@ if(want_plots):
     PCA_plot = PCA(n_components = 2)
     PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
     
-    biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles)
+    biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles, accuracy_list)
 
     conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
 

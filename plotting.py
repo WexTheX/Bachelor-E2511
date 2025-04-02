@@ -56,7 +56,7 @@ def testWelch(sets_n, variables_n, fs):
 
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
   
-def biplot(X, trainLabels, PCATest, components, separate_types, models,optimization_methods, titles):
+def biplot(X, trainLabels, PCATest, components, separate_types, models, optimization_methods, titles, accuracy_list):
   
   if components == 2:
 
@@ -93,7 +93,7 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models,optimizat
       fig, sub = plt.subplots(2, 2)
       plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
-      for clf, method, title, ax in zip(models, optimization_methods, titles, sub.flatten()):
+      for clf, method, title, accuracy, ax in zip(models, optimization_methods, titles, accuracy_list, sub.flatten()):
           
           disp = DecisionBoundaryDisplay.from_estimator(
               clf,
@@ -108,7 +108,7 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models,optimizat
           ax.scatter(xs, ys, c=mappedLabels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
           ax.set_xticks(())
           ax.set_yticks(())
-          ax.set_title(str(method) + "\n" + str(title))
+          ax.set_title(str(method) + "\n" + "Accuracy: " + str(accuracy) + "\n" + str(title) )
 
 
     # Uncomment if you want arrows

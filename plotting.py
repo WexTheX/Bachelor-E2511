@@ -56,7 +56,7 @@ def testWelch(sets_n, variables_n, fs):
 
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
   
-def biplot(X, trainLabels, PCATest, components, separate_types, models):
+def biplot(X, trainLabels, PCATest, components, separate_types, models,optimization_methods, titles):
   
   if components == 2:
 
@@ -93,14 +93,8 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models):
       fig, sub = plt.subplots(2, 2)
       plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
-      titles = (
-      "SVC with linear kernel",
-      "LinearSVC (linear kernel)",
-      "SVC with RBF kernel",
-      "SVC with polynomial (degree 3) kernel",
-      )
-
-      for clf, title, ax in zip(models, titles, sub.flatten()):
+      for clf, method, title, ax in zip(models, optimization_methods, titles, sub.flatten()):
+          
           disp = DecisionBoundaryDisplay.from_estimator(
               clf,
               X,
@@ -114,7 +108,8 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models):
           ax.scatter(xs, ys, c=mappedLabels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
           ax.set_xticks(())
           ax.set_yticks(())
-          ax.set_title(title)
+          ax.set_title(str(method) + "\n" + str(title))
+
 
     # Uncomment if you want arrows
     # for i in range(len(coeff)):
@@ -123,7 +118,7 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models):
 
     plt.xlabel("PC1")
     plt.ylabel("PC2")
-    plt.title("Biplot")
+    # plt.title("Biplot")
     # plt.figure()
 
   elif components == 3:

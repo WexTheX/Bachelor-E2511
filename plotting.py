@@ -173,8 +173,9 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models):
     labels = PCATest.feature_names_in_
 
     loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+    loadingsPerc = (loadings - np.min(loadings)) / (np.max(loadings) - np.min(loadings))
     plt.figure(figsize=(10, 8))
-    sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2', '...'], yticklabels=PCATest.feature_names_in_)
+    sns.heatmap(loadingsPerc, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
     plt.title('Feature Importance in Principal Components')
 
   else:

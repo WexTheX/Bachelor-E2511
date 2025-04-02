@@ -26,7 +26,10 @@ variables = []
 # datasets.append("Preprocessing/Datafiles/Welding/WELD_6.txt")
 # datasets.append("Preprocessing/Datafiles/Welding/WELD_10.txt")
 
-# datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_2.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_4.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_1.txt")

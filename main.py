@@ -38,8 +38,8 @@ method = 'ManualGridSearch'
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.5
-randomness = 11
+variance_explained = 0.9
+randomness = 181
 window_length_seconds = 15
 split_value = 0.75
 Fs = 800

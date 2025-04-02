@@ -31,14 +31,14 @@ from sklearn.ensemble import RandomForestClassifier
 
 want_feature_extraction = 0
 separate_types = 1
-want_plots = 1
+want_plots = 0
 ML_models = ["SVM", "RF"]
 ML_models = 0
-method = 'ManualGridSearch'
+accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.9
+variance_explained = 0.4
 randomness = 181
 window_length_seconds = 15
 split_value = 0.75
@@ -62,7 +62,7 @@ hyperparams_SVM = {
     "kernel": ["linear", "poly", "rbf", "sigmoid"],
     "gamma": [1],
     "coef0": [0, 0.5, 1],
-    "degree": [2, 3, 4, 5]
+    "degree": [2, 3]
 }
 
 # hyperparams_SVM_space = {
@@ -127,9 +127,11 @@ hyperparams_RF = {
 if(separate_types):
     path = "Preprocessing/DatafilesSeparated" 
     output_path = "OutputFiles/Separated/"
+    test_path = "testFiles/"
 else:
     path = "Preprocessing/Datafiles"
     output_path = "OutputFiles/"
+    test_path = "testFiles/"
 
 path_names = os.listdir(path)
 activity_name = [name.upper() for name in path_names]
@@ -144,7 +146,7 @@ sets, sets_labels = fillSets(path, path_names, activity_name, separate_types)
 if (want_feature_extraction):
     # Create dataframe "feature_df" containing all features deemed relevant from the raw sensor data
     # One row in feature_df is all features from one window
-    feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds*Fs, False, 800, path)
+    feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds*Fs, False, 800)
     feature_df.to_csv(output_path+"feature_df.csv", index=False)
     with open(output_path+"window_labels.txt", "w") as fp:
         for item in window_labels:
@@ -179,19 +181,25 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 # comment out here + in clf_dict to remove 
 
+optimization_methods = ['ManualGridSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
 
-clf1 = makeSVMClassifier('876', SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf2 = makeSVMClassifier('GridSearchCV', SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf3 = makeSVMClassifier('HalvingGridSearchCV', SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf4 = makeSVMClassifier('876', SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf1, clf1_best_params = makeSVMClassifier(optimization_methods[0], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf2, clf2_best_params = makeSVMClassifier(optimization_methods[1], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf3, clf3_best_params = makeSVMClassifier(optimization_methods[2], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+clf4, clf4_best_params = makeSVMClassifier(optimization_methods[3], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
 
 models = (clf1, clf2, clf3, clf4)
+titles = (
+    clf1_best_params,
+    clf2_best_params,
+    clf3_best_params,
+    clf4_best_params )
 
 clf_dict = {
-    'No optimization': clf1,
-    'GridSearchCV': clf2,
-    'HalvingGridSearchCV': clf3,
-    'BayesSearchCV': clf4
+    optimization_methods[0]: clf1,
+    optimization_methods[1]: clf2,
+    optimization_methods[2]: clf3,
+    optimization_methods[3]: clf4
     }
 
 ''' EVALUATION '''
@@ -200,11 +208,14 @@ for name, clf in clf_dict.items():
     
     print(f"Evaluating {name}: ")
 
-    test_predict = clf.predict(PCA_test_df)   
+    test_predict = clf.predict(PCA_test_df)
+
     accuracy_score = metrics.balanced_accuracy_score(test_labels, test_predict)
     precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
     recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
     f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
+    
+    accuracy_list.append(np.round(accuracy_score, 3))
 
     print(f"Accuracy: \t {accuracy_score}")
     print(f"Precision: \t {precision_score}")
@@ -216,10 +227,9 @@ dummy_clf.fit(PCA_train_df, train_labels)
 dummy_score = dummy_clf.score(PCA_test_df, test_labels)
 
 print("Baseline Accuracy (Dummy Classifier):", dummy_score)
-
+print(accuracy_list)
 
 if(want_plots):
-
 
     # # Set-up 2x2 grid for plotting.
     # fig, sub = plt.subplots(2, 2)
@@ -283,8 +293,8 @@ if(want_plots):
     # Plot 2D plot of PC's regardless of how many components are in the model
     PCA_plot = PCA(n_components = 2)
     PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
-
-    biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models)
+    
+    biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles, accuracy_list)
 
     conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
 
@@ -302,3 +312,22 @@ if(want_plots):
 # from bleak import BleakScanner, BleakClient
 # import asyncio
 
+''' REAL TEST '''
+
+'''
+# File path to testing file
+# test_data_df = pd.read_csv(test_path+"test_data.csv")
+
+test_feature, windowLabel = extractAllFeatures('testFiles/06-03-2025 123529', sets_labels, window_length_seconds*Fs, False, 800)
+
+# Scale incoming data
+test_data_scaled = scaleFeatures(test_feature)
+
+# PCA transform test_data_scaled using already fitted PCA
+PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
+
+# Use best CLF
+guess = clf1.predict(PCA_test_df)
+
+guess = guess.sort()
+'''

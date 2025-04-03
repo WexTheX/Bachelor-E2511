@@ -11,19 +11,17 @@ from sklearn.inspection import DecisionBoundaryDisplay, permutation_importance
 from skopt.space import Real, Categorical, Integer
 from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier
-from plotting import plotWelch, biplot
-from SignalProcessing import ExtractIMU_Features as IMU_F
-from SignalProcessing import get_Freq_Domain_features_of_signal as freq
-from Preprocessing.preprocessing import fillSets
-from sklearn.ensemble import RandomForestClassifier
+from plotting import biplot
+from Preprocessing.preprocessing import fillSets, downsample
+
 
 
 
@@ -42,7 +40,8 @@ variance_explained = 0.9
 randomness = 181
 window_length_seconds = 15
 split_value = 0.75
-Fs = 800
+fs = 800
+ds_fs = 200
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
@@ -149,8 +148,11 @@ if (want_feature_extraction):
     
     for i, file in enumerate(sets):
         print(f"Extracting files from file: {file}")
-        fe_df = extractDFfromFile(file, Fs)
-        window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, Fs, False)
+        fe_df = extractDFfromFile(file, fs)
+
+        # ds_fe_df = downsample(fe_df, fs, ds_fs)
+        
+        window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
         all_window_features = all_window_features + window_df
         window_labels = window_labels + df_window_labels
@@ -159,7 +161,7 @@ if (want_feature_extraction):
     feature_df = pd.DataFrame(all_window_features)
     print(feature_df)
 
-    # feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds*Fs, False, 800)
+    # feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds, fs, False)
 
     end_time = time.time()  # End timer
     elapsed_time = end_time - start_time
@@ -261,53 +263,10 @@ dummy_clf.fit(PCA_train_df, train_labels)
 dummy_score = dummy_clf.score(PCA_test_df, test_labels)
 
 print("Baseline Accuracy (Dummy Classifier):", dummy_score)
-print(accuracy_list)
 
 if(want_plots):
     ''' FEATURE IMPORTANCE '''
-
-
-    # # Set-up 2x2 grid for plotting.
-    # fig, sub = plt.subplots(2, 2)
-    # plt.subplots_adjust(wspace=0.4, hspace=0.4)
-
-    # X0, X1 = PCA_train_df[0], PCA_train_df[1]
-
-    # titles = (
-    # "SVC with linear kernel",
-    # "LinearSVC (linear kernel)",
-    # "SVC with RBF kernel",
-    # "SVC with polynomial (degree 3) kernel",
-    # )
-
-    # label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-    #                    'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (0.6, 0.0, 0.0), 'GRINDSMALL': (0.3, 0.0, 0.0),
-    #                    'SANDSIM': (0.0, 1.0, 0.0), 
-    #                    'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.0, 0.0, 0.6), 'WELDSTTIG': (0.0, 0.0, 0.3)}
-    
-    # y_labels = np.array(train_labels)
-    # mappedLabels = np.array([label_mapping[label] for label in train_labels])
-    # # print(mappedLabels)
-
-    # for clf, title, ax in zip(models, titles, sub.flatten()):
-    #     disp = DecisionBoundaryDisplay.from_estimator(
-    #         clf,
-    #         PCA_train_df,
-    #         response_method="predict",
-    #         cmap=plt.cm.coolwarm,
-    #         alpha=0.8,
-    #         ax=ax,
-    #         xlabel='PC1',
-    #         ylabel='PC2',
-    #     )
-    #     ax.scatter(X0, X1, c=mappedLabels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
-    #     ax.set_xticks(())
-    #     ax.set_yticks(())
-    #     ax.set_title(title)
-
-    # plt.show()
-
-
+    #TODO
 
     ''' PCA CHECK '''
     # print("Printing PCA compontents for entire set")
@@ -325,15 +284,13 @@ if(want_plots):
         
         biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, models, optimization_methods, titles, accuracy_list)
 
-
-    # Plot 2D plot of PC's regardless of how many components are in the model
+    ''' 2D/3D PLOT OF PCA '''
     PCA_plot = PCA(n_components = 2)
     PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
-    
     biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles, accuracy_list)
 
+    ''' CONFUSION MATRIX '''
     conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
-
     plt.figure(figsize=(10, 8))
     sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
     plt.xlabel("Predicted")

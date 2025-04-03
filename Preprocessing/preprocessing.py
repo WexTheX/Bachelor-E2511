@@ -1,14 +1,26 @@
 import pandas as pd
-import fileinput
 import re
 import os
-from pathlib import Path
 
-# def downsample(Hz)
-    # We should have an option to downsample to see how diff sampling frequencies affect ML accuracy
-    # This is a hyperparemeter
-    
-    # return downsampled_fs
+
+# We should have an option to downsample to see how diff sampling frequencies affect ML accuracy
+# This is a hyperparemeter ???
+def downsample(df: pd.DataFrame, old_fs, new_fs):
+    dropped_rows = []
+
+    if((old_fs / new_fs).is_integer() == False):
+        print(f"Old fs: {old_fs} / New fs: {new_fs} is not whole number")
+        quit()
+    elif((old_fs < new_fs)):
+        print(f"Old fs: {old_fs} is smaller than New fs: {new_fs}")
+        quit()
+    else:
+        for i in range(len(df['Timestamp'])):
+            if((i % (old_fs / new_fs)) != 0):
+                dropped_rows.append(i)
+
+    new_df = df.drop(dropped_rows)
+    return new_df
 
 def convert_date_format(filename):
     # Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename

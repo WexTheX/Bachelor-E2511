@@ -1,7 +1,6 @@
-import time
 import numpy as np
 import pandas as pd
-import math
+
 # SignalProcessing part is needed when this file is imported in main.py
 from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
@@ -10,11 +9,11 @@ from Preprocessing.preprocessing import tab_txt_to_csv, delete_header, rename_da
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
 
-def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs):
-    features_df = []
+def extractAllFeatures(datasets, datasetsLabel, window_length_sec, fs, Norm_Accel):
     windowLabel = []
     all_window_features = []
     windowSum = 0
+    window_length = window_length_sec * fs
     
     # Renames data inside Datafiles/xxx folder
 
@@ -27,8 +26,8 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs):
         df = pd.read_csv(name+".csv")
 
         ''' REMOVE 10 SECONDS '''
-        df.drop(df.index[:Fs*10]) # Drop everything before 10 seconds
-        df.drop(df.index[Fs*10:]) # Drop everything after 10 seconds
+        df.drop(df.index[:fs*10]) # Drop everything before 10 seconds
+        df.drop(df.index[fs*10:]) # Drop everything after 10 seconds
 
         # 1, 2, 4, 5, or 10 data points must be selected
         time_data   = df["Timestamp"]  # Timedata, only used to measure amount of samples
@@ -55,7 +54,7 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs):
         num_samples = len(time_data) # Number of measurements
         
         ''' LOAD WINDOWS '''
-        num_windows = num_samples // WindowLength # Rounds down when deciding numbers
+        num_windows = num_samples // window_length # Rounds down when deciding numbers
         print(f"Number of IMU windows in {name} after cut: {num_windows}")
         windowSum += num_windows
         
@@ -63,8 +62,8 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs):
         for j in range(0, num_windows):
             
             # Define the start and end index for the window
-            start_idx = j * WindowLength
-            end_idx = start_idx + WindowLength
+            start_idx = j * window_length
+            end_idx = start_idx + window_length
             # print(f"Getting features from window {start_idx} to {end_idx}")  
                     
             # Windowing the signals
@@ -101,14 +100,14 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs):
 
                 # Get frequency features (Welch's method)
                 # 10 columns, 4 Frequency domain features each = 40 elements
-                window_features_accel_Norm_Freq = get_Freq_Domain_features_of_signal(window_accel_Norm, "accel_Norm", Fs)
-                window_features_gyro_X_Freq     = get_Freq_Domain_features_of_signal(window_gyro_X, "gyro_X", Fs)
-                window_features_gyro_Y_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Y, "gyro_Y", Fs)
-                window_features_gyro_Z_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Z, "gyro_Z", Fs)
-                window_features_mag_X_Freq      = get_Freq_Domain_features_of_signal(window_mag_X, "mag_X", Fs)
-                window_features_mag_Y_Freq      = get_Freq_Domain_features_of_signal(window_mag_Y, "mag_Y", Fs)
-                window_features_mag_Z_Freq      = get_Freq_Domain_features_of_signal(window_mag_Z, "mag_Z", Fs)
-                # window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", Fs)
+                window_features_accel_Norm_Freq = get_Freq_Domain_features_of_signal(window_accel_Norm, "accel_Norm", fs)
+                window_features_gyro_X_Freq     = get_Freq_Domain_features_of_signal(window_gyro_X, "gyro_X", fs)
+                window_features_gyro_Y_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Y, "gyro_Y", fs)
+                window_features_gyro_Z_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Z, "gyro_Z", fs)
+                window_features_mag_X_Freq      = get_Freq_Domain_features_of_signal(window_mag_X, "mag_X", fs)
+                window_features_mag_Y_Freq      = get_Freq_Domain_features_of_signal(window_mag_Y, "mag_Y", fs)
+                window_features_mag_Z_Freq      = get_Freq_Domain_features_of_signal(window_mag_Z, "mag_Z", fs)
+                # window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", fs)
 
 
                 ## merge all
@@ -155,16 +154,16 @@ def extractAllFeatures(datasets, datasetsLabel, WindowLength, Norm_Accel, Fs):
                 
                 # Get frequency features from Welch's method
                 # 10 columns, 4 Frequency domain features each = 40 elements
-                window_features_accel_X_Freq    = get_Freq_Domain_features_of_signal(window_accel_X, "accel_X", Fs)
-                window_features_accel_Y_Freq    = get_Freq_Domain_features_of_signal(window_accel_Y, "accel_Y", Fs)
-                window_features_accel_Z_Freq    = get_Freq_Domain_features_of_signal(window_accel_Z, "accel_Z", Fs)
-                window_features_gyro_X_Freq     = get_Freq_Domain_features_of_signal(window_gyro_X, "gyro_X", Fs)
-                window_features_gyro_Y_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Y, "gyro_Y", Fs)
-                window_features_gyro_Z_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Z, "gyro_Z", Fs)
-                window_features_mag_X_Freq      = get_Freq_Domain_features_of_signal(window_mag_X, "mag_X", Fs)
-                window_features_mag_Y_Freq      = get_Freq_Domain_features_of_signal(window_mag_Y, "mag_Y", Fs)
-                window_features_mag_Z_Freq      = get_Freq_Domain_features_of_signal(window_mag_Z, "mag_Z", Fs)
-                # window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", Fs)
+                window_features_accel_X_Freq    = get_Freq_Domain_features_of_signal(window_accel_X, "accel_X", fs)
+                window_features_accel_Y_Freq    = get_Freq_Domain_features_of_signal(window_accel_Y, "accel_Y", fs)
+                window_features_accel_Z_Freq    = get_Freq_Domain_features_of_signal(window_accel_Z, "accel_Z", fs)
+                window_features_gyro_X_Freq     = get_Freq_Domain_features_of_signal(window_gyro_X, "gyro_X", fs)
+                window_features_gyro_Y_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Y, "gyro_Y", fs)
+                window_features_gyro_Z_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Z, "gyro_Z", fs)
+                window_features_mag_X_Freq      = get_Freq_Domain_features_of_signal(window_mag_X, "mag_X", fs)
+                window_features_mag_Y_Freq      = get_Freq_Domain_features_of_signal(window_mag_Y, "mag_Y", fs)
+                window_features_mag_Z_Freq      = get_Freq_Domain_features_of_signal(window_mag_Z, "mag_Z", fs)
+                # window_features_temp_Freq       = get_Freq_Domain_features_of_signal(window_temp, "temp", fs)
 
 
                 # Merge all

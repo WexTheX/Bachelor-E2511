@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split, KFold, StratifiedKFold, Gr
 from sklearn.decomposition import PCA
 from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 from plotting import biplot
 
@@ -387,3 +388,9 @@ def makeRFClassifier(method, base_estimator, num_folds, param_grid, PCA_train_df
   print(f"RF optimized and fitted using {method} in {elapsed_time} seconds")
 
   return clf
+
+def makeKNNClassifier(df, labels):
+  neight = KNeighborsClassifier(n_neighbors=3)
+  neight.fit(df, labels)
+  
+  return neight

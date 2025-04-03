@@ -18,19 +18,17 @@ from sklearn.ensemble import RandomForestClassifier
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier
+from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier
 from plotting import biplot
 from Preprocessing.preprocessing import fillSets, downsample
 
 
-
-
 ''' GLOBAL VARIABLES '''
 
-want_feature_extraction = 1
+want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
-ML_models = ["SVM", "RF"]
+ML_models = ["SVM", "RF", "KNN"]
 ML_model = "SVM"
 accuracy_list = []
 
@@ -207,6 +205,8 @@ optimization_methods = ['ManualGridSearchCV', 'RandomizedSearchCV', 'GridSearchC
 
 classifiers = []
 best_clf_params = []
+
+print(f"Using {ML_model} classifier")
 if (ML_model == "SVM"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
@@ -217,28 +217,16 @@ elif (ML_model == "RF"):
         t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
         classifiers.append(t_clf)
         # best_clf_params.append(t_best_clf_params)
-
-# clf1, clf1_best_params = makeSVMClassifier(optimization_methods[0], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-# clf2, clf2_best_params = makeSVMClassifier(optimization_methods[1], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-# clf3, clf3_best_params = makeSVMClassifier(optimization_methods[2], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-# clf4, clf4_best_params = makeSVMClassifier(optimization_methods[3], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-
-# models = (clf1, clf2, clf3, clf4)
-# titles = (
-#     clf1_best_params,
-#     clf2_best_params,
-#     clf3_best_params,
-#     clf4_best_params )
+elif (ML_model == "KNN"):
+    t_clf = makeKNNClassifier(PCA_train_df, train_labels)
+    classifiers.append(t_clf)
 
 models = tuple(classifiers)
 titles = tuple(best_clf_params)
 
-clf_dict = {
-    optimization_methods[0]: models[0],
-    optimization_methods[1]: models[1],
-    optimization_methods[2]: models[2],
-    optimization_methods[3]: models[3]
-    }
+clf_dict = {}
+for i, model in enumerate(models):
+    clf_dict[optimization_methods[i]] = model
 
 ''' EVALUATION '''
 

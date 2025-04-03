@@ -14,11 +14,12 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier
+from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier
 from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, new_biplot
 from Preprocessing.preprocessing import fillSets, downsample
 
@@ -27,9 +28,10 @@ from Preprocessing.preprocessing import fillSets, downsample
 ''' GLOBAL VARIABLES '''
 
 want_feature_extraction = 0
+want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
-ML_models = ["SVM", "RF"]
+ML_models = ["SVM", "RF", "KNN"]
 ML_model = "SVM"
 accuracy_list = []
 
@@ -40,7 +42,7 @@ randomness = 181
 window_length_seconds = 15
 split_value = 0.75
 fs = 800
-ds_fs = 200
+ds_fs = 800
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
@@ -72,6 +74,17 @@ hyperparams_RF = {
     # 'bootstrap': [True, False],  # Whether to use bootstrapped samples
     'criterion': ['gini', 'entropy']  # Splitting criteria
 }
+
+hyperparams_KNN = {
+    'algorithm': ['ball_tree', 'kd_tree', 'brute'], 
+    # 'leaf_size': [30], 
+    # 'metric': 'minkowski', 
+    # 'metric_params': None, 
+    # 'n_jobs': None, 
+    'n_neighbors': [3, 4, 5], 
+    'p': [1, 2], 
+    'weights': ['uniform', 'distance']
+    }
 
 ''' USER INPUTS '''
 
@@ -125,7 +138,9 @@ if (want_feature_extraction):
         print(f"Extracting files from file: {file}")
         fe_df = extractDFfromFile(file, fs)
 
-        # ds_fe_df = downsample(fe_df, fs, ds_fs)
+        if(ds_fs != fs):
+            fe_df = downsample(fe_df, fs, ds_fs)
+        
         
         window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
@@ -185,6 +200,7 @@ optimization_methods = ['ManualGridSearchCV', 'RandomizedSearchCV', 'GridSearchC
 classifiers = []
 best_clf_params = []
 
+print(f"Using {ML_model} classifier")
 if (ML_model == "SVM"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
@@ -195,28 +211,18 @@ elif (ML_model == "RF"):
         t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
         classifiers.append(t_clf)
         # best_clf_params.append(t_best_clf_params)
-
-# clf1, clf1_best_params = makeSVMClassifier(optimization_methods[0], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-# clf2, clf2_best_params = makeSVMClassifier(optimization_methods[1], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-# clf3, clf3_best_params = makeSVMClassifier(optimization_methods[2], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-# clf4, clf4_best_params = makeSVMClassifier(optimization_methods[3], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-
-# models = (clf1, clf2, clf3, clf4)
-# titles = (
-#     clf1_best_params,
-#     clf2_best_params,
-#     clf3_best_params,
-#     clf4_best_params )
+elif (ML_model == "KNN"):
+    for method in optimization_methods:
+        t_clf, t_best_clf_params = makeKNNClassifier(method, PCA_train_df, train_labels, hyperparams_KNN, num_folds)
+        classifiers.append(t_clf)
+        best_clf_params.append(t_best_clf_params)
 
 models = tuple(classifiers)
 titles = tuple(best_clf_params)
 
-clf_dict = {
-    optimization_methods[0]: models[0],
-    optimization_methods[1]: models[1],
-    optimization_methods[2]: models[2],
-    optimization_methods[3]: models[3]
-    }
+clf_dict = {}
+for i, model in enumerate(models):
+    clf_dict[optimization_methods[i]] = model
 
 ''' EVALUATION '''
 

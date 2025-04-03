@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split, KFold, StratifiedKFold, Gr
 from sklearn.decomposition import PCA
 from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 from plotting import biplot
 
@@ -387,3 +388,78 @@ def makeRFClassifier(method, base_estimator, num_folds, param_grid, PCA_train_df
   print(f"RF optimized and fitted using {method} in {elapsed_time} seconds")
 
   return clf
+
+def makeKNNClassifier(method, df, labels, hyperparam_dict, num_folds):
+    start_time = time.time()
+
+    if method.lower() == 'gridsearchcv':
+        print(f"Using GridSearchCV from sklearn to find best RF hyperparams")
+        
+        clf = GridSearchCV(
+            estimator=KNeighborsClassifier(),
+            param_grid=hyperparam_dict,
+            cv=num_folds,
+            n_jobs=-1
+            ) 
+        
+        clf.fit(df, labels)
+        clf_best_params = clf.best_params_
+
+        end_time = time.time()  # End timer
+        elapsed_time = end_time - start_time
+
+        print(f"Used {method} to find the best model in {elapsed_time} seconds")
+        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+        print(f"\n")
+
+    elif method.lower() == 'halvinggridsearchcv':
+        print(f"Using HalvingGridSearchCV from sklearn to find best RF hyperparams")
+        
+        clf = HalvingGridSearchCV(
+            estimator=KNeighborsClassifier(),
+            param_grid=hyperparam_dict,
+            cv=num_folds,
+            n_jobs=-1
+            ) 
+        
+        clf.fit(df, labels)
+        clf_best_params = clf.best_params_
+
+        end_time = time.time()  # End timer
+        elapsed_time = end_time - start_time
+
+        print(f"Used {method} to find the best model in {elapsed_time} seconds")
+        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+        print(f"\n")
+
+    elif method.lower() == 'randomizedsearchcv':
+        print(f"Using RandomizedSearchCV from sklearn to find best RF hyperparams")
+        
+        clf = RandomizedSearchCV(
+            estimator = KNeighborsClassifier(),
+            param_distributions = hyperparam_dict,
+            n_iter = 30,
+            scoring = 'accuracy',
+            cv = num_folds,
+            verbose = 0,
+            n_jobs = -1
+            )
+        
+        clf.fit(df, labels)
+        clf_best_params = clf.best_params_
+
+        end_time = time.time()  # End timer
+        elapsed_time = end_time - start_time
+
+        print(f"Used {method} to find the best model in {elapsed_time} seconds")
+        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+        print(f"\n")
+
+    else:
+        print("No optimizer selected, using default with 3 neighbors")
+        clf = KNeighborsClassifier(n_neighbors=3)
+        clf.fit(df, labels)
+
+        clf_best_params = {"n_neighbors": 3}
+    
+    return clf, clf_best_params

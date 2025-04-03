@@ -28,7 +28,6 @@ from Preprocessing.preprocessing import fillSets, downsample
 ''' GLOBAL VARIABLES '''
 
 want_feature_extraction = 0
-want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN"]
@@ -37,9 +36,9 @@ accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.4
-randomness = 181
-window_length_seconds = 15
+variance_explained = 0.90
+randomness = 123
+window_length_seconds = 20
 split_value = 0.75
 fs = 800
 ds_fs = 800
@@ -52,17 +51,18 @@ base_params =  {'class_weight': 'balanced',
 
 SVM_base = svm.SVC(**base_params)
 RF_base = RandomForestClassifier(**base_params)
+KNN_base = KNeighborsClassifier()
 
 ''' HYPER PARAMETER VARIABLES '''
 
 num_folds = 3
 
 hyperparams_SVM = {
-    "C": [0.001, 0.01],
+    "C": [0.001, 0.01, 0.1, 1, 10, 100],
     "kernel": ["linear", "poly", "rbf", "sigmoid"],
-    "gamma": [0.1, 1],
-    "coef0": [0, 1],
-    "degree": [2, 3]
+    "gamma": [0.01, 0.1, 1, 10, 100],
+    "coef0": [0, 0.5, 1],
+    "degree": [2, 3, 4, 5]
 }
 
 hyperparams_RF = {
@@ -195,22 +195,25 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 # comment out here + in clf_dict to remove 
 
-optimization_methods = ['ManualGridSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
+optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
 
 classifiers = []
 best_clf_params = []
 
 print(f"Using {ML_model} classifier")
+
 if (ML_model == "SVM"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
+
 elif (ML_model == "RF"):
     for method in optimization_methods:
         t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
         classifiers.append(t_clf)
         # best_clf_params.append(t_best_clf_params)
+
 elif (ML_model == "KNN"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeKNNClassifier(method, PCA_train_df, train_labels, hyperparams_KNN, num_folds)

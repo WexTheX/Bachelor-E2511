@@ -192,7 +192,6 @@ def PCA_table_plot(X, n_components):
     
     loadings = PCA_object.components_.T * np.sqrt(PCA_object.explained_variance_)
     loadings_percantage = (loadings - np.min(loadings)) / (np.max(loadings) - np.min(loadings))
-    print(loadings_percantage)
 
     print(f"Total amount of features: {len(X.columns)}")
 
@@ -232,10 +231,12 @@ def new_biplot(train_data_scaled, train_labels, separate_types):
   if(separate_types):
     label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
                     'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
+                    'IMPA': (0.5, 0.5, 0.5), 
                     'SANDSIM': (0.0, 1.0, 0.0), 
                     'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
+
   else:
-    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
 
   # y_labels = np.array(train_labels)
   mappedLabels = np.array([label_mapping[label] for label in train_labels])
@@ -252,12 +253,13 @@ def plot_SVM_boundaries(X, train_labels, separate_types,
   if models[0].n_features_in_ == 2:
 
     if(separate_types):
-      label_mapping = {'IDLE': (0.0, 0.0, 0.0), 
-                      'GRINDBIG': (1.0, 0.0, 0.0), 'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
-                      'SANDSIM': (0.0, 1.0, 0.0), 
-                      'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
+      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
+                    'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
+                    'IMPA': (0.5, 0.5, 0.5), 
+                    'SANDSIM': (0.0, 1.0, 0.0), 
+                    'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
     else:
-      label_mapping = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+      label_mapping = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
 
     mapped_labels = np.array([label_mapping[label] for label in train_labels])
 

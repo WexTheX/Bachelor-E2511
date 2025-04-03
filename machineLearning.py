@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import time
 
 from skopt import BayesSearchCV
+from skopt.space import Real, Categorical, Integer
 from sklearn.preprocessing import StandardScaler
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import train_test_split, KFold, StratifiedKFold, GridSearchCV, HalvingGridSearchCV, RandomizedSearchCV
@@ -50,7 +51,7 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
     
     return n_components
 
-def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types):
+def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types):
     
     # Unpack dictionary into lists
     C_list, kernel_types, gamma_list, coef0_list, deg_list = [list(values) for values in hyperparams_dict.values()]
@@ -205,8 +206,6 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
       # print(f"Best combination of hyperparameters (C, kernel, gamma, coef0, degree): {hyperparams_list[best_param_test]}")
       # ''' Ser en del endringer ble gjort, legger denne her for nå, kan slettes '''
 
-      if(want_plots):
-        plt.show()
 
       clf_best_params = {
           "C": C_list[multi_dim_index[0]],
@@ -223,7 +222,6 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
 
       end_time = time.time()  # End timer
       elapsed_time = end_time - start_time
-      
       
       print(f"Using ManualGridSearch to find best hyperparams: {clf_best_params}")  
       print(f"Used {method} to find the best model in {elapsed_time} seconds")
@@ -280,6 +278,14 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
     elif method.lower() == 'bayessearchcv':
       
       print(f"Using BayesSearchCV from scikit optimize to find best hyperparams")
+
+      hyperparams_space = {
+        "C": Real(hyperparams_dict['C'][0], hyperparams_dict['C'][-1], prior="log-uniform"),  # Continuous log-scale for C
+        "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
+        "gamma": Real(hyperparams_dict['gamma'][0], hyperparams_dict['gamma'][-1], prior="log-uniform"),  # Log-uniform scale for gamma
+        "coef0": Real(hyperparams_dict['coef0'][0], hyperparams_dict['coef0'][-1]),
+        "degree": Integer(hyperparams_dict['degree'][0], hyperparams_dict['degree'][-1])
+      }
 
       clf = BayesSearchCV(
             estimator = base_estimator,

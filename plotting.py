@@ -74,9 +74,9 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models, optimiza
 
     if(separate_types):
       label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (0.6, 0.0, 0.0), 'GRINDSMALL': (0.3, 0.0, 0.0),
+                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
                        'SANDSIM': (0.0, 1.0, 0.0), 
-                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.0, 0.0, 0.6), 'WELDSTTIG': (0.0, 0.0, 0.3)}
+                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
     else:
       label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
 
@@ -138,9 +138,9 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models, optimiza
     ax = fig.add_subplot(111, projection='3d')
     if (separate_types):
       label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (0.6, 0.0, 0.0), 'GRINDSMALL': (0.3, 0.0, 0.0),
+                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
                        'SANDSIM': (0.0, 1.0, 0.0), 
-                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.0, 0.0, 0.6), 'WELDSTTIG': (0.0, 0.0, 0.3)}
+                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
     else:
       label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
     y_labels = np.array(trainLabels)

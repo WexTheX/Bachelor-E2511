@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 
-from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.inspection import DecisionBoundaryDisplay, permutation_importance
 from skopt.space import Real, Categorical, Integer
 from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -31,14 +31,14 @@ from sklearn.ensemble import RandomForestClassifier
 
 want_feature_extraction = 0
 separate_types = 1
-want_plots = 0
+want_plots = 1
 ML_models = ["SVM", "RF"]
-ML_models = 0
+ML_model = "SVM"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.4
+variance_explained = 0.9
 randomness = 181
 window_length_seconds = 15
 split_value = 0.75
@@ -60,7 +60,7 @@ num_folds = 3
 hyperparams_SVM = {
     "C": [0.001, 0.01, 0.1, 1],
     "kernel": ["linear", "poly", "rbf", "sigmoid"],
-    "gamma": [1],
+    "gamma": [0.1, 1, 10],
     "coef0": [0, 0.5, 1],
     "degree": [2, 3]
 }
@@ -81,13 +81,13 @@ hyperparams_SVM = {
 #     "degree": [2, 3, 4, 5]
 # }
 
-hyperparams_SVM_space = {
-    "C": Real(1e-3, 1e3, prior="log-uniform"),  # Continuous log-scale for C
-    "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
-    "gamma": Real(1e-3, 1e2, prior="log-uniform"),  # Log-uniform scale for gamma
-    "coef0": Real(0, 1),
-    "degree": Integer(2, 5)
-}
+# hyperparams_SVM_space = {
+#     "C": Real(1e-3, 1e3, prior="log-uniform"),  # Continuous log-scale for C
+#     "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
+#     "gamma": Real(1e-3, 1e2, prior="log-uniform"),  # Log-uniform scale for gamma
+#     "coef0": Real(0, 1),
+#     "degree": Integer(2, 5)
+# }
 
 hyperparams_RF = {
     'n_estimators': [50, 100, 200],  # Number of trees in the forest
@@ -102,22 +102,19 @@ hyperparams_RF = {
 ''' USER INPUTS '''
 
 # answer_FE = input("Do you want feature extraction? (Y | N) (Default N)")
-# if(answer_FE == "Y"):
+# if(answer_FE.upper() == "Y"):
 #     want_feature_extraction = True
 
-# if(answer_FE):
-#     answer_ST = input("Do you want to separate by type (TIG and MIG vs only welding)? (Y | N) (Default N)")
-# if(answer_ST == "Y"):
+# answer_ST = input("Do you want to separate by type (TIG and MIG vs only welding)? (Y | N) (Default N)")
+# if(answer_ST.upper() == "Y"):
 #     separate_types = True
 
-
-
 # answer_ML = input(f"Choose ML model (Default SVM): {ML_models}.")
-# if(answer_ML = "RF"):
-#     ML_model = ML_models[0]
+# if(answer_ML.upper() = "RF"):
+#     ML_model = ML_models[1]
 
 # answer_plot = input("Do you want plots? (Y | N) (Default N)")
-# if(answer_plot == "Y"):
+# if(answer_plot.upper() == "Y"):
 #     want_plots = True
 
 
@@ -183,23 +180,39 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 optimization_methods = ['ManualGridSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
 
-clf1, clf1_best_params = makeSVMClassifier(optimization_methods[0], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf2, clf2_best_params = makeSVMClassifier(optimization_methods[1], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf3, clf3_best_params = makeSVMClassifier(optimization_methods[2], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf4, clf4_best_params = makeSVMClassifier(optimization_methods[3], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+classifiers = []
+best_clf_params = []
+if (ML_model == "SVM"):
+    for method in optimization_methods:
+        t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+        classifiers.append(t_clf)
+        best_clf_params.append(t_best_clf_params)
+elif (ML_model == "RF"):
+    for method in optimization_methods:
+        t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
+        classifiers.append(t_clf)
+        # best_clf_params.append(t_best_clf_params)
 
-models = (clf1, clf2, clf3, clf4)
-titles = (
-    clf1_best_params,
-    clf2_best_params,
-    clf3_best_params,
-    clf4_best_params )
+# clf1, clf1_best_params = makeSVMClassifier(optimization_methods[0], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+# clf2, clf2_best_params = makeSVMClassifier(optimization_methods[1], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+# clf3, clf3_best_params = makeSVMClassifier(optimization_methods[2], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+# clf4, clf4_best_params = makeSVMClassifier(optimization_methods[3], SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+
+# models = (clf1, clf2, clf3, clf4)
+# titles = (
+#     clf1_best_params,
+#     clf2_best_params,
+#     clf3_best_params,
+#     clf4_best_params )
+
+models = tuple(classifiers)
+titles = tuple(best_clf_params)
 
 clf_dict = {
-    optimization_methods[0]: clf1,
-    optimization_methods[1]: clf2,
-    optimization_methods[2]: clf3,
-    optimization_methods[3]: clf4
+    optimization_methods[0]: models[0],
+    optimization_methods[1]: models[1],
+    optimization_methods[2]: models[2],
+    optimization_methods[3]: models[3]
     }
 
 ''' EVALUATION '''
@@ -230,6 +243,8 @@ print("Baseline Accuracy (Dummy Classifier):", dummy_score)
 print(accuracy_list)
 
 if(want_plots):
+    ''' FEATURE IMPORTANCE '''
+
 
     # # Set-up 2x2 grid for plotting.
     # fig, sub = plt.subplots(2, 2)

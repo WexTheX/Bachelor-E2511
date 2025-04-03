@@ -41,7 +41,7 @@ randomness = 181
 window_length_seconds = 15
 split_value = 0.75
 fs = 800
-ds_fs = 200
+ds_fs = 800
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
@@ -150,7 +150,9 @@ if (want_feature_extraction):
         print(f"Extracting files from file: {file}")
         fe_df = extractDFfromFile(file, fs)
 
-        # ds_fe_df = downsample(fe_df, fs, ds_fs)
+        if(ds_fs != fs):
+            fe_df = downsample(fe_df, fs, ds_fs)
+        
         
         window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 

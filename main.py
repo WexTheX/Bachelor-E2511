@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 # Local imports
 # from FOLDER import FILE as F
@@ -95,6 +96,17 @@ hyperparams_RF = {
     # 'bootstrap': [True, False],  # Whether to use bootstrapped samples
     'criterion': ['gini', 'entropy']  # Splitting criteria
 }
+
+hyperparams_KNN = {
+    'algorithm': ['ball_tree', 'kd_tree', 'brute'], 
+    # 'leaf_size': [30], 
+    # 'metric': 'minkowski', 
+    # 'metric_params': None, 
+    # 'n_jobs': None, 
+    'n_neighbors': [3, 4, 5], 
+    'p': [1, 2], 
+    'weights': ['uniform', 'distance']
+    }
 
 ''' USER INPUTS '''
 
@@ -218,8 +230,10 @@ elif (ML_model == "RF"):
         classifiers.append(t_clf)
         # best_clf_params.append(t_best_clf_params)
 elif (ML_model == "KNN"):
-    t_clf = makeKNNClassifier(PCA_train_df, train_labels)
-    classifiers.append(t_clf)
+    for method in optimization_methods:
+        t_clf, t_best_clf_params = makeKNNClassifier(method, PCA_train_df, train_labels, hyperparams_KNN, num_folds)
+        classifiers.append(t_clf)
+        best_clf_params.append(t_best_clf_params)
 
 models = tuple(classifiers)
 titles = tuple(best_clf_params)

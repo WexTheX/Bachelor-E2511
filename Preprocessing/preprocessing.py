@@ -48,7 +48,13 @@ def rename_data(path, path_names, activity_name):
 
     print("Namechanges completed!")
 
-def fillSets(path, path_names, activity_name, seperate_types):
+def tab_txt_to_csv(txt_file, csv_file):
+    # Convert tab seperated txt file to csv file
+    # txt_file, csv_file format : "filename.txt", "filename.csv"
+    df_txt = pd.read_csv(txt_file, delimiter=r'\t', engine='python') # Delimiter is now all whitespace (tab and space etc)
+    df_txt.to_csv(csv_file, index = None)
+
+def fillSets(path, path_names, activity_name):
     
     rename_data(path, path_names, activity_name)
 
@@ -67,6 +73,7 @@ def fillSets(path, path_names, activity_name, seperate_types):
         for f in os.listdir(folder_path):
             if f.endswith(".bin") and not f.startswith(activity_name[i]):
                 convert_bin_to_txt(os.path.join(folder_path, f))
+
         txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt") and os.path.isfile(os.path.join(folder_path, f))]
         
         
@@ -196,9 +203,3 @@ def delete_header(path):
     # Write only the lines after "Timestamp" back to the file
     with open(file_path, "w") as f:
         f.writelines(lines_to_keep)
-
-def tab_txt_to_csv(txt_file, csv_file):
-    # Convert tab seperated txt file to csv file
-    # txt_file, csv_file format : "filename.txt", "filename.csv"
-    df_txt = pd.read_csv(txt_file, delimiter=r'\t', engine='python') # Delimiter is now all whitespace (tab and space etc)
-    df_txt.to_csv(csv_file, index = None)

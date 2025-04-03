@@ -17,7 +17,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, Gri
 
 # Local imports
 # from FOLDER import FILE as F
-from extractFeatures import extractAllFeatures
+from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier
 from plotting import plotWelch, biplot
 from SignalProcessing import ExtractIMU_Features as IMU_F
@@ -29,7 +29,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 ''' GLOBAL VARIABLES '''
 
-want_feature_extraction = 0
+want_feature_extraction = 1
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF"]
@@ -133,7 +133,7 @@ else:
 path_names = os.listdir(path)
 activity_name = [name.upper() for name in path_names]
 
-sets, sets_labels = fillSets(path, path_names, activity_name, separate_types)
+sets, sets_labels = fillSets(path, path_names, activity_name)
 # print(f"Content of sets: \n {sets}")
 # print(f"Content of sets_labels: \n {sets_labels}")
 
@@ -143,7 +143,28 @@ sets, sets_labels = fillSets(path, path_names, activity_name, separate_types)
 if (want_feature_extraction):
     # Create dataframe "feature_df" containing all features deemed relevant from the raw sensor data
     # One row in feature_df is all features from one window
-    feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds*Fs, False, 800)
+    all_window_features = []
+    window_labels = []
+    start_time = time.time()
+    
+    for i, file in enumerate(sets):
+        print(f"Extracting files from file: {file}")
+        fe_df = extractDFfromFile(file, Fs)
+        window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, Fs, False)
+
+        all_window_features = all_window_features + window_df
+        window_labels = window_labels + df_window_labels
+        print(f"Total number of windows: {len(window_labels)}")
+
+    feature_df = pd.DataFrame(all_window_features)
+    print(feature_df)
+
+    # feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds*Fs, False, 800)
+
+    end_time = time.time()  # End timer
+    elapsed_time = end_time - start_time
+    print(f"Features extracted in {elapsed_time} seconds")
+        
     feature_df.to_csv(output_path+"feature_df.csv", index=False)
     with open(output_path+"window_labels.txt", "w") as fp:
         for item in window_labels:
@@ -302,7 +323,7 @@ if(want_plots):
         PCA_total_part = total_data_scaled[PCA_total_columns_part]
         PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
         
-        # biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, clf1)
+        biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, models, optimization_methods, titles, accuracy_list)
 
 
     # Plot 2D plot of PC's regardless of how many components are in the model

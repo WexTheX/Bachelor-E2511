@@ -19,15 +19,14 @@ from sklearn.ensemble import RandomForestClassifier
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier
-from plotting import biplot
+from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, new_biplot
 from Preprocessing.preprocessing import fillSets, downsample
-
 
 
 
 ''' GLOBAL VARIABLES '''
 
-want_feature_extraction = 1
+want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF"]
@@ -36,7 +35,7 @@ accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.9
+variance_explained = 0.4
 randomness = 181
 window_length_seconds = 15
 split_value = 0.75
@@ -57,36 +56,12 @@ RF_base = RandomForestClassifier(**base_params)
 num_folds = 3
 
 hyperparams_SVM = {
-    "C": [0.001, 0.01, 0.1, 1],
+    "C": [0.001, 0.01],
     "kernel": ["linear", "poly", "rbf", "sigmoid"],
-    "gamma": [0.1, 1, 10],
-    "coef0": [0, 0.5, 1],
+    "gamma": [0.1, 1],
+    "coef0": [0, 1],
     "degree": [2, 3]
 }
-
-# hyperparams_SVM_space = {
-#     # "C": Categorical(1),  # Continuous log-scale for C
-#     # "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
-#     # "gamma": Categorical(1),  # Log-uniform scale for gamma
-#     # "coef0": Categorical(1),
-#     # "degree": Categorical(2)
-# }
-
-# hyperparams_SVM = {
-#     "C": [0.001, 0.01, 0.1, 1, 10, 100, 1000],
-#     "kernel": ["linear", "poly", "rbf", "sigmoid"],
-#     "gamma": [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2],
-#     "coef0": [0, 0.5, 1],
-#     "degree": [2, 3, 4, 5]
-# }
-
-# hyperparams_SVM_space = {
-#     "C": Real(1e-3, 1e3, prior="log-uniform"),  # Continuous log-scale for C
-#     "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
-#     "gamma": Real(1e-3, 1e2, prior="log-uniform"),  # Log-uniform scale for gamma
-#     "coef0": Real(0, 1),
-#     "degree": Integer(2, 5)
-# }
 
 hyperparams_RF = {
     'n_estimators': [50, 100, 200],  # Number of trees in the forest
@@ -185,12 +160,16 @@ if "feature_df" not in globals():
 ''' SPLITTING TEST/TRAIN + SCALING'''
 train_data, test_data, train_labels, test_labels = splitData(feature_df, window_labels, randomness, split_value)
 
+total_data_scaled = scaleFeatures(feature_df)
 train_data_scaled = scaleFeatures(train_data)
 test_data_scaled = scaleFeatures(test_data)
 
 
 ''' Principal Component Analysis (PCA)'''
+# Decide nr of PCA components
 PCA_components = setNComponents(train_data_scaled, variance_explained=variance_explained)
+
+# Create PCA object for N components found by variance_explained
 PCA_final = PCA(n_components = PCA_components)
 
 PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
@@ -205,6 +184,7 @@ optimization_methods = ['ManualGridSearchCV', 'RandomizedSearchCV', 'GridSearchC
 
 classifiers = []
 best_clf_params = []
+
 if (ML_model == "SVM"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
@@ -270,24 +250,39 @@ if(want_plots):
 
     ''' PCA CHECK '''
     # print("Printing PCA compontents for entire set")
-    total_data_scaled = pd.DataFrame(scaleFeatures(feature_df))
-    PCA_plot = PCA(n_components = 5)
-    print(f"Total amount of features: {len(total_data_scaled.columns)}")
 
-    # Displays tables for how much each feature is contributing to PC1-5
-    for i in range(len(total_data_scaled.columns) // 34):
-        PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
-        # print(f"List of columns: {PCA_total_columns_part}")
+    # PCA_plot = PCA(n_components = 5)
 
-        PCA_total_part = total_data_scaled[PCA_total_columns_part]
-        PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
+    # print(f"Total amount of features: {len(total_data_scaled.columns)}")
+
+
+
+    # # Displays tables for how much each feature is contributing to PC1-5
+    # for i in range(len(total_data_scaled.columns) // 34):
+
+    #     PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
+    #     # print(f"List of columns: {PCA_total_columns_part}")
+
+    #     PCA_total_part = total_data_scaled[PCA_total_columns_part]
+    #     PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
         
-        biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, models, optimization_methods, titles, accuracy_list)
+    #     biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, models, optimization_methods, titles, accuracy_list)
+        
+
+
+    PCA_table_plot(total_data_scaled, 5) 
+
+    new_biplot(total_data_scaled, window_labels, separate_types)
+
+    plot_SVM_boundaries(PCA_train_df, train_labels, separate_types,
+                         models, optimization_methods, titles, accuracy_list)
+        
 
     ''' 2D/3D PLOT OF PCA '''
-    PCA_plot = PCA(n_components = 2)
-    PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
-    biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles, accuracy_list)
+    # PCA_plot = PCA(n_components = 2)
+    # PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
+
+    # biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles, accuracy_list)
 
     ''' CONFUSION MATRIX '''
     conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)

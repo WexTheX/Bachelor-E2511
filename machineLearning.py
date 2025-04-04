@@ -47,15 +47,16 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
     
     return n_components
 
-def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types):
+def makeSVMClassifier(method, base_estimator, num_folds, param_grid, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types):
     
     # Unpack dictionary into lists
-    C_list, kernel_types, gamma_list, coef0_list, deg_list = [list(values) for values in hyperparams_dict.values()]
-    hyperparams_list = []
+    C_list, kernel_types, gamma_list, coef0_list, deg_list = [list(values) for values in param_grid.values()]
 
     start_time = time.time()
 
     if method.lower() == 'manualgridsearchcv':
+
+      hyperparams_list = []
 
       # Initialize arrays for evaluating score = (mean - std)
       metrics_matrix = np.zeros( (num_folds, len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
@@ -230,7 +231,7 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_
 
       clf = GridSearchCV(
             estimator = base_estimator,
-            param_grid = hyperparams_dict,
+            param_grid = param_grid,
             scoring = 'accuracy',
             cv = num_folds, 
             verbose = 0,
@@ -255,7 +256,7 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_
 
       clf = HalvingGridSearchCV(
             estimator = base_estimator,
-            param_grid = hyperparams_dict,
+            param_grid = param_grid,
             factor = 2,
             scoring = 'accuracy',
             cv = num_folds,
@@ -280,11 +281,11 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_
       print(f"Using BayesSearchCV from scikit optimize to find best hyperparams")
 
       hyperparams_space = {
-        "C": Real(hyperparams_dict['C'][0], hyperparams_dict['C'][-1], prior="log-uniform"),  # Continuous log-scale for C
+        "C": Real(param_grid['C'][0], param_grid['C'][-1], prior="log-uniform"),  # Continuous log-scale for C
         "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
-        "gamma": Real(hyperparams_dict['gamma'][0], hyperparams_dict['gamma'][-1], prior="log-uniform"),  # Log-uniform scale for gamma
-        "coef0": Real(hyperparams_dict['coef0'][0], hyperparams_dict['coef0'][-1]),
-        "degree": Integer(hyperparams_dict['degree'][0], hyperparams_dict['degree'][-1])
+        "gamma": Real(param_grid['gamma'][0], param_grid['gamma'][-1], prior="log-uniform"),  # Log-uniform scale for gamma
+        "coef0": Real(param_grid['coef0'][0], param_grid['coef0'][-1]),
+        "degree": Integer(param_grid['degree'][0], param_grid['degree'][-1])
       }
 
       clf = BayesSearchCV(
@@ -315,7 +316,7 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_
 
       clf = RandomizedSearchCV(
             estimator = base_estimator,
-            param_distributions = hyperparams_dict,
+            param_distributions = param_grid,
             n_iter = 30,
             scoring = 'accuracy',
             cv = num_folds,

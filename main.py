@@ -31,7 +31,7 @@ want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB"]
-ML_model = "GNB"
+ML_model = "SVM"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
@@ -211,16 +211,19 @@ if (ML_model.upper() == "SVM"):
         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
+
 elif (ML_model.upper() == "RF"):
     for method in optimization_methods:
         t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
         classifiers.append(t_clf)
         # best_clf_params.append(t_best_clf_params)
+
 elif (ML_model.upper() == "KNN"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeKNNClassifier(method, PCA_train_df, train_labels, hyperparams_KNN, num_folds)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
+
 elif (ML_model.upper() == "GNB"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeGNBClassifier(method, PCA_train_df, train_labels, hyperparams_GNB, num_folds)

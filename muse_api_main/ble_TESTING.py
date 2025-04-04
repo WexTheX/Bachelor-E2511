@@ -48,15 +48,19 @@ async def data_notification_handler(sender: int, data: bytearray):
     tempData = Muse_Utils.DecodePacket(data[header_offset:], 0, stream_mode.value, gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity)
     # print data as: device_ID, axl_X, axl_Y, axl_Z, gyr_X, gyr_Y, gyr_Z
 
-    print("{0} {1} {2} {3} {4} {5} {6}".format(device_ID,tempData.axl[0],tempData.axl[1],tempData.axl[2],tempData.gyr[0],tempData.gyr[1],tempData.gyr[2]))
+    #print("{0} {1} {2} {3} {4} {5} {6}".format(device_ID,tempData.axl[0],tempData.axl[1],tempData.axl[2],tempData.gyr[0],tempData.gyr[1],tempData.gyr[2]))
     
     imu_features = [
-        tempData.axl[0], tempData.axl[1], tempData.axl[2],  # Accelerometer
-        tempData.gyr[0], tempData.gyr[1], tempData.gyr[2],  # Gyroscope
-        tempData.mag[0], tempData.mag[1], tempData.mag[2],  # Magnetometer
-        tempData.tp[0], tempData.tp[1],                     # Temperature pressure
-        tempData.light[0], tempData.light[1]                # Light (range, lum, irlum)
+        tempData.axl[0], tempData.axl[1], tempData.axl[2],                              # Accelerometer
+        tempData.gyr[0], tempData.gyr[1], tempData.gyr[2],                              # Gyroscope
+        tempData.mag[0], tempData.mag[1], tempData.mag[2],                              # Magnetometer
+        tempData.tp[0], tempData.tp[1],                                                 # Temperature pressure
+        tempData.light.range, tempData.light.lum_vis, tempData.light.lum_ir             # Light (range, lum, irlum)
     ]
+    
+    
+    print(imu_features)
+    
 
     return
 
@@ -88,7 +92,7 @@ async def main():
     myDev = None
     for d in devices:
         print(d)
-        if d.name == 'muse_v3':
+        if d.name == 'Muse_E2511_RED':
             myDev = d
     
 
@@ -109,18 +113,18 @@ async def main():
             # Get sensors full scales
             await client.write_gatt_char(CMD_UUID,Muse_Utils.Cmd_GetSensorsFullScale(),True)
             response = await client.read_gatt_char(CMD_UUID)
-            gyrConfig, axlConfig, magConfig, hdrConfig = Muse_Utils.Dec_SensorFullScales(CommandResponse(response))
+            gyrConfig, axlConfig, magConfig, hdrConfig = Muse_Utils.Dec_SensorsFullScales(CommandResponse(response))
 
             
             # Set up the command
-            stream_mode = MH.DataMode.DATA_MODE_IMU
+            stream_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT
             cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=True)
 
             # Start notify on data characteristic
             await client.start_notify(DATA_UUID, data_notification_handler)
 
             print("Start streaming")
-            # Start Streaming using the above configuration (direct streaming, IMU mode and Sampling Frequency = 25 Hz)
+            # Start Streaming using the above configuration (direct streaming, IMU mode and Sampling Frequency = 200 Hz)
             await client.write_gatt_char(CMD_UUID, cmd_stream, True)
             
             # Set streaming duration to 10 seconds

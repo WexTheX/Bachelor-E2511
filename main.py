@@ -12,7 +12,7 @@ from skopt.space import Real, Categorical, Integer
 from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
-from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, GridSearchCV
+from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -36,9 +36,10 @@ accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.40
-randomness = 123
+variance_explained = 0.90
+randomness = 12333
 window_length_seconds = 20
+test_size = 0.25
 test_size = 0.25
 fs = 800
 ds_fs = 800
@@ -176,7 +177,8 @@ if "feature_df" not in globals():
 
 
 ''' SPLITTING TEST/TRAIN + SCALING'''
-train_data, test_data, train_labels, test_labels = splitData(feature_df, window_labels, randomness, test_size)
+
+train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=randomness, stratify=window_labels)
 
 total_data_scaled = scaleFeatures(feature_df)
 train_data_scaled = scaleFeatures(train_data)
@@ -193,6 +195,10 @@ PCA_final = PCA(n_components = PCA_components)
 PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
 PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
+print("Length of PCA train, and then test")
+print(PCA_train_df.shape)
+print(PCA_test_df.shape)
+
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
@@ -204,6 +210,7 @@ classifiers = []
 best_clf_params = []
 
 print(f"Using {ML_model} classifier")
+
 if (ML_model.upper() == "SVM"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
@@ -262,44 +269,17 @@ dummy_score = dummy_clf.score(PCA_test_df, test_labels)
 print("Baseline Accuracy (Dummy Classifier):", dummy_score)
 
 if(want_plots):
+    
     ''' FEATURE IMPORTANCE '''
-    #TODO
+    
+    PCA_table_plot(total_data_scaled, 5)   
 
-    ''' PCA CHECK '''
-    # print("Printing PCA compontents for entire set")
-
-    # PCA_plot = PCA(n_components = 5)
-
-    # print(f"Total amount of features: {len(total_data_scaled.columns)}")
-
-
-
-    # # Displays tables for how much each feature is contributing to PC1-5
-    # for i in range(len(total_data_scaled.columns) // 34):
-
-    #     PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
-    #     # print(f"List of columns: {PCA_total_columns_part}")
-
-    #     PCA_total_part = total_data_scaled[PCA_total_columns_part]
-    #     PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
-        
-    #     biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, models, optimization_methods, titles, accuracy_list)
-        
-
-
-    PCA_table_plot(total_data_scaled, 5) 
+    ''' 2D/3D PLOT OF PCA '''
 
     new_biplot(total_data_scaled, window_labels, separate_types)
 
     plot_SVM_boundaries(PCA_train_df, train_labels, separate_types,
                          models, optimization_methods, titles, accuracy_list)
-        
-
-    ''' 2D/3D PLOT OF PCA '''
-    # PCA_plot = PCA(n_components = 2)
-    # PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
-
-    # biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles, accuracy_list)
 
     ''' CONFUSION MATRIX '''
     conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)

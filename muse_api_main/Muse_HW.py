@@ -312,6 +312,9 @@ class Muse_HW:
         DATA_MODE_RANGE = 0x00000100
         #<summary>Acquisition mode microphone</summary>
         DATA_MODE_SOUND = 0x00000400
+        #IMU plus more
+        DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT = DATA_MODE_IMU | DATA_MODE_MAGN | DATA_MODE_TEMP_PRESS | DATA_MODE_RANGE
+
 
     class DataSize(IntEnum):
         """Acquisition packet sizes"""

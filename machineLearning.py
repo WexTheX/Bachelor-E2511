@@ -19,13 +19,6 @@ from plotting import biplot
 
 
 ''' PRE PROCESSING '''
-def splitData(df, label_list, randomness, split_value):
-
-  train_data, test_data, train_labels, test_labels = train_test_split(
-    df, label_list, test_size=split_value, random_state=randomness, stratify=label_list
-  )
-
-  return train_data, test_data, train_labels, test_labels
 
 def scaleFeatures(df):
   scaler = StandardScaler()

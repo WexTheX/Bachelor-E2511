@@ -12,6 +12,8 @@ from sklearn.decomposition import PCA
 from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+
 
 from plotting import biplot
 
@@ -464,3 +466,18 @@ def makeKNNClassifier(method, df, labels, hyperparam_dict, num_folds):
         clf_best_params = {"n_neighbors": 3}
     
     return clf, clf_best_params
+
+def makeGNBClassifier(method, df, labels, hyperparams_dict, num_folds):
+    if (method == "ahadhaidiahodihaj"):
+        print("HOW?!")
+    else:
+        clf = GaussianNB()
+        clf.fit(df, labels)
+
+        print(clf.get_params())
+        quit()
+    return clf
+
+
+
+

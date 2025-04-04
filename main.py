@@ -7,23 +7,21 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 
-from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.inspection import DecisionBoundaryDisplay, permutation_importance
 from skopt.space import Real, Categorical, Integer
 from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 # Local imports
 # from FOLDER import FILE as F
-from extractFeatures import extractAllFeatures
-from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier
-from plotting import plotWelch, biplot
-from SignalProcessing import ExtractIMU_Features as IMU_F
-from SignalProcessing import get_Freq_Domain_features_of_signal as freq
-from Preprocessing.preprocessing import fillSets
-from sklearn.ensemble import RandomForestClassifier
+from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
+from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
+from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, new_biplot
+from Preprocessing.preprocessing import fillSets, downsample
 
 
 
@@ -32,17 +30,18 @@ from sklearn.ensemble import RandomForestClassifier
 want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
-ML_models = ["SVM", "RF"]
-ML_models = 0
-method = 'ManualGridSearch'
+ML_models = ["SVM", "RF", "KNN", "GNB"]
+ML_model = "SVM"
+accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.5
-randomness = 11
-window_length_seconds = 15
+variance_explained = 0.90
+randomness = 123
+window_length_seconds = 20
 split_value = 0.75
-Fs = 800
+fs = 800
+ds_fs = 800
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
@@ -52,41 +51,18 @@ base_params =  {'class_weight': 'balanced',
 
 SVM_base = svm.SVC(**base_params)
 RF_base = RandomForestClassifier(**base_params)
+KNN_base = KNeighborsClassifier()
 
 ''' HYPER PARAMETER VARIABLES '''
 
 num_folds = 3
 
 hyperparams_SVM = {
-    "C": [0.001, 0.01, 0.1, 1],
+    "C": [0.001, 0.01, 0.1, 1, 10, 100],
     "kernel": ["linear", "poly", "rbf", "sigmoid"],
-    "gamma": [1],
+    "gamma": [0.01, 0.1, 1, 10, 100],
     "coef0": [0, 0.5, 1],
     "degree": [2, 3, 4, 5]
-}
-
-# hyperparams_SVM_space = {
-#     # "C": Categorical(1),  # Continuous log-scale for C
-#     # "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
-#     # "gamma": Categorical(1),  # Log-uniform scale for gamma
-#     # "coef0": Categorical(1),
-#     # "degree": Categorical(2)
-# }
-
-# hyperparams_SVM = {
-#     "C": [0.001, 0.01, 0.1, 1, 10, 100, 1000],
-#     "kernel": ["linear", "poly", "rbf", "sigmoid"],
-#     "gamma": [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2],
-#     "coef0": [0, 0.5, 1],
-#     "degree": [2, 3, 4, 5]
-# }
-
-hyperparams_SVM_space = {
-    "C": Real(1e-3, 1e3, prior="log-uniform"),  # Continuous log-scale for C
-    "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
-    "gamma": Real(1e-3, 1e2, prior="log-uniform"),  # Log-uniform scale for gamma
-    "coef0": Real(0, 1),
-    "degree": Integer(2, 5)
 }
 
 hyperparams_RF = {
@@ -99,25 +75,38 @@ hyperparams_RF = {
     'criterion': ['gini', 'entropy']  # Splitting criteria
 }
 
+hyperparams_KNN = {
+    'algorithm': ['ball_tree', 'kd_tree', 'brute'], 
+    # 'leaf_size': [30], 
+    # 'metric': 'minkowski', 
+    # 'metric_params': None, 
+    # 'n_jobs': None, 
+    'n_neighbors': [3, 4, 5], 
+    'p': [1, 2], 
+    'weights': ['uniform', 'distance']
+    }
+
+hyperparams_GNB = {
+    'priors': None, 
+    'var_smoothing': 1e-09
+    }
+
 ''' USER INPUTS '''
 
 # answer_FE = input("Do you want feature extraction? (Y | N) (Default N)")
-# if(answer_FE == "Y"):
+# if(answer_FE.upper() == "Y"):
 #     want_feature_extraction = True
 
-# if(answer_FE):
-#     answer_ST = input("Do you want to separate by type (TIG and MIG vs only welding)? (Y | N) (Default N)")
-# if(answer_ST == "Y"):
+# answer_ST = input("Do you want to separate by type (TIG and MIG vs only welding)? (Y | N) (Default N)")
+# if(answer_ST.upper() == "Y"):
 #     separate_types = True
 
-
-
 # answer_ML = input(f"Choose ML model (Default SVM): {ML_models}.")
-# if(answer_ML = "RF"):
-#     ML_model = ML_models[0]
+# if(answer_ML.upper() = "RF"):
+#     ML_model = ML_models[1]
 
 # answer_plot = input("Do you want plots? (Y | N) (Default N)")
-# if(answer_plot == "Y"):
+# if(answer_plot.upper() == "Y"):
 #     want_plots = True
 
 
@@ -127,14 +116,16 @@ hyperparams_RF = {
 if(separate_types):
     path = "Preprocessing/DatafilesSeparated" 
     output_path = "OutputFiles/Separated/"
+    test_path = "testFiles/"
 else:
     path = "Preprocessing/Datafiles"
     output_path = "OutputFiles/"
+    test_path = "testFiles/"
 
 path_names = os.listdir(path)
 activity_name = [name.upper() for name in path_names]
 
-sets, sets_labels = fillSets(path, path_names, activity_name, separate_types)
+sets, sets_labels = fillSets(path, path_names, activity_name)
 # print(f"Content of sets: \n {sets}")
 # print(f"Content of sets_labels: \n {sets_labels}")
 
@@ -144,7 +135,33 @@ sets, sets_labels = fillSets(path, path_names, activity_name, separate_types)
 if (want_feature_extraction):
     # Create dataframe "feature_df" containing all features deemed relevant from the raw sensor data
     # One row in feature_df is all features from one window
-    feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds*Fs, False, 800, path)
+    all_window_features = []
+    window_labels = []
+    start_time = time.time()
+    
+    for i, file in enumerate(sets):
+        print(f"Extracting files from file: {file}")
+        fe_df = extractDFfromFile(file, fs)
+
+        if(ds_fs != fs):
+            fe_df = downsample(fe_df, fs, ds_fs)
+        
+        
+        window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
+
+        all_window_features = all_window_features + window_df
+        window_labels = window_labels + df_window_labels
+        print(f"Total number of windows: {len(window_labels)}")
+
+    feature_df = pd.DataFrame(all_window_features)
+    print(feature_df)
+
+    # feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds, fs, False)
+
+    end_time = time.time()  # End timer
+    elapsed_time = end_time - start_time
+    print(f"Features extracted in {elapsed_time} seconds")
+        
     feature_df.to_csv(output_path+"feature_df.csv", index=False)
     with open(output_path+"window_labels.txt", "w") as fp:
         for item in window_labels:
@@ -163,12 +180,16 @@ if "feature_df" not in globals():
 ''' SPLITTING TEST/TRAIN + SCALING'''
 train_data, test_data, train_labels, test_labels = splitData(feature_df, window_labels, randomness, split_value)
 
+total_data_scaled = scaleFeatures(feature_df)
 train_data_scaled = scaleFeatures(train_data)
 test_data_scaled = scaleFeatures(test_data)
 
 
 ''' Principal Component Analysis (PCA)'''
+# Decide nr of PCA components
 PCA_components = setNComponents(train_data_scaled, variance_explained=variance_explained)
+
+# Create PCA object for N components found by variance_explained
 PCA_final = PCA(n_components = PCA_components)
 
 PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
@@ -179,20 +200,42 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 # comment out here + in clf_dict to remove 
 
+optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
 
-clf1 = makeSVMClassifier('876', SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf2 = makeSVMClassifier('GridSearchCV', SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf3 = makeSVMClassifier('HalvingGridSearchCV', SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
-clf4 = makeSVMClassifier('876', SVM_base, num_folds, hyperparams_SVM_space, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+classifiers = []
+best_clf_params = []
 
-models = (clf1, clf2, clf3, clf4)
+print(f"Using {ML_model} classifier")
+if (ML_model.upper() == "SVM"):
+    for method in optimization_methods:
+        t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+        classifiers.append(t_clf)
+        best_clf_params.append(t_best_clf_params)
 
-clf_dict = {
-    'No optimization': clf1,
-    'GridSearchCV': clf2,
-    'HalvingGridSearchCV': clf3,
-    'BayesSearchCV': clf4
-    }
+elif (ML_model.upper() == "RF"):
+    for method in optimization_methods:
+        t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
+        classifiers.append(t_clf)
+        # best_clf_params.append(t_best_clf_params)
+
+elif (ML_model.upper() == "KNN"):
+    for method in optimization_methods:
+        t_clf, t_best_clf_params = makeKNNClassifier(method, PCA_train_df, train_labels, hyperparams_KNN, num_folds)
+        classifiers.append(t_clf)
+        best_clf_params.append(t_best_clf_params)
+
+elif (ML_model.upper() == "GNB"):
+    for method in optimization_methods:
+        t_clf, t_best_clf_params = makeGNBClassifier(method, PCA_train_df, train_labels, hyperparams_GNB, num_folds)
+        classifiers.append(t_clf)
+        best_clf_params.append(t_best_clf_params)
+
+models = tuple(classifiers)
+titles = tuple(best_clf_params)
+
+clf_dict = {}
+for i, model in enumerate(models):
+    clf_dict[optimization_methods[i]] = model
 
 ''' EVALUATION '''
 
@@ -200,11 +243,14 @@ for name, clf in clf_dict.items():
     
     print(f"Evaluating {name}: ")
 
-    test_predict = clf.predict(PCA_test_df)   
+    test_predict = clf.predict(PCA_test_df)
+
     accuracy_score = metrics.balanced_accuracy_score(test_labels, test_predict)
     precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
     recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
     f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
+    
+    accuracy_list.append(np.round(accuracy_score, 3))
 
     print(f"Accuracy: \t {accuracy_score}")
     print(f"Precision: \t {precision_score}")
@@ -217,77 +263,48 @@ dummy_score = dummy_clf.score(PCA_test_df, test_labels)
 
 print("Baseline Accuracy (Dummy Classifier):", dummy_score)
 
-
 if(want_plots):
-
-
-    # # Set-up 2x2 grid for plotting.
-    # fig, sub = plt.subplots(2, 2)
-    # plt.subplots_adjust(wspace=0.4, hspace=0.4)
-
-    # X0, X1 = PCA_train_df[0], PCA_train_df[1]
-
-    # titles = (
-    # "SVC with linear kernel",
-    # "LinearSVC (linear kernel)",
-    # "SVC with RBF kernel",
-    # "SVC with polynomial (degree 3) kernel",
-    # )
-
-    # label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-    #                    'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (0.6, 0.0, 0.0), 'GRINDSMALL': (0.3, 0.0, 0.0),
-    #                    'SANDSIM': (0.0, 1.0, 0.0), 
-    #                    'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.0, 0.0, 0.6), 'WELDSTTIG': (0.0, 0.0, 0.3)}
-    
-    # y_labels = np.array(train_labels)
-    # mappedLabels = np.array([label_mapping[label] for label in train_labels])
-    # # print(mappedLabels)
-
-    # for clf, title, ax in zip(models, titles, sub.flatten()):
-    #     disp = DecisionBoundaryDisplay.from_estimator(
-    #         clf,
-    #         PCA_train_df,
-    #         response_method="predict",
-    #         cmap=plt.cm.coolwarm,
-    #         alpha=0.8,
-    #         ax=ax,
-    #         xlabel='PC1',
-    #         ylabel='PC2',
-    #     )
-    #     ax.scatter(X0, X1, c=mappedLabels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
-    #     ax.set_xticks(())
-    #     ax.set_yticks(())
-    #     ax.set_title(title)
-
-    # plt.show()
-
-
+    ''' FEATURE IMPORTANCE '''
+    #TODO
 
     ''' PCA CHECK '''
     # print("Printing PCA compontents for entire set")
-    total_data_scaled = pd.DataFrame(scaleFeatures(feature_df))
-    PCA_plot = PCA(n_components = 5)
-    print(f"Total amount of features: {len(total_data_scaled.columns)}")
 
-    # Displays tables for how much each feature is contributing to PC1-5
-    for i in range(len(total_data_scaled.columns) // 34):
-        PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
-        # print(f"List of columns: {PCA_total_columns_part}")
+    # PCA_plot = PCA(n_components = 5)
 
-        PCA_total_part = total_data_scaled[PCA_total_columns_part]
-        PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
+    # print(f"Total amount of features: {len(total_data_scaled.columns)}")
+
+
+
+    # # Displays tables for how much each feature is contributing to PC1-5
+    # for i in range(len(total_data_scaled.columns) // 34):
+
+    #     PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
+    #     # print(f"List of columns: {PCA_total_columns_part}")
+
+    #     PCA_total_part = total_data_scaled[PCA_total_columns_part]
+    #     PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
         
-        # biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, clf1)
+    #     biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, models, optimization_methods, titles, accuracy_list)
+        
 
 
-    # Plot 2D plot of PC's regardless of how many components are in the model
-    PCA_plot = PCA(n_components = 2)
-    PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
+    PCA_table_plot(total_data_scaled, 5) 
 
-    biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models)
+    new_biplot(total_data_scaled, window_labels, separate_types)
 
+    plot_SVM_boundaries(PCA_train_df, train_labels, separate_types,
+                         models, optimization_methods, titles, accuracy_list)
+        
+
+    ''' 2D/3D PLOT OF PCA '''
+    # PCA_plot = PCA(n_components = 2)
+    # PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
+
+    # biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles, accuracy_list)
+
+    ''' CONFUSION MATRIX '''
     conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
-
     plt.figure(figsize=(10, 8))
     sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
     plt.xlabel("Predicted")
@@ -302,3 +319,22 @@ if(want_plots):
 # from bleak import BleakScanner, BleakClient
 # import asyncio
 
+''' REAL TEST '''
+
+'''
+# File path to testing file
+# test_data_df = pd.read_csv(test_path+"test_data.csv")
+
+test_feature, windowLabel = extractAllFeatures('testFiles/06-03-2025 123529', sets_labels, window_length_seconds*Fs, False, 800)
+
+# Scale incoming data
+test_data_scaled = scaleFeatures(test_feature)
+
+# PCA transform test_data_scaled using already fitted PCA
+PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
+
+# Use best CLF
+guess = clf1.predict(PCA_test_df)
+
+guess = guess.sort()
+'''

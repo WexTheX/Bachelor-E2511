@@ -16,19 +16,19 @@ def get_Time_Domain_features_of_signal(signal,signal_name):
     if signal_name:
         suffix = f"_{signal_name}"
     
-    features[f'mean{suffix}']       = signal.mean()   
-    features[f'sd{suffix}']         = signal.std()
-    features[f'mad{suffix}']        = stats.median_abs_deviation(signal, scale=1/1.4826)
-    features[f'max{suffix}']        = signal.max()
-    features[f'min{suffix}']        = signal.min()
-    features[f'energy{suffix}']     = sum(pow(abs(signal), 2)) # https://stackoverflow.com/questions/34133680/calculate-energy-of-time-domain-data
-    features[f'entropy{suffix}']    = entropy(signal) # https://stackoverflow.com/questions/15450192/fastest-way-to-compute-entropy-in-python
-    features[f'iqr{suffix}']        = interquartile_range(signal) # https://www.statology.org/interquartile-range-python/
-    features[f'kurtosis{suffix}']   = stats.kurtosis(signal, fisher=True)
-    features[f'skewness{suffix}']   = stats.skew(signal)
+    features[f'mean{suffix}']           = signal.mean()   
+    features[f'sd{suffix}']             = signal.std()
+    features[f'mad{suffix}']            = stats.median_abs_deviation(signal, scale=1/1.4826)
+    features[f'max{suffix}']            = signal.max()
+    features[f'min{suffix}']            = signal.min()
+    features[f'energy{suffix}']         = sum(pow(abs(signal), 2)) # https://stackoverflow.com/questions/34133680/calculate-energy-of-time-domain-data
+    features[f'entropy{suffix}']        = entropy(signal) # https://stackoverflow.com/questions/15450192/fastest-way-to-compute-entropy-in-python
+    features[f'iqr{suffix}']            = interquartile_range(signal) # https://www.statology.org/interquartile-range-python/
+    features[f'kurtosis{suffix}']       = stats.kurtosis(signal, fisher=True)
+    features[f'skewness{suffix}']       = stats.skew(signal)
     # features['auto_regression_coefficient']   = 1 #TODO auto_regression_coefficient https://machinelearningmastery.com/autoregression-models-time-series-forecasting-python/
     # features['simple_moving_average_x']       = simple_moving_average(x_features, moving_average_window)
-    # features['correlation']                   = 1 #TODO correlation https://realpython.com/numpy-scipy-pandas-correlation-python/#example-numpy-correlation-calculation
+    features[f'correlation{suffix}']    = autocorrelation(signal) # https://realpython.com/numpy-scipy-pandas-correlation-python/#example-numpy-correlation-calculation
     # features['angular_velocity']              = 1 #TODO angular velocity | how to get? 
     # features['linear_acceleration']           = 1 # for Norm data this is already there
 
@@ -108,7 +108,11 @@ def simple_moving_average(signal, window_size):
 
     return moving_averages
 
-#navn = "Vinkelslipertest1"
-#signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
-#features = get_Time_Domain_features_of_signal(signal, navn)
-#print(features)
+def autocorrelation(signal):
+    dataframe = pd.concat([signal.shift(1), signal], axis=1)
+    dataframe.columns = ['t-1', 't+1']
+    resultMatrix = dataframe.corr()
+
+    result = resultMatrix.iloc[0,1]
+    return result
+

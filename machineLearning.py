@@ -4,12 +4,16 @@ import matplotlib.pyplot as plt
 import time
 
 from skopt import BayesSearchCV
+from skopt.space import Real, Categorical, Integer
 from sklearn.preprocessing import StandardScaler
 from sklearn.experimental import enable_halving_search_cv
-from sklearn.model_selection import train_test_split, KFold, StratifiedKFold, GridSearchCV, HalvingGridSearchCV
+from sklearn.model_selection import train_test_split, KFold, StratifiedKFold, GridSearchCV, HalvingGridSearchCV, RandomizedSearchCV
 from sklearn.decomposition import PCA
 from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+
 
 from plotting import biplot
 
@@ -50,7 +54,7 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
     
     return n_components
 
-def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types):
+def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types):
     
     # Unpack dictionary into lists
     C_list, kernel_types, gamma_list, coef0_list, deg_list = [list(values) for values in hyperparams_dict.values()]
@@ -58,7 +62,7 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
 
     start_time = time.time()
 
-    if method == 'ManualGridSearch':
+    if method.lower() == 'manualgridsearchcv':
 
       # Initialize arrays for evaluating score = (mean - std)
       metrics_matrix = np.zeros( (num_folds, len(C_list), len(kernel_types), len(gamma_list), len(coef0_list), len(deg_list)) )
@@ -113,8 +117,7 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
                 # print("Work in progress")
 
               if kernel == 'linear':
-                l, m, n = 0, 0, 0
-                      
+                l, m, n = 0, 0, 0   
                 clf = svm.SVC(C=C_value, kernel=kernel)
                 clf.fit(kfold_PCA_train_df, kfold_train_labels)
                 test_predict = clf.predict(kfold_PCA_validation_df)
@@ -130,7 +133,6 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
                 for l, gamma_value in enumerate(gamma_list):
                     for m, coef0_value in enumerate(coef0_list):
                         for n, deg_value in enumerate(deg_list):
-
                           # print(f"Working on {j} {k} {l} {m} {n}")
                           clf = svm.SVC(C=C_value, kernel=kernel, gamma=gamma_value, coef0=coef0_value, degree=deg_value)
                           clf.fit(kfold_PCA_train_df, kfold_train_labels)
@@ -165,6 +167,7 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
                     if i == 0:
                         hyperparams_list.append((C_value, kernel, gamma_value))
 
+      print(f"Created {len(hyperparams_list) * num_folds} SVM classifiers.")
       print("\n")
 
       # Exhaustive grid search: calculate which hyperparams gives highest score = max|mean - std|
@@ -206,28 +209,29 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
       # print(f"Best combination of hyperparameters (C, kernel, gamma, coef0, degree): {hyperparams_list[best_param_test]}")
       # ''' Ser en del endringer ble gjort, legger denne her for nå, kan slettes '''
 
-      print(f"\n")
-      print(f"All combinations of hyper params: {len(hyperparams_list)}")
-      print(f"Highest score found (mean - std): {max_value}")
-      
 
-      best_hyperparams = {
+      clf_best_params = {
           "C": C_list[multi_dim_index[0]],
           "kernel": kernel_types[multi_dim_index[1]],
           "gamma": gamma_list[multi_dim_index[2]],
           "coef0": coef0_list[multi_dim_index[3]],
           "degree": deg_list[multi_dim_index[4]]
       }
+        
+      print(f"All combinations of hyper params: {len(hyperparams_list)}")
 
-      print(f"Using ManualGridSearch to find best hyperparams: {best_hyperparams}")  
-
-      if(want_plots):
-        plt.show()
-
-      clf = svm.SVC(**best_hyperparams)
+      clf = svm.SVC(**clf_best_params)
       clf.fit(PCA_train_df, train_labels)
 
-    elif method == 'GridSearchCV':
+      end_time = time.time()  # End timer
+      elapsed_time = end_time - start_time
+      
+      print(f"Using ManualGridSearch to find best hyperparams: {clf_best_params}")  
+      print(f"Used {method} to find the best model in {elapsed_time} seconds")
+      print(f"{clf_best_params} gives the parameter setting with the highest (mean-std) score: {max_value}")
+      print(f"\n")
+
+    elif method.lower() == 'gridsearchcv':
 
       print(f"Using GridSearchCV from sklearn to find best hyperparams")
 
@@ -241,11 +245,18 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
             )
       
       clf.fit(PCA_train_df, train_labels)
+      clf_best_params = clf.best_params_
 
-      for param, value in clf.best_params_.items():
-        print(f"{param}: {value}")
-      
-    elif method == 'HalvingGridSearchCV':
+      end_time = time.time()  # End timer
+      elapsed_time = end_time - start_time
+
+      best_score = max( clf.cv_results_['mean_test_score'] - clf.cv_results_['std_test_score'] )
+
+      print(f"Used {method} to find the best model in {elapsed_time} seconds")
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
+      print(f"\n")
+
+    elif method.lower() == 'halvinggridsearchcv':
       
       print(f"Using HalvingGridSearchCV from sklearn to find best hyperparams")
 
@@ -260,13 +271,28 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
             )
       
       clf.fit(PCA_train_df, train_labels)
+      clf_best_params = clf.best_params_
 
-      for param, value in clf.best_params_.items():
-        print(f"{param}: {value}")
+      end_time = time.time()  # End timer
+      elapsed_time = end_time - start_time
 
-    elif method == 'BayesSearchCV':
+      best_score = max( clf.cv_results_['mean_test_score'] - clf.cv_results_['std_test_score'] )
+
+      print(f"Used {method} to find the best model in {elapsed_time} seconds")
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
+      print(f"\n")
+
+    elif method.lower() == 'bayessearchcv':
       
       print(f"Using BayesSearchCV from scikit optimize to find best hyperparams")
+
+      hyperparams_space = {
+        "C": Real(hyperparams_dict['C'][0], hyperparams_dict['C'][-1], prior="log-uniform"),  # Continuous log-scale for C
+        "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
+        "gamma": Real(hyperparams_dict['gamma'][0], hyperparams_dict['gamma'][-1], prior="log-uniform"),  # Log-uniform scale for gamma
+        "coef0": Real(hyperparams_dict['coef0'][0], hyperparams_dict['coef0'][-1]),
+        "degree": Integer(hyperparams_dict['degree'][0], hyperparams_dict['degree'][-1])
+      }
 
       clf = BayesSearchCV(
             estimator = base_estimator,
@@ -279,23 +305,53 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_space, hype
             )
       
       clf.fit(PCA_train_df, train_labels)
-    
-      for param, value in clf.best_params_.items():
-        print(f"{param}: {value}")
+      clf_best_params = clf.best_params_
 
+      end_time = time.time()  # End timer
+      elapsed_time = end_time - start_time
+
+      best_score = max( clf.cv_results_['mean_test_score'] - clf.cv_results_['std_test_score'] )
+
+      print(f"Used {method} to find the best model in {elapsed_time} seconds")
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
+      print(f"\n")
+
+    elif method.lower() == 'randomizedsearchcv':
+      
+      print(f"Using RandomizedSearchCV from scikit optimize to find best hyperparams")
+
+      clf = RandomizedSearchCV(
+            estimator = base_estimator,
+            param_distributions = hyperparams_dict,
+            n_iter = 30,
+            scoring = 'accuracy',
+            cv = num_folds,
+            verbose = 0,
+            n_jobs = 5
+            )
+      
+      clf.fit(PCA_train_df, train_labels)
+      clf_best_params = clf.best_params_
+
+      end_time = time.time()  # End timer
+      elapsed_time = end_time - start_time
+
+      best_score = max( clf.cv_results_['mean_test_score'] - clf.cv_results_['std_test_score'] )
+
+      print(f"Used {method} to find the best model in {elapsed_time} seconds")
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
+      print(f"\n")
+      
     else: 
-      print(f"Optimizer {method} not recognized, choosing default Support Vector Classifier.")
+      
       clf = base_estimator
       clf.fit(PCA_train_df, train_labels)
+      clf_best_params = {'C':1, 'kernel': 'rbf'}
 
+      print(f"Optimizer {method} not recognized, choosing default Support Vector Classifier.")
+      print(f"\n")
 
-    end_time = time.time()  # End timer
-    elapsed_time = end_time - start_time
-
-    print(f"Created and evaluated {len(hyperparams_list) * num_folds} instances of SVM classifiers using {method} in {elapsed_time} seconds")
-    print(f"\n")
-
-    return clf
+    return clf, clf_best_params
 
 def makeRFClassifier(method, base_estimator, num_folds, param_grid, PCA_train_df, train_labels):
   
@@ -342,3 +398,93 @@ def makeRFClassifier(method, base_estimator, num_folds, param_grid, PCA_train_df
   print(f"RF optimized and fitted using {method} in {elapsed_time} seconds")
 
   return clf
+
+def makeKNNClassifier(method, df, labels, hyperparam_dict, num_folds):
+    start_time = time.time()
+
+    if method.lower() == 'gridsearchcv':
+        print(f"Using GridSearchCV from sklearn to find best RF hyperparams")
+        
+        clf = GridSearchCV(
+            estimator=KNeighborsClassifier(),
+            param_grid=hyperparam_dict,
+            cv=num_folds,
+            n_jobs=-1
+            ) 
+        
+        clf.fit(df, labels)
+        clf_best_params = clf.best_params_
+
+        end_time = time.time()  # End timer
+        elapsed_time = end_time - start_time
+
+        print(f"Used {method} to find the best model in {elapsed_time} seconds")
+        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+        print(f"\n")
+
+    elif method.lower() == 'halvinggridsearchcv':
+        print(f"Using HalvingGridSearchCV from sklearn to find best RF hyperparams")
+        
+        clf = HalvingGridSearchCV(
+            estimator=KNeighborsClassifier(),
+            param_grid=hyperparam_dict,
+            cv=num_folds,
+            n_jobs=-1
+            ) 
+        
+        clf.fit(df, labels)
+        clf_best_params = clf.best_params_
+
+        end_time = time.time()  # End timer
+        elapsed_time = end_time - start_time
+
+        print(f"Used {method} to find the best model in {elapsed_time} seconds")
+        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+        print(f"\n")
+
+    elif method.lower() == 'randomizedsearchcv':
+        print(f"Using RandomizedSearchCV from sklearn to find best RF hyperparams")
+        
+        clf = RandomizedSearchCV(
+            estimator = KNeighborsClassifier(),
+            param_distributions = hyperparam_dict,
+            n_iter = 30,
+            scoring = 'accuracy',
+            cv = num_folds,
+            verbose = 0,
+            n_jobs = -1
+            )
+        
+        clf.fit(df, labels)
+        clf_best_params = clf.best_params_
+
+        end_time = time.time()  # End timer
+        elapsed_time = end_time - start_time
+
+        print(f"Used {method} to find the best model in {elapsed_time} seconds")
+        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+        print(f"\n")
+
+    else:
+        print("No optimizer selected, using default with 3 neighbors")
+        clf = KNeighborsClassifier(n_neighbors=3)
+        clf.fit(df, labels)
+
+        clf_best_params = {"n_neighbors": 3}
+    
+    return clf, clf_best_params
+
+def makeGNBClassifier(method, df, labels, hyperparams_dict, num_folds):
+    if (method == "ahadhaidiahodihaj"):
+        print("HOW?!")
+    else:
+        clf = GaussianNB()
+        clf.fit(df, labels)
+
+        print(clf.get_params())
+        quit()
+    return clf
+
+
+
+

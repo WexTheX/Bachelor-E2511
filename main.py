@@ -12,7 +12,7 @@ from skopt.space import Real, Categorical, Integer
 from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
-from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, GridSearchCV
+from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -37,9 +37,9 @@ accuracy_list = []
 ''' DATASET VARIABLES '''
 
 variance_explained = 0.90
-randomness = 123
+randomness = 12333
 window_length_seconds = 20
-split_value = 0.75
+test_size = 0.25
 fs = 800
 ds_fs = 800
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
@@ -173,7 +173,8 @@ if "feature_df" not in globals():
 
 
 ''' SPLITTING TEST/TRAIN + SCALING'''
-train_data, test_data, train_labels, test_labels = splitData(feature_df, window_labels, randomness, split_value)
+
+train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=randomness, stratify=window_labels)
 
 total_data_scaled = scaleFeatures(feature_df)
 train_data_scaled = scaleFeatures(train_data)
@@ -189,6 +190,10 @@ PCA_final = PCA(n_components = PCA_components)
 
 PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
 PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
+
+print("Length of PCA train, and then test")
+print(PCA_train_df.shape)
+print(PCA_test_df.shape)
 
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''

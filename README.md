@@ -23,3 +23,7 @@ antall .txt filer i hver Datafiles mappe blir telt, og navnet blir lagt inn i li
 ...
 
 1000) CNN
+
+Hva forventer vi å bli ferdig med til påske?
+
+1) Skrive i metode-bit hvordan vi prosesserer data før vi sender inn i maskinlæring 

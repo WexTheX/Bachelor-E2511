@@ -482,7 +482,6 @@ def makeGNBClassifier(method, df, labels, hyperparams_dict, num_folds):
         clf.fit(df, labels)
 
         print(clf.get_params())
-        quit()
     return clf
 
 

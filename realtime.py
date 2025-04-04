@@ -42,11 +42,11 @@ DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 ''' Pickled PCA and CLF from main '''
 
 
-output_path = "OutputFiles/"
+output_path = "OutputFiles/Separated/"
 with open(output_path + "classifier.pkl", "rb") as CLF_file:
         halving_classifier = pickle.load(CLF_file)
 
-with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
+with open(output_path + "PCA.pkl", "rb" ) as PCA_File:
     PCA_final = pickle.load(PCA_File)
 
 
@@ -100,18 +100,19 @@ feature_list = []
 def splitWindow(features, feature_name):
 
 
-    if len(feature_list) < 10000:
+    if len(feature_list) < 2000:
         feature_list.append(features)
 
     else:
-        
         segment = feature_list
+        feature_list.clear()
+
 
         feature_df = pd.DataFrame([segment], columns=feature_name)
 
         
 
-        feature_segment_scaled = scaleFeatures(segment)
+        feature_segment_scaled = scaleFeatures(feature_df)
     
     
         PCA_final_df  = pd.DataFrame(PCA_final.transform(feature_segment_scaled))
@@ -119,7 +120,7 @@ def splitWindow(features, feature_name):
 
         prediction = halving_classifier.predict(PCA_final_df)
 
-        feature_list.clear()
+        print(prediction)
         return
 
 

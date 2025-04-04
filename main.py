@@ -27,7 +27,7 @@ from Preprocessing.preprocessing import fillSets, downsample
 
 ''' GLOBAL VARIABLES '''
 
-want_feature_extraction = 0
+want_feature_extraction = 1
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB"]
@@ -334,4 +334,3 @@ with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
 
 
 
-PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))

@@ -211,6 +211,7 @@ classifiers = []
 best_clf_params = []
 
 print(f"Using {ML_model} classifier")
+
 if (ML_model.upper() == "SVM"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
@@ -269,44 +270,17 @@ dummy_score = dummy_clf.score(PCA_test_df, test_labels)
 print("Baseline Accuracy (Dummy Classifier):", dummy_score)
 
 if(want_plots):
+    
     ''' FEATURE IMPORTANCE '''
-    #TODO
+    
+    PCA_table_plot(total_data_scaled, 5)   
 
-    ''' PCA CHECK '''
-    # print("Printing PCA compontents for entire set")
-
-    # PCA_plot = PCA(n_components = 5)
-
-    # print(f"Total amount of features: {len(total_data_scaled.columns)}")
-
-
-
-    # # Displays tables for how much each feature is contributing to PC1-5
-    # for i in range(len(total_data_scaled.columns) // 34):
-
-    #     PCA_total_columns_part = total_data_scaled.columns[i*34:(i*34+34)]
-    #     # print(f"List of columns: {PCA_total_columns_part}")
-
-    #     PCA_total_part = total_data_scaled[PCA_total_columns_part]
-    #     PCA_total_df = pd.DataFrame(PCA_plot.fit_transform(PCA_total_part))
-        
-    #     biplot(PCA_total_df, window_labels, PCA_plot, 5, separate_types, models, optimization_methods, titles, accuracy_list)
-        
-
-
-    PCA_table_plot(total_data_scaled, 5) 
+    ''' 2D/3D PLOT OF PCA '''
 
     new_biplot(total_data_scaled, window_labels, separate_types)
 
     plot_SVM_boundaries(PCA_train_df, train_labels, separate_types,
                          models, optimization_methods, titles, accuracy_list)
-        
-
-    ''' 2D/3D PLOT OF PCA '''
-    # PCA_plot = PCA(n_components = 2)
-    # PCA_plot_df = pd.DataFrame(PCA_plot.fit_transform(total_data_scaled))
-
-    # biplot(PCA_plot_df, window_labels, PCA_plot, 2, separate_types, models, optimization_methods, titles, accuracy_list)
 
     ''' CONFUSION MATRIX '''
     conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)

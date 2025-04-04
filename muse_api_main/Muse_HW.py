@@ -26,7 +26,7 @@ __version__ = "2.0.0"
 
 from enum import Enum, Flag, IntEnum
 from frozendict import frozendict
-from Muse_Data import *
+from muse_api_main.Muse_Data import *
 
 class Muse_HW:
     

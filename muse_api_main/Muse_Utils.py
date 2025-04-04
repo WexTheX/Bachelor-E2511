@@ -30,8 +30,8 @@ import datetime
 import struct
 import math
 
-from Muse_HW import Muse_HW as MH
-from Muse_Data import *
+from muse_api_main.Muse_HW import Muse_HW as MH
+from muse_api_main.Muse_Data import *
 from typing import Optional
 
 class Muse_Utils:

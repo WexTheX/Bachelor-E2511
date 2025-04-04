@@ -19,7 +19,7 @@ from sklearn.neighbors import KNeighborsClassifier
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier
+from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
 from plotting import biplot
 from Preprocessing.preprocessing import fillSets, downsample
 
@@ -29,8 +29,8 @@ from Preprocessing.preprocessing import fillSets, downsample
 want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
-ML_models = ["SVM", "RF", "KNN"]
-ML_model = "SVM"
+ML_models = ["SVM", "RF", "KNN", "GNB"]
+ML_model = "GNB"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
@@ -106,6 +106,11 @@ hyperparams_KNN = {
     'n_neighbors': [3, 4, 5], 
     'p': [1, 2], 
     'weights': ['uniform', 'distance']
+    }
+
+hyperparams_GNB = {
+    'priors': None, 
+    'var_smoothing': 1e-09
     }
 
 ''' USER INPUTS '''
@@ -219,19 +224,24 @@ classifiers = []
 best_clf_params = []
 
 print(f"Using {ML_model} classifier")
-if (ML_model == "SVM"):
+if (ML_model.upper() == "SVM"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
-elif (ML_model == "RF"):
+elif (ML_model.upper() == "RF"):
     for method in optimization_methods:
         t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
         classifiers.append(t_clf)
         # best_clf_params.append(t_best_clf_params)
-elif (ML_model == "KNN"):
+elif (ML_model.upper() == "KNN"):
     for method in optimization_methods:
         t_clf, t_best_clf_params = makeKNNClassifier(method, PCA_train_df, train_labels, hyperparams_KNN, num_folds)
+        classifiers.append(t_clf)
+        best_clf_params.append(t_best_clf_params)
+elif (ML_model.upper() == "GNB"):
+    for method in optimization_methods:
+        t_clf, t_best_clf_params = makeGNBClassifier(method, PCA_train_df, train_labels, hyperparams_GNB, num_folds)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
 

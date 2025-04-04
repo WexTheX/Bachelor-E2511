@@ -32,7 +32,7 @@ class CommandResponse:
         Args:
             buffer (bytearray): response buffer
         """
-        from Muse_HW import Muse_HW as MH
+        from muse_api_main.Muse_HW import Muse_HW as MH
         if buffer is not None:
             self.rx = MH.Command(buffer[0])
             if buffer[2] > 0x80:

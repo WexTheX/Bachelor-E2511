@@ -32,6 +32,7 @@ from sklearn.decomposition import PCA
 import pickle
 from machineLearning import scaleFeatures
 import pandas as pd
+from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 
 CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7" 
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
@@ -42,11 +43,11 @@ DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 ''' Pickled PCA and CLF from main '''
 
 
-output_path = "OutputFiles/"
+output_path = "OutputFiles/Separated/"
 with open(output_path + "classifier.pkl", "rb") as CLF_file:
         halving_classifier = pickle.load(CLF_file)
 
-with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
+with open(output_path + "PCA.pkl", "rb" ) as PCA_File:
     PCA_final = pickle.load(PCA_File)
 
 
@@ -57,7 +58,8 @@ def cmd_notification_handler(sender, data):
 
     return
 
-
+columns = ["Timestamp","Axl.X","Axl.Y","Axl.Z","Gyr.X","Gyr.Y","Gyr.Z","Mag.X","Mag.Y","Mag.Z","Temp","Press","Range","Lum","IRLum"]
+feature_list = []
 
 async def data_notification_handler(sender: int, data: bytearray):
     """Decode data"""
@@ -70,57 +72,45 @@ async def data_notification_handler(sender: int, data: bytearray):
 
     #print("{0} {1} {2} {3} {4} {5} {6}".format(device_ID,tempData.axl[0],tempData.axl[1],tempData.axl[2],tempData.gyr[0],tempData.gyr[1],tempData.gyr[2]))
     
-    features = [
-        tempData.timestamp,
-        tempData.axl[0], tempData.axl[1], tempData.axl[2],                              # Accelerometer
-        tempData.gyr[0], tempData.gyr[1], tempData.gyr[2],                              # Gyroscope
-        tempData.mag[0], tempData.mag[1], tempData.mag[2],                              # Magnetometer
-        tempData.tp[0], tempData.tp[1],                                                 # Temperature pressure
-        tempData.light.range, tempData.light.lum_vis, tempData.light.lum_ir             # Light (range, lum, irlum)
+    features = [tempData.timestamp,
+                tempData.axl[0], 
+        tempData.axl[1], 
+        tempData.axl[2],                             
+        tempData.gyr[0], 
+         tempData.gyr[1], 
+         tempData.gyr[2],                              
+         tempData.mag[0], 
+         tempData.mag[1], 
+      tempData.mag[2],                             
+        tempData.tp[0], 
+        tempData.tp[1],                                                
+        tempData.light.range, 
+      tempData.light.lum_vis, 
+       tempData.light.lum_ir             
     ]
     
-
-    feature_name = ["Timestamp", "Gyr.X", "Gyr.Y", "Gyr.Z", "Axl.X", "Axl.Y", "Axl.Z",
-               "Mag.X", "Mag.Y", "Mag.Z", "Temp", "Press", "Range", "Lum", "IRLum"]
+    feature_list.append(features)
+   
     
     
+    if (len(feature_list) > 2000-1):
+        
     
-    splitWindow(features, feature_name)
+        segment = feature_list
+        #print(segment)
+        feature_df = pd.DataFrame(data=segment, columns=columns)
+        
+        feature_list.clear()
 
-    
+        print(feature_df)
 
-
-
-
+        
+        
     return
 
 
-feature_list = []
-
-def splitWindow(features, feature_name):
 
 
-    if len(feature_list) < 10000:
-        feature_list.append(features)
-
-    else:
-        
-        segment = feature_list
-
-        feature_df = pd.DataFrame([segment], columns=feature_name)
-
-        
-
-        feature_segment_scaled = scaleFeatures(segment)
-    
-    
-        PCA_final_df  = pd.DataFrame(PCA_final.transform(feature_segment_scaled))
-    
-
-        prediction = halving_classifier.predict(PCA_final_df)
-
-        feature_list.clear()
-        return
 
 
 def list_services(client):
@@ -177,7 +167,7 @@ async def main():
             
             # Set up the command
             stream_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT
-            cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=True)
+            cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=False)
 
             # Start notify on data characteristic
             await client.start_notify(DATA_UUID, data_notification_handler)
@@ -187,7 +177,7 @@ async def main():
             await client.write_gatt_char(CMD_UUID, cmd_stream, True)
             
             # Set streaming duration to 10 seconds
-            await asyncio.sleep(10)
+            await asyncio.sleep(20)
 
             # Stop data acquisition in STREAMING mode      
             await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)

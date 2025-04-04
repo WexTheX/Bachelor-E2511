@@ -27,7 +27,7 @@ __version__ = "1.3.0"
 from bleak import BleakScanner, BleakClient
 import asyncio
 
-from Muse_Utils import *
+from muse_api_main.Muse_Utils import *
 
 CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7"
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"

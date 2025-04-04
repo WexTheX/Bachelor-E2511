@@ -26,7 +26,7 @@ __version__ = "2.0.0"
 
 from enum import Enum, Flag, IntEnum
 from frozendict import frozendict
-from Muse_Data import *
+from muse_api_main.Muse_Data import *
 
 class Muse_HW:
     
@@ -313,7 +313,7 @@ class Muse_HW:
         #<summary>Acquisition mode microphone</summary>
         DATA_MODE_SOUND = 0x00000400
         #IMU plus more
-        DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT = DATA_MODE_IMU | DATA_MODE_MAGN | DATA_MODE_TEMP_PRESS | DATA_MODE_RANGE
+        DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT =  DATA_MODE_IMU | DATA_MODE_MAGN | DATA_MODE_TEMP_PRESS | DATA_MODE_RANGE
 
 
     class DataSize(IntEnum):

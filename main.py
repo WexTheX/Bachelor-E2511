@@ -19,7 +19,7 @@ from sklearn.neighbors import KNeighborsClassifier
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import  scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
+from machineLearning import scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
 from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, new_biplot
 from Preprocessing.preprocessing import fillSets, downsample
 
@@ -31,14 +31,15 @@ want_feature_extraction = 1
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB"]
-ML_model = "SVM"
+ML_model = "KNN"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.90
-randomness = 12333
+variance_explained = 0.4
+randomness = 333
 window_length_seconds = 20
+test_size = 0.25
 test_size = 0.25
 fs = 800
 ds_fs = 200
@@ -58,11 +59,11 @@ KNN_base = KNeighborsClassifier()
 num_folds = 3
 
 hyperparams_SVM = {
-    "C": [0.001, 0.01, 0.1, 1, 10, 100],
+    "C": [0.001, 0.01],
     "kernel": ["linear", "poly", "rbf", "sigmoid"],
-    "gamma": [0.01, 0.1, 1, 10, 100],
-    "coef0": [0, 0.5, 1],
-    "degree": [2, 3, 4, 5]
+    "gamma": [0.01, 0.1],
+    "coef0": [0, 1],
+    "degree": [2, 3]
 }
 
 hyperparams_RF = {
@@ -113,14 +114,22 @@ hyperparams_GNB = {
 ''' LOAD DATASET '''
 
 # Different folder for separated and not separated
-if(separate_types):
+if (separate_types):
     path = "Preprocessing/DatafilesSeparated" 
     output_path = "OutputFiles/Separated/"
     test_path = "testFiles/"
+
+    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
+                    'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
+                    'IMPA': (0.5, 0.5, 0.5), 
+                    'SANDSIM': (0.0, 1.0, 0.0), 
+                    'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
 else:
     path = "Preprocessing/Datafiles"
     output_path = "OutputFiles/"
     test_path = "testFiles/"
+
+    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
 
 path_names = os.listdir(path)
 activity_name = [name.upper() for name in path_names]
@@ -143,9 +152,8 @@ if (want_feature_extraction):
         print(f"Extracting files from file: {file}")
         fe_df = extractDFfromFile(file, fs)
 
-        if(ds_fs != fs):
+        if (ds_fs != fs):
             fe_df = downsample(fe_df, fs, ds_fs)
-        
         
         window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
@@ -154,7 +162,6 @@ if (want_feature_extraction):
         print(f"Total number of windows: {len(window_labels)}")
 
     feature_df = pd.DataFrame(all_window_features)
-    print(feature_df)
 
     # feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds, fs, False)
 
@@ -162,15 +169,15 @@ if (want_feature_extraction):
     elapsed_time = end_time - start_time
     print(f"Features extracted in {elapsed_time} seconds")
         
-    feature_df.to_csv(output_path+"feature_df.csv", index=False)
+    feature_df.to_csv(output_path+str(ds_fs)+"feature_df.csv", index=False)
     with open(output_path+"window_labels.txt", "w") as fp:
         for item in window_labels:
             fp.write("%s\n" % item)
 
 if "feature_df" not in globals():
     window_labels = []
-    feature_df = pd.read_csv(output_path+"feature_df.csv")
-    f = open(output_path+"window_labels.txt", "r")
+    feature_df = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
+    f = open(output_path+"window_labels.txt", "r") 
     data = f.read()
     window_labels = data.split("\n")
     f.close()
@@ -187,6 +194,7 @@ test_data_scaled = scaleFeatures(test_data)
 
 
 ''' Principal Component Analysis (PCA)'''
+
 # Decide nr of PCA components
 PCA_components = setNComponents(train_data_scaled, variance_explained=variance_explained)
 
@@ -195,11 +203,6 @@ PCA_final = PCA(n_components = PCA_components)
 
 PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
 PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
-
-print("Length of PCA train, and then test")
-print(PCA_train_df.shape)
-print(PCA_test_df.shape)
-
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
@@ -221,6 +224,7 @@ if (ML_model.upper() == "SVM"):
 elif (ML_model.upper() == "RF"):
     for method in optimization_methods:
         t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
+
         classifiers.append(t_clf)
         # best_clf_params.append(t_best_clf_params)
 
@@ -236,12 +240,9 @@ elif (ML_model.upper() == "GNB"):
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
 
-models = tuple(classifiers)
-titles = tuple(best_clf_params)
-
 clf_dict = {}
-for i, model in enumerate(models):
-    clf_dict[optimization_methods[i]] = model
+for i, classifier in enumerate(classifiers):
+    clf_dict[optimization_methods[i]] = classifier
 
 ''' EVALUATION '''
 
@@ -277,10 +278,10 @@ if(want_plots):
 
     ''' 2D/3D PLOT OF PCA '''
 
-    new_biplot(total_data_scaled, window_labels, separate_types)
+    new_biplot(total_data_scaled, window_labels, label_mapping)
 
-    plot_SVM_boundaries(PCA_train_df, train_labels, separate_types,
-                         models, optimization_methods, titles, accuracy_list)
+    plot_SVM_boundaries(PCA_train_df, train_labels, label_mapping,
+                         classifiers, optimization_methods, best_clf_params, accuracy_list)
 
     ''' CONFUSION MATRIX '''
     conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
@@ -289,6 +290,33 @@ if(want_plots):
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
     plt.title('Confusion matrix')
+
+    ''' KNN PLOT '''
+    if(ML_model.upper() == "KNN"):
+        if (separate_types):
+            label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
+                            'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.7, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.7),
+                            'IMPA': (0.5, 0.5, 0.5),
+                            'SANDSIM': (0.0, 1.0, 0.0), 
+                            'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.7, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.7, 1.0)}
+        else:
+            label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'IMPA': (0.5, 0.5, 0.5), 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+        y_labels = np.array(train_labels)
+        mapped_labels = np.array([label_mapping[label] for label in train_labels])
+
+        _, ax = plt.subplots()
+
+        disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        PCA_test_df,
+        response_method="predict",
+        plot_method="pcolormesh",
+        shading="auto",
+        alpha=0.5,
+        ax=ax,
+        )
+        scatter = disp.ax_.scatter(PCA_train_df.iloc[:, 0], PCA_train_df.iloc[:, 1], c=mapped_labels, edgecolors="k")
+    
     plt.show()
 
 

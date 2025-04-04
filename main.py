@@ -31,12 +31,12 @@ want_feature_extraction = 1
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB"]
-ML_model = "KNN"
+ML_model = "SVM"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.4
+variance_explained = 0.95
 randomness = 333
 window_length_seconds = 20
 test_size = 0.25

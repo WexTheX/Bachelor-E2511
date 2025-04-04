@@ -31,7 +31,7 @@ want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB"]
-ML_model = "SVM"
+ML_model = "KNN"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
@@ -40,8 +40,9 @@ variance_explained = 0.4
 randomness = 333
 window_length_seconds = 20
 test_size = 0.25
+test_size = 0.25
 fs = 800
-ds_fs = 800
+ds_fs = 200
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
@@ -154,7 +155,6 @@ if (want_feature_extraction):
         if (ds_fs != fs):
             fe_df = downsample(fe_df, fs, ds_fs)
         
-        
         window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
         all_window_features = all_window_features + window_df
@@ -162,7 +162,6 @@ if (want_feature_extraction):
         print(f"Total number of windows: {len(window_labels)}")
 
     feature_df = pd.DataFrame(all_window_features)
-    print(feature_df)
 
     # feature_df, window_labels = extractAllFeatures(sets, sets_labels, window_length_seconds, fs, False)
 
@@ -170,15 +169,15 @@ if (want_feature_extraction):
     elapsed_time = end_time - start_time
     print(f"Features extracted in {elapsed_time} seconds")
         
-    feature_df.to_csv(output_path+"feature_df.csv", index=False)
+    feature_df.to_csv(output_path+str(ds_fs)+"feature_df.csv", index=False)
     with open(output_path+"window_labels.txt", "w") as fp:
         for item in window_labels:
             fp.write("%s\n" % item)
 
 if "feature_df" not in globals():
     window_labels = []
-    feature_df = pd.read_csv(output_path+"feature_df.csv")
-    f = open(output_path+"window_labels.txt", "r")
+    feature_df = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
+    f = open(output_path+"window_labels.txt", "r") 
     data = f.read()
     window_labels = data.split("\n")
     f.close()
@@ -253,7 +252,7 @@ for name, clf in clf_dict.items():
 
     test_predict = clf.predict(PCA_test_df)
 
-    accuracy_score = metrics.balanced_accuracy_score(test_labels, test_predict)
+    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
     precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
     recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
     f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
@@ -291,6 +290,33 @@ if(want_plots):
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
     plt.title('Confusion matrix')
+
+    ''' KNN PLOT '''
+    if(ML_model.upper() == "KNN"):
+        if (separate_types):
+            label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
+                            'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.7, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.7),
+                            'IMPA': (0.5, 0.5, 0.5),
+                            'SANDSIM': (0.0, 1.0, 0.0), 
+                            'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.7, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.7, 1.0)}
+        else:
+            label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'IMPA': (0.5, 0.5, 0.5), 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+        y_labels = np.array(train_labels)
+        mapped_labels = np.array([label_mapping[label] for label in train_labels])
+
+        _, ax = plt.subplots()
+
+        disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        PCA_test_df,
+        response_method="predict",
+        plot_method="pcolormesh",
+        shading="auto",
+        alpha=0.5,
+        ax=ax,
+        )
+        scatter = disp.ax_.scatter(PCA_train_df.iloc[:, 0], PCA_train_df.iloc[:, 1], c=mapped_labels, edgecolors="k")
+    
     plt.show()
 
 
@@ -319,3 +345,21 @@ guess = clf1.predict(PCA_test_df)
 
 guess = guess.sort()
 '''
+
+
+
+''' Pickling classifier '''
+import pickle
+halving_classifier = clf_dict["HalvingGridSearchCV"]
+
+with open(output_path + "classifier.pkl", "wb") as CLF_File: 
+    pickle.dump(halving_classifier, CLF_File) 
+
+
+
+with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
+    pickle.dump(PCA_final, PCA_File)
+
+
+
+PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))

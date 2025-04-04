@@ -6,6 +6,8 @@ import seaborn as sns
 from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 from sklearn import svm, metrics, dummy
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.decomposition import PCA
+
 
 # Plot of normal distribution, WIP
 def normDistPlot(dataset, size):
@@ -56,9 +58,11 @@ def testWelch(sets_n, variables_n, fs):
 
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
   
-def biplot(X, trainLabels, PCATest, components, separate_types, models, optimization_methods, titles, accuracy_list):
+def biplot(X, trainLabels, PCATest, n_components, separate_types, models, optimization_methods, titles, accuracy_list):
   
-  if components == 2:
+  # PCA_object = PCA(n_components = n_components)
+
+  if n_components == 2:
 
     coeff = PCATest.components_.T
     labels = PCATest.feature_names_in_
@@ -121,7 +125,7 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models, optimiza
     # plt.title("Biplot")
     # plt.figure()
 
-  elif components == 3:
+  elif n_components == 3:
 
     coeff = PCATest.components_.T
     labels = PCATest.feature_names_in_
@@ -162,12 +166,13 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models, optimiza
     ax.set_title("3D Biplot")
     # plt.figure()
 
-  elif 3 < components < 10:
+  elif 3 < n_components < 10:
 
     coeff = PCATest.components_.T
     labels = PCATest.feature_names_in_
 
     loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+
     loadingsPerc = (loadings - np.min(loadings)) / (np.max(loadings) - np.min(loadings))
     plt.figure(figsize=(10, 8))
     sns.heatmap(loadingsPerc, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
@@ -176,3 +181,111 @@ def biplot(X, trainLabels, PCATest, components, separate_types, models, optimiza
   else:
     print(f"Too many principal components to plot in a meaningful way")
     pass
+
+
+def PCA_table_plot(X, n_components):
+  
+  if 3 < n_components < 10:
+
+    PCA_object = PCA(n_components = n_components)
+    PCA_object.fit(X)
+    
+    loadings = PCA_object.components_.T * np.sqrt(PCA_object.explained_variance_)
+    loadings_percantage = (loadings - np.min(loadings)) / (np.max(loadings) - np.min(loadings))
+
+    print(f"Total amount of features: {len(X.columns)}")
+
+    for i in range(len(X.columns) // 34):
+      
+
+      loadings_percantage_part = loadings_percantage[i*34:(i*34+34)]
+      feature_names_part = PCA_object.feature_names_in_[i*34:(i*34+34)]
+
+      plt.figure(figsize=(10, 8))
+      sns.heatmap(loadings_percantage_part, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels = feature_names_part)
+      plt.title('Feature Importance in Principal Components')
+
+  else:
+    print(f"Too many principal components to plot in a meaningful way")
+    pass
+
+
+def new_biplot(train_data_scaled, train_labels, separate_types):
+  
+  PCA_object = PCA(n_components = 2)
+  X = pd.DataFrame(PCA_object.fit_transform(train_data_scaled))
+  
+  # This function will always plot the 2 most important PC's
+  coeff = PCA_object.components_.T
+  labels = PCA_object.feature_names_in_
+
+  # loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
+  # plt.figure(figsize=(10, 8))
+  # sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
+  # plt.title('Feature Importance in Principal Components')
+  
+  xs, ys = X[0], X[1]
+
+  plt.figure(figsize=(10, 8))
+
+  if(separate_types):
+    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
+                    'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
+                    'IMPA': (0.5, 0.5, 0.5), 
+                    'SANDSIM': (0.0, 1.0, 0.0), 
+                    'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
+
+  else:
+    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+
+  # y_labels = np.array(train_labels)
+  mappedLabels = np.array([label_mapping[label] for label in train_labels])
+
+  plt.scatter(xs, ys, c=mappedLabels#, cmap='viridis'
+              )
+
+
+
+def plot_SVM_boundaries(X, train_labels, separate_types,
+                        models, optimization_methods, titles, accuracy_list):
+
+  # Check if there is actually 2 components in the clf
+  if models[0].n_features_in_ == 2:
+
+    if(separate_types):
+      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
+                    'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
+                    'IMPA': (0.5, 0.5, 0.5), 
+                    'SANDSIM': (0.0, 1.0, 0.0), 
+                    'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
+    else:
+      label_mapping = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+
+    mapped_labels = np.array([label_mapping[label] for label in train_labels])
+
+
+
+    xs, ys = X[0], X[1]
+    
+    fig, sub = plt.subplots(2, 2)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+
+    for clf, method, title, accuracy, ax in zip(models, optimization_methods, titles, accuracy_list, sub.flatten()):
+        
+        disp = DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            response_method="predict",
+            cmap=plt.cm.coolwarm,
+            alpha=0.8,
+            ax=ax,
+            xlabel='PC1',
+            ylabel='PC2',
+        )
+        ax.scatter(xs, ys, c=mapped_labels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
+        ax.set_xticks(())
+        ax.set_yticks(())
+        ax.set_title(str(method) + "\n" + "Accuracy: " + str(accuracy) + "\n" + str(title) )
+
+  else:
+    print(f"Classifiers has {models[0].n_features_in_} features, need 2 to plot SVM boundaries")

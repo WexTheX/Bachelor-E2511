@@ -250,8 +250,10 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_
       end_time = time.time()  # End timer
       elapsed_time = end_time - start_time
 
+      best_score = max( clf.cv_results_['mean_test_score'] - clf.cv_results_['std_test_score'] )
+
       print(f"Used {method} to find the best model in {elapsed_time} seconds")
-      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
       print(f"\n")
 
     elif method.lower() == 'halvinggridsearchcv':
@@ -274,8 +276,10 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_
       end_time = time.time()  # End timer
       elapsed_time = end_time - start_time
 
+      best_score = max( clf.cv_results_['mean_test_score'] - clf.cv_results_['std_test_score'] )
+
       print(f"Used {method} to find the best model in {elapsed_time} seconds")
-      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
       print(f"\n")
 
     elif method.lower() == 'bayessearchcv':
@@ -306,8 +310,10 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_
       end_time = time.time()  # End timer
       elapsed_time = end_time - start_time
 
+      best_score = max( clf.cv_results_['mean_test_score'] - clf.cv_results_['std_test_score'] )
+
       print(f"Used {method} to find the best model in {elapsed_time} seconds")
-      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
       print(f"\n")
 
     elif method.lower() == 'randomizedsearchcv':
@@ -330,10 +336,12 @@ def makeSVMClassifier(method, base_estimator, num_folds, hyperparams_dict, want_
       end_time = time.time()  # End timer
       elapsed_time = end_time - start_time
 
-      print(f"Used {method} to find the best model in {elapsed_time} seconds")
-      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest mean score: {clf.best_score_}")
-      print(f"\n")
+      best_score = max( clf.cv_results_['mean_test_score'] - clf.cv_results_['std_test_score'] )
 
+      print(f"Used {method} to find the best model in {elapsed_time} seconds")
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
+      print(f"\n")
+      
     else: 
       
       clf = base_estimator

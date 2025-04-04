@@ -15,12 +15,13 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
-from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, new_biplot
+from plotting import biplot, plot_SVM_boundaries, PCA_table_plot
 from Preprocessing.preprocessing import fillSets, downsample
 
 
@@ -31,7 +32,7 @@ want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB"]
-ML_model = "KNN"
+ML_model = "RF"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
@@ -40,9 +41,8 @@ variance_explained = 0.4
 randomness = 333
 window_length_seconds = 20
 test_size = 0.25
-test_size = 0.25
 fs = 800
-ds_fs = 200
+ds_fs = 800
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
@@ -53,6 +53,7 @@ base_params =  {'class_weight': 'balanced',
 SVM_base = svm.SVC(**base_params)
 RF_base = RandomForestClassifier(**base_params)
 KNN_base = KNeighborsClassifier()
+GNB_base = GaussianNB()
 
 ''' HYPER PARAMETER VARIABLES '''
 
@@ -151,14 +152,17 @@ if (want_feature_extraction):
     for i, file in enumerate(sets):
         print(f"Extracting files from file: {file}")
         fe_df = extractDFfromFile(file, fs)
+        print(fe_df['Axl.X'].mean())
 
         if (ds_fs != fs):
             fe_df = downsample(fe_df, fs, ds_fs)
+            print(fe_df['Axl.X'].mean())
         
         window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
         all_window_features = all_window_features + window_df
         window_labels = window_labels + df_window_labels
+
         print(f"Total number of windows: {len(window_labels)}")
 
     feature_df = pd.DataFrame(all_window_features)
@@ -206,49 +210,45 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-# comment out here + in clf_dict to remove 
-
 optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
 
 classifiers = []
 best_clf_params = []
 
-print(f"Using {ML_model} classifier")
-
 if (ML_model.upper() == "SVM"):
     for method in optimization_methods:
-        t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, want_plots, PCA_train_df, train_data, train_labels, variance_explained, separate_types)
+        t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, PCA_train_df, train_labels, train_data, variance_explained)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
 
 elif (ML_model.upper() == "RF"):
     for method in optimization_methods:
-        t_clf = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
-
+        t_clf, t_best_clf_params = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
         classifiers.append(t_clf)
-        # best_clf_params.append(t_best_clf_params)
+        best_clf_params.append(t_best_clf_params)
 
 elif (ML_model.upper() == "KNN"):
     for method in optimization_methods:
-        t_clf, t_best_clf_params = makeKNNClassifier(method, PCA_train_df, train_labels, hyperparams_KNN, num_folds)
+        t_clf, t_best_clf_params = makeKNNClassifier(method, KNN_base, num_folds, hyperparams_KNN, PCA_train_df, train_labels)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
 
 elif (ML_model.upper() == "GNB"):
     for method in optimization_methods:
-        t_clf, t_best_clf_params = makeGNBClassifier(method, PCA_train_df, train_labels, hyperparams_GNB, num_folds)
+        t_clf, t_best_clf_params = makeGNBClassifier(method, GNB_base, num_folds, hyperparams_GNB, PCA_train_df, train_labels)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
 
-clf_dict = {}
-for i, classifier in enumerate(classifiers):
-    clf_dict[optimization_methods[i]] = classifier
-
 ''' EVALUATION '''
 
-for name, clf in clf_dict.items():
+# clf_dict = {}
+
+# for i, classifier in enumerate(classifiers):
+#     clf_dict[optimization_methods[i]] = classifier
+
+for name, clf in zip(optimization_methods, classifiers):
     
-    print(f"Evaluating {name}: ")
+    print(f"{name} scores")
 
     test_predict = clf.predict(PCA_test_df)
 
@@ -259,10 +259,11 @@ for name, clf in clf_dict.items():
     
     accuracy_list.append(np.round(accuracy_score, 3))
 
-    print(f"Accuracy: \t {accuracy_score}")
-    print(f"Precision: \t {precision_score}")
-    print(f"Recall: \t {recall_score}")
-    print(f"f1: \t\t {f1_score}")
+    print(f"Accuracy: \t {accuracy_score:.4f}")
+    print(f"Precision: \t {precision_score:.4f}")
+    print(f"Recall: \t {recall_score:.4f}")
+    print(f"f1: \t\t {f1_score:.4f}")
+    print("-" * 23)
 
 dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
 dummy_clf.fit(PCA_train_df, train_labels)
@@ -276,9 +277,9 @@ if(want_plots):
     
     PCA_table_plot(total_data_scaled, 5)   
 
-    ''' 2D/3D PLOT OF PCA '''
+    ''' 2D PLOTS OF PCA '''
 
-    new_biplot(total_data_scaled, window_labels, label_mapping)
+    biplot(total_data_scaled, window_labels, label_mapping)
 
     plot_SVM_boundaries(PCA_train_df, train_labels, label_mapping,
                          classifiers, optimization_methods, best_clf_params, accuracy_list)
@@ -350,7 +351,7 @@ guess = guess.sort()
 
 ''' Pickling classifier '''
 import pickle
-halving_classifier = clf_dict["HalvingGridSearchCV"]
+halving_classifier = classifiers[0]
 
 with open(output_path + "classifier.pkl", "wb") as CLF_File: 
     pickle.dump(halving_classifier, CLF_File) 

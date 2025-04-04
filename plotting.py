@@ -9,8 +9,8 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.decomposition import PCA
 
 
-# Plot of normal distribution, WIP
 def normDistPlot(dataset, size):
+  # Plot of normal distribution, WIP
   mean = dataset["mean_accel_X"]
   sd = dataset["sd_accel_X"]
     
@@ -20,8 +20,8 @@ def normDistPlot(dataset, size):
   plt.axvline(values.mean(), color='k', linestyle='dashed', linewidth=2)
   plt.figure()
 
-# Plot of FFT of sets and variables, REDO needed
 def plotFFT(sets, variables):
+  # Plot of FFT of sets and variables, REDO needed
   label_names = []
 
   for i in sets:
@@ -44,8 +44,8 @@ def plotFFT(sets, variables):
   plt.legend(label_names)
   plt.figure()
 
-# Plot of Welch Method
 def plotWelch(signal, feature, fs, filtering=True, omega_n = 15, order = 3):
+  # Plot of Welch Method
   df = pd.read_csv(signal+".csv")
   x = df[feature]
   freq, psd = getWelch(x, fs, filtering, omega_n, order)
@@ -84,7 +84,7 @@ def PCA_table_plot(X, n_components):
     print(f"Too many principal components to plot in a meaningful way")
     pass
 
-def new_biplot(train_data_scaled, train_labels, label_mapping):
+def biplot(train_data_scaled, train_labels, label_mapping):
   
   # Create PCA object for 2 components
   PCA_object = PCA(n_components = 2)
@@ -141,11 +141,11 @@ def plot_SVM_boundaries(X, train_labels, label_mapping,
         ax.set_title(str(method) + "\n" + "Accuracy: " + str(accuracy) + "\n" + str(title) )
 
   else:
-    print(f"Classifiers has {classifiers[0].n_features_in_} features, need 2 to plot SVM boundaries")
+    print(f"Cannot plot SVM boundaries: Classifiers has {classifiers[0].n_features_in_} features, must be 2.")
 
 
 
-def biplot(X, trainLabels, PCATest, n_components, separate_types, models, optimization_methods, titles, accuracy_list):
+def old_biplot(X, trainLabels, PCATest, n_components, separate_types, models, optimization_methods, titles, accuracy_list):
   
   # OLD BIPLOT FUNCTION, NOT IN USE
   # PCA_object = PCA(n_components = n_components)

@@ -26,17 +26,37 @@ __version__ = "1.3.0"
 
 from bleak import BleakScanner, BleakClient
 import asyncio
-
+import threading
 from Muse_Utils import *
+from sklearn.decomposition import PCA
+import pickle
+from machineLearning import scaleFeatures
+import pandas as pd
 
 CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7" 
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
+
+
+
+
+''' Pickled PCA and CLF from main '''
+
+
+output_path = "OutputFiles/"
+with open(output_path + "classifier.pkl", "rb") as CLF_file:
+        halving_classifier = pickle.load(CLF_file)
+
+with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
+    PCA_final = pickle.load(PCA_File)
+
+
 
 def cmd_notification_handler(sender, data):
     """Simple notification handler which prints the data received."""
     print("{0}: {1}".format(sender, data))
 
     return
+
 
 
 async def data_notification_handler(sender: int, data: bytearray):
@@ -59,10 +79,35 @@ async def data_notification_handler(sender: int, data: bytearray):
     ]
     
     
-    print(imu_features)
+    feature_segment = splitWindow(featureList=data)
+
+    feature_segment_scaled = scaleFeatures(feature_segment)
+    
+    
+    PCA_final_df  = pd.DataFrame(PCA_final.transform(feature_segment_scaled))
     
 
+    prediction = halving_classifier.predict(PCA_final_df)
+
+
+
+
     return
+
+
+
+def splitWindow(data, feature_list):
+    
+    
+    if len(data) < 10000:
+        feature_list.append()
+
+    else:
+        
+        segment = feature_list
+        feature_list.clear()
+        return segment
+
 
 def list_services(client):
     #print all services and characteristic

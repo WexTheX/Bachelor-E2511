@@ -19,7 +19,7 @@ from sklearn.neighbors import KNeighborsClassifier
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import splitData, scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
+from machineLearning import  scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
 from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, new_biplot
 from Preprocessing.preprocessing import fillSets, downsample
 
@@ -42,7 +42,7 @@ window_length_seconds = 20
 test_size = 0.25
 test_size = 0.25
 fs = 800
-ds_fs = 800
+ds_fs = 200
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
@@ -250,7 +250,7 @@ for name, clf in clf_dict.items():
 
     test_predict = clf.predict(PCA_test_df)
 
-    accuracy_score = metrics.balanced_accuracy_score(test_labels, test_predict)
+    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
     precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
     recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
     f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
@@ -343,3 +343,21 @@ guess = clf1.predict(PCA_test_df)
 
 guess = guess.sort()
 '''
+
+
+
+''' Pickling classifier '''
+import pickle
+halving_classifier = clf_dict["HalvingGridSearchCV"]
+
+with open(output_path + "classifier.pkl", "wb") as CLF_File: 
+    pickle.dump(halving_classifier, CLF_File) 
+
+
+
+with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
+    pickle.dump(PCA_final, PCA_File)
+
+
+
+PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))

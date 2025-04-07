@@ -30,27 +30,30 @@ import threading
 from muse_api_main.Muse_Utils import *
 from sklearn.decomposition import PCA
 import pickle
-from machineLearning import scaleFeatures
 import pandas as pd
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
+import time
+import numpy as np
 
 CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7" 
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 
 
-
+window_length_sec = 20
+fs = 200
 
 ''' Pickled PCA and CLF from main '''
 
 
 output_path = "OutputFiles/Separated/"
 with open(output_path + "classifier.pkl", "rb") as CLF_file:
-        halving_classifier = pickle.load(CLF_file)
+    halving_classifier = pickle.load(CLF_file)
 
 with open(output_path + "PCA.pkl", "rb" ) as PCA_File:
     PCA_final = pickle.load(PCA_File)
 
-
+with open(output_path + "scaler.pkl", "rb" ) as Scaler_File:
+    scaler = pickle.load(Scaler_File)
 
 def cmd_notification_handler(sender, data):
     """Simple notification handler which prints the data received."""
@@ -63,7 +66,7 @@ feature_list = []
 
 async def data_notification_handler(sender: int, data: bytearray):
     """Decode data"""
-
+    global feature_list
     header_offset = 8   # ignore packet header
 
     # decode packet data
@@ -72,28 +75,29 @@ async def data_notification_handler(sender: int, data: bytearray):
 
     #print("{0} {1} {2} {3} {4} {5} {6}".format(device_ID,tempData.axl[0],tempData.axl[1],tempData.axl[2],tempData.gyr[0],tempData.gyr[1],tempData.gyr[2]))
     
-    features = [tempData.timestamp,
-                tempData.axl[0], 
+    features = np.array([
+        time.time(),
+        tempData.axl[0], 
         tempData.axl[1], 
         tempData.axl[2],                             
         tempData.gyr[0], 
-         tempData.gyr[1], 
-         tempData.gyr[2],                              
-         tempData.mag[0], 
-         tempData.mag[1], 
-      tempData.mag[2],                             
+        tempData.gyr[1], 
+        tempData.gyr[2],                              
+        tempData.mag[0], 
+        tempData.mag[1], 
+        tempData.mag[2],                             
         tempData.tp[0], 
         tempData.tp[1],                                                
         tempData.light.range, 
-      tempData.light.lum_vis, 
-       tempData.light.lum_ir             
-    ]
+        tempData.light.lum_vis, 
+        tempData.light.lum_ir]             
+    )
     
     feature_list.append(features)
    
+    #print(features)
     
-    
-    if (len(feature_list) > 2000-1):
+    if (len(feature_list) > window_length_sec*fs-1):
         
     
         segment = feature_list
@@ -103,26 +107,22 @@ async def data_notification_handler(sender: int, data: bytearray):
         
 
         #print(feature_df)
+        
+        
+        feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
+        
 
-        
-        
-    
-      
-      
-      
-        
-        feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", 20, 200, False)
-
-        feature_df_scaled = scaleFeatures(pd.DataFrame(feature_df_extraction))
+        feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))
+       
         PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))
 
         prediction = halving_classifier.predict(PCA_feature_df)
         print(prediction)
 
-        feature_list.clear()
+        feature_list = []
 
         
-        
+    #print(len(feature_list))    
     return
 
 
@@ -184,7 +184,7 @@ async def main():
             
             # Set up the command
             stream_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT
-            cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=True)
+            cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=False)
 
             # Start notify on data characteristic
             await client.start_notify(DATA_UUID, data_notification_handler)
@@ -194,7 +194,7 @@ async def main():
             await client.write_gatt_char(CMD_UUID, cmd_stream, True)
             
             # Set streaming duration to 10 seconds
-            await asyncio.sleep(20)
+            await asyncio.sleep(120)
 
             # Stop data acquisition in STREAMING mode      
             await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)

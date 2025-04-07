@@ -253,7 +253,10 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
     ''' LOAD WINDOWS '''
     num_windows = num_samples // window_length # Rounds down when deciding numbers
     window_sum += num_windows
-        
+    
+
+
+    
     # Only does feature extraction on windows in the middle
     for j in range(0, num_windows):
         

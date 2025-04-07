@@ -271,6 +271,7 @@ def old_biplot(X, trainLabels, PCATest, n_components, separate_types, models, op
     pass
 
 def plotKNNboundries(df, clf, labels):
+  
     _, ax = plt.subplots()
 
     disp = DecisionBoundaryDisplay.from_estimator(

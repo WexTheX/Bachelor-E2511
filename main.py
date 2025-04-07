@@ -37,7 +37,7 @@ accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.80
+variance_explained = 2
 randomness = 333
 window_length_seconds = 20
 test_size = 0.25
@@ -230,10 +230,12 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
+optimization_methods = ['BayesSearchCV1', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
 
 classifiers = []
 best_clf_params = []
+optimization_list = []
+
 clf_names = []
 
 search_kwargs = {'n_jobs': -1, 
@@ -244,15 +246,21 @@ search_kwargs = {'n_jobs': -1,
 
 models = [ (SVM_base, SVM_param_grid), 
           (RF_base, RF_param_grid),
-          (KNN_base, KNN_param_grid),
-          (GNB_base, GNB_param_grid) ]
+          (KNN_base, KNN_param_grid)]
+        #   (GNB_base, GNB_param_grid) ]
 
 for base_model, param_grid in models:
     for method in optimization_methods:
+
         clf, best_params = makeClassifier(base_model, param_grid, method, PCA_train_df, train_labels, search_kwargs, n_iter=30)
+
         classifiers.append(clf)
         best_clf_params.append(best_params)
+        optimization_list.append(method)
 
+# print(f"Optimization list: {optimization_list}")
+# print(f"Classifiers: {classifiers}")
+# print(f"best_params: {best_clf_params}")
 
 # if (ML_model.upper() == "SVM"):
 #     for method in optimization_methods:
@@ -283,9 +291,13 @@ for base_model, param_grid in models:
 clf_dict = {}
 
 for i, classifier in enumerate(classifiers):
-    clf_dict[optimization_methods[i]] = classifier
+    clf_dict[optimization_list[i]] = classifier
 
-for name, clf, clf_name in zip(optimization_methods, classifiers, clf_names):
+print(clf_dict)
+
+# clf_dict brukes ikke, clf_names er tom
+
+for name, clf, clf_name in zip(optimization_list, classifiers, clf_names):
     
     accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name, clf_name)
     accuracy_list.append(np.round(accuracy_score, 3))

@@ -135,9 +135,12 @@ def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels,
         kfold_validation_data = train_data.iloc[test_index]
 
         # Scale training and validation separately
-        kfold_train_data_scaled = scaler.transform(kfold_train_data)
+        scaler = StandardScaler()
+        scaler.set_output(transform="pandas")
+
+        kfold_train_data_scaled = scaler.fit_transform(kfold_train_data)
         kfold_validation_data_scaled = scaler.transform(kfold_validation_data)
-        
+
         PCA_components = setNComponents(kfold_train_data_scaled, variance_explained=variance_explained)
         
         PCA_fold = PCA(n_components = PCA_components)
@@ -567,6 +570,7 @@ def makeGNBClassifier(method, base_estimator, num_folds, param_grid, df, labels)
     return clf
 
 def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_name):
+    
     print(f"{name} scores")
 
     test_predict = clf.predict(test_df)

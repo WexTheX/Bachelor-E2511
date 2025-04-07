@@ -8,19 +8,18 @@
 # get answer of what activity and probability from ML
 
 
-### Skal i Main.py
+
+# ### Testing trained model on unseen files
 # test_file_path = "testFiles"
 # test_files = os.listdir(test_file_path)
 
+
 # for filename in test_files:
 #     file_to_test = os.path.join(test_file_path, filename)
-#     run_inference_on_file(file_to_test, fs, window_length_sec, norm_accel=True)
+#     print(f"Testing file {file_to_test}")
+#     run_inference_on_file(file_to_test, fs, window_length_sec,file_name = file_to_test, norm_accel=True, run=True)
 
-#---------------------------------------------
-
-
-
-def run_inference_on_file(file_path, fs, window_length_sec, norm_accel=True, run=False):
+def run_inference_on_file(file_path, fs, window_length_sec, run, file_name, norm_accel=True):
     if not run:
         print(f"Skipping inference on {file_path}")
         return
@@ -43,6 +42,7 @@ def run_inference_on_file(file_path, fs, window_length_sec, norm_accel=True, run
 
     ### Predictions
     preds = clf.predict(features_pca)
+    print(file_name)
     print(f"{'TIME':<10}{'ACTIVITY':<15}{'PROBABILITY':<12}TOP-3 PREDICTIONS")
     print(f"{'0–10':<10}{'deleted':<15}{'-':<12}-")
 

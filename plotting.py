@@ -269,3 +269,17 @@ def old_biplot(X, trainLabels, PCATest, n_components, separate_types, models, op
   else:
     print(f"Too many principal components to plot in a meaningful way")
     pass
+
+def plotKNNboundries(df, clf, labels):
+    _, ax = plt.subplots()
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+    clf,
+    df,
+    response_method="predict",
+    plot_method="pcolormesh",
+    shading="auto",
+    alpha=0.5,
+    ax=ax,
+    )
+    scatter = disp.ax_.scatter(df.iloc[:, 0], df.iloc[:, 1], c=labels, edgecolors="k")

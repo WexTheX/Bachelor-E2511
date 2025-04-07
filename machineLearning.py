@@ -12,7 +12,7 @@ from sklearn.decomposition import PCA
 from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-
+import seaborn as sns
 
 from plotting import biplot
 
@@ -523,3 +523,30 @@ def makeGNBClassifier(method, base_estimator, num_folds, param_grid, df, labels)
 
         print(clf.get_params())
     return clf
+
+def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name):
+    print(f"{name} scores")
+
+    test_predict = clf.predict(test_df)
+
+    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+    precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
+    recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
+    f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
+
+    print(f"Accuracy: \t {accuracy_score:.4f}")
+    print(f"Precision: \t {precision_score:.4f}")
+    print(f"Recall: \t {recall_score:.4f}")
+    print(f"f1: \t\t {f1_score:.4f}")
+    print("-" * 23)
+
+    if(want_plots):
+        ''' CONFUSION MATRIX '''
+        conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+        plt.title(f'Confusion matrix, {clf.estimator}, {name}')
+    
+    return accuracy_score

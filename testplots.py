@@ -16,13 +16,13 @@ datasets = []
 variables = []
 
 ''' ADD DATASETS '''
-datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSaperated/GrindBig/GRINDBIG_1.txt")
 # datasets.append("Preprocessing/DatafilesSaperated/GrindBig/GRINDBIG_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
 datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
@@ -78,6 +78,7 @@ def plotTime(sets, vars):
   #     df[j].plot()
 
   for i in vars:
+    plt.figure()
     legendNames = []
 
     for j in sets:
@@ -90,7 +91,7 @@ def plotTime(sets, vars):
     plt.title('Time, %s' % i)
     plt.legend(legendNames)
     plt.grid()
-    plt.show()
+    # plt.show()
 
 
 ''' FFT PLOTTING '''
@@ -140,11 +141,11 @@ def plotWelch(sets, vars):
     plt.ylabel('Power Spectral Density')
     plt.title('Welch PSD')
     plt.legend(legendNames)
-    plt.show()
+    # plt.show()
 
 plotTime(datasets, variables)
 # plotFFT(datasets, variables)
 # plotWelch(datasets, variables)  
 
-# plt.show()
+plt.show()
 

@@ -29,24 +29,66 @@ def trainScaler(df):
 
 ''' PCA '''
 def setNComponents(kfold_train_data_scaled, variance_explained):
-    
-    C = np.cov(kfold_train_data_scaled, rowvar=False) # 140x140 Co-variance matrix
-    eigenvalues, eigenvectors = np.linalg.eig(C)
+    if variance_explained < 1.0:
+      C = np.cov(kfold_train_data_scaled, rowvar=False) # 140x140 Co-variance matrix
+      eigenvalues, eigenvectors = np.linalg.eig(C)
 
-    eig_sum = 0
-    for i in range(len(eigenvalues)):
-        
-        eig_sum += eigenvalues[i]
-        total_variance = eig_sum / eigenvalues.sum()
+      eig_sum = 0
+      for i in range(len(eigenvalues)):
+          
+          eig_sum += eigenvalues[i]
+          total_variance = eig_sum / eigenvalues.sum()
 
-        if total_variance >= variance_explained:
-            n_components = i + 1
-            print(f"Variance explained by {n_components} PCA components: {eig_sum / eigenvalues.sum()}")
-            break
+          if total_variance >= variance_explained:
+              n_components = i + 1
+              print(f"Variance explained by {n_components} PCA components: {eig_sum / eigenvalues.sum()}")
+              # print(eigenvalues[0] / eigenvalues.sum())
+              # print((eigenvalues[0] + eigenvalues[1]) / eigenvalues.sum())
+              # print((eigenvalues[0] + eigenvalues[1] + eigenvalues[2]) / eigenvalues.sum())
+              # print((eigenvalues[0] + eigenvalues[1] + eigenvalues[2] + eigenvalues[3]) / eigenvalues.sum())
+              # print((eigenvalues[0] + eigenvalues[1] + eigenvalues[2] + eigenvalues[3] + eigenvalues[4]) / eigenvalues.sum())
+              break
+          
+    else:
+       n_components = variance_explained
     
     return n_components
 
-def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels, train_data, variance_explained, scaler):
+def makeSmoothParamGrid(param_grid):
+   
+  smooth_param_grid = {}
+
+  for param, value in param_grid.items():
+
+    if value and all(v is None for v in value):
+       smooth_param_grid[param] = None
+       continue
+    
+    if all(isinstance(v, (str, bool)) for v in value):
+      # print(f"  - Converted '{param}' to Categorical({value})")
+      smooth_param_grid[param] = Categorical(value)
+      continue
+    
+    # Filter out None
+    if any(isinstance(v, float) for v in value):
+      float_values = [float(v) for v in value if v != None]
+      min_value, max_value = min(float_values), max(float_values)
+
+      if abs(max_value - min_value) > 1e-12:
+        # print(f"  - Converted '{param}' to Real({value})")
+        smooth_param_grid[param] = Real(min_value, max_value, name=param)
+
+    if any(isinstance(v, int) for v in value):
+        int_values = [float(v) for v in value if v != None]
+        min_value, max_value = min(int_values), max(int_values)
+
+        if abs(max_value - min_value) > 1e-12:
+          # print(f"  - Converted '{param}' to Integer({value})")
+          smooth_param_grid[param] = Integer(int(min_value), int(max_value), name=param)
+
+  return smooth_param_grid
+
+def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels, train_data, variance_explained):
     
     print()
     print(f"Classifier: \t {base_estimator}")
@@ -93,9 +135,12 @@ def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels,
         kfold_validation_data = train_data.iloc[test_index]
 
         # Scale training and validation separately
-        kfold_train_data_scaled = scaler.transform(kfold_train_data)
+        scaler = StandardScaler()
+        scaler.set_output(transform="pandas")
+
+        kfold_train_data_scaled = scaler.fit_transform(kfold_train_data)
         kfold_validation_data_scaled = scaler.transform(kfold_validation_data)
-        
+
         PCA_components = setNComponents(kfold_train_data_scaled, variance_explained=variance_explained)
         
         PCA_fold = PCA(n_components = PCA_components)
@@ -525,6 +570,7 @@ def makeGNBClassifier(method, base_estimator, num_folds, param_grid, df, labels)
     return clf
 
 def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_name):
+    
     print(f"{name} scores")
 
     test_predict = clf.predict(test_df)
@@ -550,3 +596,81 @@ def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_
         plt.title(f'Confusion matrix, {clf_name}, {name}')
     
     return accuracy_score
+
+def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_iter=30):
+    
+    print()
+    print(f"Classifier: \t {base_estimator}")
+    print(f"Optimalizer: \t {method}")
+    print("-" * 40)
+
+    start_time = time.time()
+
+    if method.lower() == 'gridsearchcv':
+        
+        clf = GridSearchCV(
+           
+            estimator=base_estimator,
+            param_grid=param_grid,
+
+            **search_kwargs
+
+            ) 
+
+    elif method.lower() == 'halvinggridsearchcv':
+        
+        clf = HalvingGridSearchCV(
+           
+            estimator=base_estimator,
+            param_grid=param_grid,
+
+            **search_kwargs
+
+            ) 
+         
+    elif method.lower() == 'randomizedsearchcv':
+        
+        clf = RandomizedSearchCV(
+           
+            estimator=base_estimator,
+            param_distributions=param_grid,
+
+            n_iter=n_iter,
+            **search_kwargs
+
+            ) 
+        
+    elif method.lower() == 'bayessearchcv':
+        
+        smooth_param_grid = makeSmoothParamGrid(param_grid)
+
+        clf = BayesSearchCV(
+
+            estimator=base_estimator,
+            search_spaces=smooth_param_grid,
+
+            n_iter=n_iter,
+            **search_kwargs
+
+            )
+
+    else:
+       clf = base_estimator
+       best_params = None
+       print(f"{method} not recognized, fitting default {base_estimator}")
+
+    clf.fit(X, y)
+
+    end_time = time.time()  # End timer
+    elapsed_time = end_time - start_time
+
+    if clf != base_estimator: 
+      best_params = clf.best_params_
+
+      best_score = ( clf.cv_results_['mean_test_score'][clf.best_index_] - clf.cv_results_['std_test_score'][clf.best_index_] )
+      print(clf.best_score_)
+      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
+      print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
+      print(f"\n")  
+
+    return clf, best_params

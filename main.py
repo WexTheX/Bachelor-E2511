@@ -19,7 +19,7 @@ from sklearn.naive_bayes import GaussianNB
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF
+from machineLearning import trainScaler, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF
 from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
 
@@ -36,7 +36,7 @@ accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.95
+variance_explained = 0.80
 randomness = 333
 window_length_seconds = 20
 test_size = 0.25
@@ -193,9 +193,12 @@ train_data, test_data, train_labels, test_labels = train_test_split(feature_df, 
 
 mapped_labels = np.array([label_mapping[label] for label in train_labels])
 
-total_data_scaled = scaleFeatures(feature_df)
-train_data_scaled = scaleFeatures(train_data)
-test_data_scaled = scaleFeatures(test_data)
+scaler = trainScaler(train_data)
+train_data_scaled = scaler.transform(train_data)
+test_data_scaled = scaler.transform(test_data)
+
+total_data_scaled = scaler.transform(feature_df) # Only used for PCA of entire dataset, not used in actual ML
+
 
 
 ''' Principal Component Analysis (PCA)'''
@@ -219,7 +222,7 @@ clf_names = []
 
 if ((ML_model.upper() == "SVM") or (ML_model.upper == "COMPARE")):
     for method in optimization_methods:
-        t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, PCA_train_df, train_labels, train_data, variance_explained)
+        t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, PCA_train_df, train_labels, train_data, variance_explained, scaler)
         classifiers.append(t_clf)
         best_clf_params.append(t_best_clf_params)
         clf_names.append("SVM")
@@ -321,10 +324,8 @@ halving_classifier = classifiers[0]
 with open(output_path + "classifier.pkl", "wb") as CLF_File: 
     pickle.dump(halving_classifier, CLF_File) 
 
-
-
 with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
     pickle.dump(PCA_final, PCA_File)
 
-
-
+with open(output_path + "scaler.pkl", "wb") as scaler_file:
+    pickle.dump(scaler, scaler_file)

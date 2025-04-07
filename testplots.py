@@ -16,20 +16,24 @@ datasets = []
 variables = []
 
 ''' ADD DATASETS '''
-# datasets.append("Preprocessing/Datafiles/Grinding/GRIND_0.txt")
-# datasets.append("Preprocessing/Datafiles/Grinding/GRIND_4.txt")
-# datasets.append("Preprocessing/Datafiles/Grinding/GRIND_11.txt")
-# datasets.append("Preprocessing/Datafiles/Idle/IDLE_0.txt")
-# datasets.append("Preprocessing/Datafiles/Idle/IDLE_1.txt")
-# datasets.append("Preprocessing/Datafiles/Idle/IDLE_2.txt")
-# datasets.append("Preprocessing/Datafiles/Welding/WELD_0.txt")
-# datasets.append("Preprocessing/Datafiles/Welding/WELD_6.txt")
-# datasets.append("Preprocessing/Datafiles/Welding/WELD_10.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_0.txt")
+# datasets.append("Preprocessing/DatafilesSaperated/GrindBig/GRINDBIG_1.txt")
+# datasets.append("Preprocessing/DatafilesSaperated/GrindBig/GRINDBIG_2.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
+datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_2.txt")
 
-datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
-datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_4.txt")
-datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_6.txt")
+
+# datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_2.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_4.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_1.txt")
@@ -39,7 +43,9 @@ datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_5.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_7.txt")
-
+datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_2.txt")
 
 
 

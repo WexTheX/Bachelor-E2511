@@ -524,7 +524,7 @@ def makeGNBClassifier(method, base_estimator, num_folds, param_grid, df, labels)
         print(clf.get_params())
     return clf
 
-def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name):
+def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_name):
     print(f"{name} scores")
 
     test_predict = clf.predict(test_df)
@@ -547,6 +547,6 @@ def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name):
         sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
         plt.xlabel("Predicted")
         plt.ylabel("Actual")
-        plt.title(f'Confusion matrix, {clf.estimator}, {name}')
+        plt.title(f'Confusion matrix, {clf_name}, {name}')
     
     return accuracy_score

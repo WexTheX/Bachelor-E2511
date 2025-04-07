@@ -253,9 +253,9 @@ elif ((ML_model.upper() == "GNB") or (ML_model.upper == "COMPARE")):
 # for i, classifier in enumerate(classifiers):
 #     clf_dict[optimization_methods[i]] = classifier
 
-for name, clf in zip(optimization_methods, classifiers):
+for name, clf, clf_name in zip(optimization_methods, classifiers, clf_names):
     
-    accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name)
+    accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name, clf_name)
     accuracy_list.append(np.round(accuracy_score, 3))
     
 
@@ -280,7 +280,8 @@ if(want_plots):
 
     ''' KNN PLOT '''
     if(ML_model.upper() == "KNN"):
-        plotKNNboundries(PCA_train_df, clf, mapped_labels)
+        if (PCA_components == 2):
+            plotKNNboundries(PCA_train_df, clf, mapped_labels)
     
     plt.show()
 

@@ -16,11 +16,12 @@ from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, tra
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.preprocessing import StandardScaler
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import scaleFeatures, setNComponents, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
+from machineLearning import scaleFeatures, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
 from plotting import biplot, plot_SVM_boundaries, PCA_table_plot
 from Preprocessing.preprocessing import fillSets, downsample
 
@@ -28,7 +29,7 @@ from Preprocessing.preprocessing import fillSets, downsample
 
 ''' GLOBAL VARIABLES '''
 
-want_feature_extraction = 1
+want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB"]
@@ -59,17 +60,25 @@ GNB_base = GaussianNB()
 
 num_folds = 3
 
-hyperparams_SVM = {
+SVM_param_grid = {
     "C": [0.001, 0.01],
     "kernel": ["linear", "poly", "rbf", "sigmoid"],
     "gamma": [0.01, 0.1],
-    "coef0": [0, 1],
+    "coef0": [0.0, 1.0],
     "degree": [2, 3]
 }
 
-hyperparams_RF = {
+# smooth_hyperparams_SVM = {
+#     "C": Real(hyperparams_SVM['C'][0], hyperparams_SVM['C'][-1], prior="log-uniform"),  # Continuous log-scale for C
+#     "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
+#     "gamma": Real(hyperparams_SVM['gamma'][0], hyperparams_SVM['gamma'][-1], prior="log-uniform"),  # Log-uniform scale for gamma
+#     "coef0": Real(hyperparams_SVM['coef0'][0], hyperparams_SVM['coef0'][-1]),
+#     "degree": Integer(hyperparams_SVM['degree'][0], hyperparams_SVM['degree'][-1])
+# }
+
+RF_param_grid = {
     'n_estimators': [50, 100, 200],  # Number of trees in the forest
-    # 'max_depth': [10, 20, 30, None],  # Maximum depth of each tree
+    'max_depth': [10, 20, 30, None],  # Maximum depth of each tree
     # 'min_samples_split': [2, 5, 10],  # Minimum samples required to split a node
     # 'min_samples_leaf': [1, 2, 4],  # Minimum samples required in a leaf node
     # 'max_features': ['sqrt', 'log2'],  # Number of features considered for splitting
@@ -77,7 +86,7 @@ hyperparams_RF = {
     'criterion': ['gini', 'entropy']  # Splitting criteria
 }
 
-hyperparams_KNN = {
+KNN_param_grid = {
     'algorithm': ['ball_tree', 'kd_tree', 'brute'], 
     # 'leaf_size': [30], 
     # 'metric': 'minkowski', 
@@ -88,10 +97,11 @@ hyperparams_KNN = {
     'weights': ['uniform', 'distance']
     }
 
-hyperparams_GNB = {
-    'priors': None, 
-    'var_smoothing': 1e-09
+GNB_param_grid = {
+    'priors': [None], 
+    'var_smoothing': [1e-09]
     }
+
 
 ''' USER INPUTS '''
 
@@ -192,9 +202,18 @@ if "feature_df" not in globals():
 
 train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=randomness, stratify=window_labels)
 
-total_data_scaled = scaleFeatures(feature_df)
-train_data_scaled = scaleFeatures(train_data)
-test_data_scaled = scaleFeatures(test_data)
+scaler = StandardScaler()
+scaler.set_output(transform="pandas")
+
+train_data_scaled = scaler.fit_transform(train_data)
+test_data_scaled = scaler.transform(test_data)
+
+total_data_scaled = scaler.fit_transform(feature_df)
+
+
+# total_data_scaled = scaleFeatures(feature_df, 1)
+# train_data_scaled = scaleFeatures(train_data, 1)
+# test_data_scaled = scaleFeatures(test_data, 0)
 
 
 ''' Principal Component Analysis (PCA)'''
@@ -215,36 +234,54 @@ optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', '
 classifiers = []
 best_clf_params = []
 
-if (ML_model.upper() == "SVM"):
-    for method in optimization_methods:
-        t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, PCA_train_df, train_labels, train_data, variance_explained)
-        classifiers.append(t_clf)
-        best_clf_params.append(t_best_clf_params)
+search_kwargs = {'n_jobs': -1, 
+                 'verbose': 0,
+                 'cv': num_folds,
+                 'scoring': 'f1_weighted'
+                }
 
-elif (ML_model.upper() == "RF"):
-    for method in optimization_methods:
-        t_clf, t_best_clf_params = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
-        classifiers.append(t_clf)
-        best_clf_params.append(t_best_clf_params)
+models = [ (SVM_base, SVM_param_grid), 
+          (RF_base, RF_param_grid),
+          (KNN_base, KNN_param_grid),
+          (GNB_base, GNB_param_grid) ]
 
-elif (ML_model.upper() == "KNN"):
+for base_model, param_grid in models:
     for method in optimization_methods:
-        t_clf, t_best_clf_params = makeKNNClassifier(method, KNN_base, num_folds, hyperparams_KNN, PCA_train_df, train_labels)
-        classifiers.append(t_clf)
-        best_clf_params.append(t_best_clf_params)
+        clf, best_params = makeClassifier(base_model, param_grid, method, PCA_train_df, train_labels, search_kwargs, n_iter=30)
+        classifiers.append(clf)
+        best_clf_params.append(best_params)
 
-elif (ML_model.upper() == "GNB"):
-    for method in optimization_methods:
-        t_clf, t_best_clf_params = makeGNBClassifier(method, GNB_base, num_folds, hyperparams_GNB, PCA_train_df, train_labels)
-        classifiers.append(t_clf)
-        best_clf_params.append(t_best_clf_params)
+
+# if (ML_model.upper() == "SVM"):
+#     for method in optimization_methods:
+#         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, PCA_train_df, train_labels, train_data, variance_explained)
+#         classifiers.append(t_clf)
+#         best_clf_params.append(t_best_clf_params)
+
+# elif (ML_model.upper() == "RF"):
+#     for method in optimization_methods:
+#         t_clf, t_best_clf_params = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
+#         classifiers.append(t_clf)
+#         best_clf_params.append(t_best_clf_params)
+
+# elif (ML_model.upper() == "KNN"):
+#     for method in optimization_methods:
+#         t_clf, t_best_clf_params = makeKNNClassifier(method, KNN_base, num_folds, hyperparams_KNN, PCA_train_df, train_labels)
+#         classifiers.append(t_clf)
+#         best_clf_params.append(t_best_clf_params)
+
+# elif (ML_model.upper() == "GNB"):
+#     for method in optimization_methods:
+#         t_clf, t_best_clf_params = makeGNBClassifier(method, GNB_base, num_folds, hyperparams_GNB, PCA_train_df, train_labels)
+#         classifiers.append(t_clf)
+#         best_clf_params.append(t_best_clf_params)
 
 ''' EVALUATION '''
 
-# clf_dict = {}
+clf_dict = {}
 
-# for i, classifier in enumerate(classifiers):
-#     clf_dict[optimization_methods[i]] = classifier
+for i, classifier in enumerate(classifiers):
+    clf_dict[optimization_methods[i]] = classifier
 
 for name, clf in zip(optimization_methods, classifiers):
     

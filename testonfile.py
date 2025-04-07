@@ -19,7 +19,7 @@
 #     print(f"Testing file {file_to_test}")
 #     run_inference_on_file(file_to_test, fs, window_length_sec,file_name = file_to_test, norm_accel=True, run=True)
 
-def run_inference_on_file(file_path, fs, window_length_sec, run, file_name, norm_accel=True):
+def run_inference_on_file(file_path, fs, window_length_sec, run, norm_accel=True):
     if not run:
         print(f"Skipping inference on {file_path}")
         return
@@ -42,7 +42,6 @@ def run_inference_on_file(file_path, fs, window_length_sec, run, file_name, norm
 
     ### Predictions
     preds = clf.predict(features_pca)
-    print(file_name)
     print(f"{'TIME':<10}{'ACTIVITY':<15}{'PROBABILITY':<12}TOP-3 PREDICTIONS")
     print(f"{'0–10':<10}{'deleted':<15}{'-':<12}-")
 

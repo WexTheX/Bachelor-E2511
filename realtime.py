@@ -100,9 +100,26 @@ async def data_notification_handler(sender: int, data: bytearray):
         #print(segment)
         feature_df = pd.DataFrame(data=segment, columns=columns)
         
-        feature_list.clear()
+        
 
-        print(feature_df)
+        #print(feature_df)
+
+        
+        
+    
+      
+      
+      
+        
+        feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", 20, 200, False)
+
+        feature_df_scaled = scaleFeatures(pd.DataFrame(feature_df_extraction))
+        PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))
+
+        prediction = halving_classifier.predict(PCA_feature_df)
+        print(prediction)
+
+        feature_list.clear()
 
         
         
@@ -167,7 +184,7 @@ async def main():
             
             # Set up the command
             stream_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT
-            cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=False)
+            cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=True)
 
             # Start notify on data characteristic
             await client.start_notify(DATA_UUID, data_notification_handler)

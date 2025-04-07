@@ -4,7 +4,6 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 
 from sklearn.inspection import DecisionBoundaryDisplay, permutation_importance
@@ -21,8 +20,8 @@ from sklearn.preprocessing import StandardScaler
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import scaleFeatures, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier
-from plotting import biplot, plot_SVM_boundaries, PCA_table_plot
+from machineLearning import trainScaler, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF
+from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
 
 
@@ -32,13 +31,13 @@ from Preprocessing.preprocessing import fillSets, downsample
 want_feature_extraction = 0
 separate_types = 1
 want_plots = 1
-ML_models = ["SVM", "RF", "KNN", "GNB"]
-ML_model = "RF"
+ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
+ML_model = "SVM"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 0.95
+variance_explained = 0.80
 randomness = 333
 window_length_seconds = 20
 test_size = 0.25
@@ -202,6 +201,8 @@ if "feature_df" not in globals():
 
 train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=randomness, stratify=window_labels)
 
+mapped_labels = np.array([label_mapping[label] for label in train_labels])
+
 scaler = StandardScaler()
 scaler.set_output(transform="pandas")
 
@@ -233,6 +234,7 @@ optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', '
 
 classifiers = []
 best_clf_params = []
+clf_names = []
 
 search_kwargs = {'n_jobs': -1, 
                  'verbose': 0,
@@ -283,24 +285,11 @@ clf_dict = {}
 for i, classifier in enumerate(classifiers):
     clf_dict[optimization_methods[i]] = classifier
 
-for name, clf in zip(optimization_methods, classifiers):
+for name, clf, clf_name in zip(optimization_methods, classifiers, clf_names):
     
-    print(f"{name} scores")
-
-    test_predict = clf.predict(PCA_test_df)
-
-    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-    precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
-    recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
-    f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
-    
+    accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name, clf_name)
     accuracy_list.append(np.round(accuracy_score, 3))
-
-    print(f"Accuracy: \t {accuracy_score:.4f}")
-    print(f"Precision: \t {precision_score:.4f}")
-    print(f"Recall: \t {recall_score:.4f}")
-    print(f"f1: \t\t {f1_score:.4f}")
-    print("-" * 23)
+    
 
 dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
 dummy_clf.fit(PCA_train_df, train_labels)
@@ -321,39 +310,10 @@ if(want_plots):
     plot_SVM_boundaries(PCA_train_df, train_labels, label_mapping,
                          classifiers, optimization_methods, best_clf_params, accuracy_list)
 
-    ''' CONFUSION MATRIX '''
-    conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.title('Confusion matrix')
-
     ''' KNN PLOT '''
     if(ML_model.upper() == "KNN"):
-        if (separate_types):
-            label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-                            'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.7, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.7),
-                            'IMPA': (0.5, 0.5, 0.5),
-                            'SANDSIM': (0.0, 1.0, 0.0), 
-                            'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.7, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.7, 1.0)}
-        else:
-            label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'IMPA': (0.5, 0.5, 0.5), 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
-        y_labels = np.array(train_labels)
-        mapped_labels = np.array([label_mapping[label] for label in train_labels])
-
-        _, ax = plt.subplots()
-
-        disp = DecisionBoundaryDisplay.from_estimator(
-        clf,
-        PCA_test_df,
-        response_method="predict",
-        plot_method="pcolormesh",
-        shading="auto",
-        alpha=0.5,
-        ax=ax,
-        )
-        scatter = disp.ax_.scatter(PCA_train_df.iloc[:, 0], PCA_train_df.iloc[:, 1], c=mapped_labels, edgecolors="k")
+        if (PCA_components == 2):
+            plotKNNboundries(PCA_train_df, clf, mapped_labels)
     
     plt.show()
 
@@ -393,10 +353,8 @@ halving_classifier = classifiers[0]
 with open(output_path + "classifier.pkl", "wb") as CLF_File: 
     pickle.dump(halving_classifier, CLF_File) 
 
-
-
 with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
     pickle.dump(PCA_final, PCA_File)
 
-
-
+with open(output_path + "scaler.pkl", "wb") as scaler_file:
+    pickle.dump(scaler, scaler_file)

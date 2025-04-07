@@ -12,26 +12,20 @@ from sklearn.decomposition import PCA
 from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-
+import seaborn as sns
 
 from plotting import biplot
 
 
 ''' PRE PROCESSING '''
 
-def scaleFeatures(df, variable):
-  if variable == 1:
-    scaler = StandardScaler()
-    scaler.set_output(transform="pandas")
+def trainScaler(df):
+  scaler = StandardScaler()
+  scaler.set_output(transform="pandas")
 
-    scaled_features = scaler.fit_transform(df)
-  else:
-    scaler = StandardScaler()
-    scaler.set_output(transform="pandas")
+  scaler.fit(df)
 
-    scaled_features = scaler.transform(df)
-
-  return scaled_features
+  return scaler
 
 ''' PCA '''
 def setNComponents(kfold_train_data_scaled, variance_explained):
@@ -141,8 +135,8 @@ def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels,
         kfold_validation_data = train_data.iloc[test_index]
 
         # Scale training and validation separately
-        kfold_train_data_scaled = scaleFeatures(kfold_train_data)
-        kfold_validation_data_scaled = scaleFeatures(kfold_validation_data)
+        kfold_train_data_scaled = scaler.transform(kfold_train_data)
+        kfold_validation_data_scaled = scaler.transform(kfold_validation_data)
         
         PCA_components = setNComponents(kfold_train_data_scaled, variance_explained=variance_explained)
         
@@ -571,6 +565,33 @@ def makeGNBClassifier(method, base_estimator, num_folds, param_grid, df, labels)
 
         print(clf.get_params())
     return clf
+
+def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_name):
+    print(f"{name} scores")
+
+    test_predict = clf.predict(test_df)
+
+    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+    precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
+    recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
+    f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
+
+    print(f"Accuracy: \t {accuracy_score:.4f}")
+    print(f"Precision: \t {precision_score:.4f}")
+    print(f"Recall: \t {recall_score:.4f}")
+    print(f"f1: \t\t {f1_score:.4f}")
+    print("-" * 23)
+
+    if(want_plots):
+        ''' CONFUSION MATRIX '''
+        conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+        plt.title(f'Confusion matrix, {clf_name}, {name}')
+    
+    return accuracy_score
 
 def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_iter=30):
     

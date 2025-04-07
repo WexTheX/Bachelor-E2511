@@ -19,13 +19,13 @@ from plotting import biplot
 
 ''' PRE PROCESSING '''
 
-def scaleFeatures(df):
+def trainScaler(df):
   scaler = StandardScaler()
   scaler.set_output(transform="pandas")
 
-  scaled_features = scaler.fit_transform(df)
+  scaler.fit(df)
 
-  return scaled_features
+  return scaler
 
 ''' PCA '''
 def setNComponents(kfold_train_data_scaled, variance_explained):
@@ -46,7 +46,7 @@ def setNComponents(kfold_train_data_scaled, variance_explained):
     
     return n_components
 
-def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels, train_data, variance_explained):
+def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels, train_data, variance_explained, scaler):
     
     print()
     print(f"Classifier: \t {base_estimator}")
@@ -93,8 +93,8 @@ def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels,
         kfold_validation_data = train_data.iloc[test_index]
 
         # Scale training and validation separately
-        kfold_train_data_scaled = scaleFeatures(kfold_train_data)
-        kfold_validation_data_scaled = scaleFeatures(kfold_validation_data)
+        kfold_train_data_scaled = scaler.transform(kfold_train_data)
+        kfold_validation_data_scaled = scaler.transform(kfold_validation_data)
         
         PCA_components = setNComponents(kfold_train_data_scaled, variance_explained=variance_explained)
         
@@ -524,7 +524,7 @@ def makeGNBClassifier(method, base_estimator, num_folds, param_grid, df, labels)
         print(clf.get_params())
     return clf
 
-def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name):
+def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_name):
     print(f"{name} scores")
 
     test_predict = clf.predict(test_df)
@@ -547,6 +547,6 @@ def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name):
         sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
         plt.xlabel("Predicted")
         plt.ylabel("Actual")
-        plt.title(f'Confusion matrix, {clf.estimator}, {name}')
+        plt.title(f'Confusion matrix, {clf_name}, {name}')
     
     return accuracy_score

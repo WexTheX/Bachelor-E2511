@@ -11,7 +11,7 @@ from skopt.space import Real, Categorical, Integer
 from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
-from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, train_test_split, GridSearchCV
+from sklearn.model_selection import KFold, StratifiedKFold, TimeSeriesSplit, cross_val_score, train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -30,11 +30,13 @@ from Preprocessing.preprocessing import fillSets, downsample
 ''' GLOBAL VARIABLES '''
 
 want_feature_extraction = 0
-pickle_files = 0 # Pickle the classifier, scaler and PCA objects.
+pickle_files = 1 # Pickle the classifier, scaler and PCA objects.
 separate_types = 1
-want_plots = 1
+want_plots = 0
 ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
 ML_model = "SVM"
+Splitting_method = ["StratifiedKFOLD", "TimeSeriesSplit"]
+Splitting_method = "TimeseriesSplit"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
@@ -49,10 +51,16 @@ variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X"
 
 ''' BASE ESTIMATORS '''
 
-base_params =  {'class_weight': 'balanced',
+base_params =  {'class_weight': 'balanced', 
                 'random_state': randomness}
 
-SVM_base = svm.SVC(**base_params)
+base_paramssvm = {
+    'class_weight': 'balanced',
+    'probability': True,
+    'random_state': randomness
+}
+
+SVM_base = svm.SVC(**base_paramssvm)
 RF_base = RandomForestClassifier(**base_params)
 KNN_base = KNeighborsClassifier()
 GNB_base = GaussianNB()
@@ -259,9 +267,15 @@ optimization_list = []
 
 clf_names = []
 
+if Splitting_method == "StratifiedKFold":
+    split = StratifiedKFold(n_splits=num_folds)
+
+if Splitting_method == "TimeseriesSplit":
+    split = TimeSeriesSplit(n_splits=num_folds)
+
 search_kwargs = {'n_jobs': -1, 
                  'verbose': 0,
-                 'cv': num_folds,
+                 'cv': split,
                  'scoring': 'f1_weighted'
                 }
 
@@ -269,6 +283,9 @@ models = [ (SVM_base, SVM_param_grid),
           (RF_base, RF_param_grid),
           (KNN_base, KNN_param_grid)]
         #   (GNB_base, GNB_param_grid) ]
+
+
+
 
 for base_model, param_grid in models:
     for method in optimization_methods:
@@ -381,14 +398,54 @@ guess = guess.sort()
 
 ''' Pickling classifier '''
 import pickle
-halving_classifier = classifiers[0]
 
+final_model = classifiers[0]
+if hasattr(final_model, "best_estimator_"):
+    final_model = final_model.best_estimator_
+
+#halving_classifier = classifiers[0]
 if (pickle_files):
+    # with open(output_path + "classifier.pkl", "wb") as CLF_File: 
+    #     pickle.dump(halving_classifier, CLF_File) 
+    
+
+
+    final_model = None
+    for clf, method in zip(classifiers, optimization_list):
+        if method == "HalvingGridSearchCV":
+            final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
+            break
+
+    if final_model is None:
+        print("Fant ikke modell med HalvingGridSearchCV – bruker første som fallback.")
+        final_model = classifiers[0]
+
+    # Dobbeltsjekk før lagring
+    print("Modell som lagres:", final_model)
+    print("predict_proba tilgjengelig:", hasattr(final_model, "predict_proba"))
+
+    # Lagre
     with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-        pickle.dump(halving_classifier, CLF_File) 
+        pickle.dump(final_model, CLF_File)
+
 
     with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
         pickle.dump(PCA_final, PCA_File)
 
     with open(output_path + "scaler.pkl", "wb") as scaler_file:
         pickle.dump(scaler, scaler_file)
+
+# from testonfile import run_inference_on_file
+#     ### Testing trained model on unseen files
+# test_file_path = "testFiles"
+# test_files = os.listdir(test_file_path)
+
+
+# for filename in test_files:
+#     if filename.endswith(".csv"):
+#         continue  # hopper over .csv-filer
+#     file_to_test = os.path.join(test_file_path, filename)
+#     file_to_test_no_ext = file_to_test.replace(".txt", "")
+#     print("_______________________________________________________________________________")
+#     print(f"Testing file {file_to_test}")
+#     run_inference_on_file(file_to_test_no_ext, fs = fs, window_length_sec = window_length_seconds, norm_accel=False, run=True)

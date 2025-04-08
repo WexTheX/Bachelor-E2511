@@ -63,7 +63,13 @@ def saveWindow():
 
     Kollasj med alle forskjellige classifiers
 
+7) TimeSeriesSplit
+
+Gå fra K-fold til timeseriessplit?
+https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html
+"Note that unlike standard cross-validation methods, successive training sets are supersets of those that come before them."
+
 Extra: 
 
-7) Se på flere features (moving average ...)
+100) Se på flere features (moving average ...)
     Finn fine grafer til rapporten

@@ -597,7 +597,7 @@ def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_
     
     return accuracy_score
 
-def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_iter=30):
+def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs,  n_iter=30):
     
     print()
     print(f"Classifier: \t {base_estimator}")
@@ -612,7 +612,7 @@ def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_it
            
             estimator=base_estimator,
             param_grid=param_grid,
-
+            
             **search_kwargs
 
             ) 
@@ -623,7 +623,7 @@ def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_it
            
             estimator=base_estimator,
             param_grid=param_grid,
-
+           
             **search_kwargs
 
             ) 
@@ -634,7 +634,7 @@ def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_it
            
             estimator=base_estimator,
             param_distributions=param_grid,
-
+            
             n_iter=n_iter,
             **search_kwargs
 
@@ -648,7 +648,7 @@ def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_it
 
             estimator=base_estimator,
             search_spaces=smooth_param_grid,
-
+          
             n_iter=n_iter,
             **search_kwargs
 

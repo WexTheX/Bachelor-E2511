@@ -11,7 +11,7 @@ from skopt.space import Real, Categorical, Integer
 from sklearn import svm, metrics, dummy
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
-from sklearn.model_selection import KFold, StratifiedKFold, cross_val_score, train_test_split, GridSearchCV
+from sklearn.model_selection import KFold, StratifiedKFold, TimeSeriesSplit, cross_val_score, train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -35,6 +35,8 @@ separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
 ML_model = "SVM"
+Splitting_method = ["StratifiedKFOLD", "TimeSeriesSplit"]
+Splitting_method = "TimeseriesSplit"
 accuracy_list = []
 
 ''' DATASET VARIABLES '''
@@ -259,9 +261,15 @@ optimization_list = []
 
 clf_names = []
 
+if Splitting_method == "StratifiedKFold":
+    split = StratifiedKFold(n_splits=num_folds)
+
+if Splitting_method == "TimeseriesSplit":
+    split = TimeSeriesSplit(n_splits=num_folds)
+
 search_kwargs = {'n_jobs': -1, 
                  'verbose': 0,
-                 'cv': num_folds,
+                 'cv': split,
                  'scoring': 'f1_weighted'
                 }
 
@@ -269,6 +277,9 @@ models = [ (SVM_base, SVM_param_grid),
           (RF_base, RF_param_grid),
           (KNN_base, KNN_param_grid)]
         #   (GNB_base, GNB_param_grid) ]
+
+
+
 
 for base_model, param_grid in models:
     for method in optimization_methods:

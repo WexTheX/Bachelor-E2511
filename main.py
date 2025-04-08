@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 
 # Local imports
 # from FOLDER import FILE as F
@@ -29,6 +30,7 @@ from Preprocessing.preprocessing import fillSets, downsample
 ''' GLOBAL VARIABLES '''
 
 want_feature_extraction = 0
+pickle_files = 0 # Pickle the classifier, scaler and PCA objects.
 separate_types = 1
 want_plots = 1
 ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
@@ -54,6 +56,7 @@ SVM_base = svm.SVC(**base_params)
 RF_base = RandomForestClassifier(**base_params)
 KNN_base = KNeighborsClassifier()
 GNB_base = GaussianNB()
+LR_base = LogisticRegression(**base_params)
 
 ''' HYPER PARAMETER VARIABLES '''
 
@@ -100,6 +103,24 @@ GNB_param_grid = {
     'priors': [None], 
     'var_smoothing': [1e-09]
     }
+
+
+LR_param_grid = {
+    'C': [0.001, 0.01], 
+    # 'class_weight': 'balanced', 
+    'dual': False, 
+    'fit_intercept': True, 
+    'intercept_scaling': 1, 
+    'l1_ratio': None, 
+    'max_iter': 100, 
+    'multi_class': 'deprecated', 
+    'n_jobs': None, 
+    'penalty': 'l2', 
+    # 'random_state': 333, 
+    'solver': 'lbfgs', 
+    'tol': 0.0001, 
+    'verbose': 0, 
+    'warm_start': False}
 
 
 ''' USER INPUTS '''
@@ -362,11 +383,12 @@ guess = guess.sort()
 import pickle
 halving_classifier = classifiers[0]
 
-with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-    pickle.dump(halving_classifier, CLF_File) 
+if (pickle_files):
+    with open(output_path + "classifier.pkl", "wb") as CLF_File: 
+        pickle.dump(halving_classifier, CLF_File) 
 
-with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
-    pickle.dump(PCA_final, PCA_File)
+    with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
+        pickle.dump(PCA_final, PCA_File)
 
-with open(output_path + "scaler.pkl", "wb") as scaler_file:
-    pickle.dump(scaler, scaler_file)
+    with open(output_path + "scaler.pkl", "wb") as scaler_file:
+        pickle.dump(scaler, scaler_file)

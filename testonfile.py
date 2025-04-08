@@ -1,3 +1,7 @@
+from sklearn import joblib
+from extractFeatures import extractDFfromFile, extractFeaturesFromDF
+import pandas as pd
+
 # Implement solution to test a large file of various activities - EH 
 
 # Import file 
@@ -29,6 +33,7 @@
 #     file_to_test = os.path.join(test_file_path, filename)
 #     print(f"Testing file {file_to_test}")
 #     run_inference_on_file(file_to_test, fs = fs, window_length_sec = window_length_seconds, norm_accel=True, run=True)
+
 
 def run_inference_on_file(file_path, fs, window_length_sec, run, norm_accel=True):
     import joblib

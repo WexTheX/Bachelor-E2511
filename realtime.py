@@ -28,6 +28,7 @@ from bleak import BleakScanner, BleakClient
 import asyncio
 import threading
 from muse_api_main.Muse_Utils import *
+from muse_api_main.Muse_HW import *
 from sklearn.decomposition import PCA
 import pickle
 import pandas as pd
@@ -37,10 +38,28 @@ import numpy as np
 
 CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7" 
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
+ 
+muse_name = "Muse_E2511_GREY"                                       # Bluetooth name of sensor
+data_mode = Muse_HW.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT      # Sensor mode
+window_length_sec = 20                                              # Length of 1 window
+fs = 200                                                            # Aquisation rate
+
+delta_time = 0.04           # Time difference between samples at 25Hz
+real_time_window_sec = 10   # Time period the program will stream
 
 
-window_length_sec = 20
-fs = 200
+total_data_size = 6 * 5 # 30
+data_buffer_size = int((128 - 8) / total_data_size) # 4
+notification_counter = 0
+
+'''
+# Packet dimension and size, according to mode (30 and 4)
+pck_dim = Muse_Utils.GetPacketDimension(data_mode)
+print(pck_dim)
+pck_num = Muse_Utils.GetNumberOfPackets(data_mode)
+print(pck_num)
+quit()
+'''
 
 ''' Pickled PCA and CLF from main '''
 
@@ -63,10 +82,11 @@ def cmd_notification_handler(sender, data):
 
 columns = ["Timestamp","Axl.X","Axl.Y","Axl.Z","Gyr.X","Gyr.Y","Gyr.Z","Mag.X","Mag.Y","Mag.Z","Temp","Press","Range","Lum","IRLum"]
 feature_list = []
+prediction_list = {}
 
 async def data_notification_handler(sender: int, data: bytearray):
     """Decode data"""
-    global feature_list
+    global feature_list, prediction_list
     header_offset = 8   # ignore packet header
 
     # decode packet data
@@ -75,6 +95,18 @@ async def data_notification_handler(sender: int, data: bytearray):
 
     #print("{0} {1} {2} {3} {4} {5} {6}".format(device_ID,tempData.axl[0],tempData.axl[1],tempData.axl[2],tempData.gyr[0],tempData.gyr[1],tempData.gyr[2]))
     
+
+    '''
+    Om jeg forstår det rett kommer det en pakke inn hvert 0.04 sekund.
+    Den pakken inneholder 4 samples per sensor, dvs features for 100 Hz.
+    Usikkert på om dette er korrekt, eller om det gjøres på en annen måte.
+    Om det er sant, kan det hende det ikke er mulig å få frekvensen vi ønsker med alle sensorene
+    Tror det kun er mulig med KUN axl og gyro, ikke med flere enn to.
+
+    IDK how we deal with that, more research required
+
+    Tror også metoden under ikke fungerer
+    '''
     features = np.array([
         time.time(),
         tempData.axl[0], 
@@ -93,31 +125,21 @@ async def data_notification_handler(sender: int, data: bytearray):
         tempData.light.lum_ir]             
     )
     
-    feature_list.append(features)
+    #feature_list.append(features)
    
     #print(features)
     
     if (len(feature_list) > window_length_sec*fs-1):
-        
-    
-        segment = feature_list
-        #print(segment)
-        feature_df = pd.DataFrame(data=segment, columns=columns)
-        
-        
-
-        #print(feature_df)
-        
-        
+        ''' FEATURE EXTRACTION AND SCALE '''
+        feature_df = pd.DataFrame(data=feature_list, columns=columns)  
         feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
-        
-
         feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))
        
+        ''' PCA AND PREDICT '''
         PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))
-
         prediction = halving_classifier.predict(PCA_feature_df)
         print(prediction)
+        prediction_list[time.time()] = prediction
 
         feature_list = []
 
@@ -194,7 +216,7 @@ async def main():
             await client.write_gatt_char(CMD_UUID, cmd_stream, True)
             
             # Set streaming duration to 10 seconds
-            await asyncio.sleep(120)
+            await asyncio.sleep(real_time_window_sec)
 
             # Stop data acquisition in STREAMING mode      
             await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)

@@ -70,11 +70,13 @@ def PCA_table_plot(X, n_components):
 
     print(f"Total amount of features: {len(X.columns)}")
 
-    for i in range(len(X.columns) // 34):
+    samples_per_pca = 73
+
+    for i in range(len(X.columns) // samples_per_pca):
       
 
-      loadings_percantage_part = loadings_percantage[i*34:(i*34+34)]
-      feature_names_part = PCA_object.feature_names_in_[i*34:(i*34+34)]
+      loadings_percantage_part = loadings_percantage[i*samples_per_pca:(i*samples_per_pca+samples_per_pca)]
+      feature_names_part = PCA_object.feature_names_in_[i*samples_per_pca:(i*samples_per_pca+samples_per_pca)]
 
       plt.figure(figsize=(10, 8))
       sns.heatmap(loadings_percantage_part, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels = feature_names_part)

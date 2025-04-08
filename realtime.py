@@ -38,19 +38,28 @@ import numpy as np
 
 CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7" 
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
- 
-muse_name = "Muse_E2511_GREY"                                       # Bluetooth name of sensor
-data_mode = Muse_HW.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT      # Sensor mode
+
+myDev = None
+muse_name = "Muse_E2511_RED"
+
 window_length_sec = 20                                              # Length of 1 window
-fs = 200                                                            # Aquisation rate
+fs = 200  
+
+data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT
+DATA_SIZE = 6*5;  # dimension of packet
+DATA_BUFFER_SIZE = int((128 - 8) / DATA_SIZE) # number of packets for each 128-bytes notification
+
+notification_counter = 0
+sample_counter = 0
+num_values = 14
+data_buffer = np.zeros((DATA_BUFFER_SIZE, num_values))  # buffer to store accelerometer data
+
+feature_list = np.zeros((fs*window_length_sec, num_values+1))
+columns = ["Timestamp","Axl.X","Axl.Y","Axl.Z","Gyr.X","Gyr.Y","Gyr.Z","Mag.X","Mag.Y","Mag.Z","Temp","Press","Range","Lum","IRLum"]
+prediction_list = {}
 
 delta_time = 0.04           # Time difference between samples at 25Hz
-real_time_window_sec = 10   # Time period the program will stream
-
-
-total_data_size = 6 * 5 # 30
-data_buffer_size = int((128 - 8) / total_data_size) # 4
-notification_counter = 0
+real_time_window_sec = 30  # Time period the program will stream
 
 '''
 # Packet dimension and size, according to mode (30 and 4)
@@ -80,75 +89,119 @@ def cmd_notification_handler(sender, data):
 
     return
 
-columns = ["Timestamp","Axl.X","Axl.Y","Axl.Z","Gyr.X","Gyr.Y","Gyr.Z","Mag.X","Mag.Y","Mag.Z","Temp","Press","Range","Lum","IRLum"]
-feature_list = []
-prediction_list = {}
+
 
 async def data_notification_handler(sender: int, data: bytearray):
     """Decode data"""
-    global feature_list, prediction_list
+    global feature_list, prediction_list, notification_counter, sample_counter
     header_offset = 8   # ignore packet header
 
     # decode packet data
-    tempData = Muse_Utils.DecodePacket(data[header_offset:], 0, stream_mode.value, gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity)
+    #tempData = Muse_Utils.DecodePacket(data[header_offset:], 0, stream_mode.value, gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity)
     # print data as: device_ID, axl_X, axl_Y, axl_Z, gyr_X, gyr_Y, gyr_Z
 
-    #print("{0} {1} {2} {3} {4} {5} {6}".format(device_ID,tempData.axl[0],tempData.axl[1],tempData.axl[2],tempData.gyr[0],tempData.gyr[1],tempData.gyr[2]))
-    
-
     '''
-    Om jeg forstår det rett kommer det en pakke inn hvert 0.04 sekund.
-    Den pakken inneholder 4 samples per sensor, dvs features for 100 Hz.
-    Usikkert på om dette er korrekt, eller om det gjøres på en annen måte.
-    Om det er sant, kan det hende det ikke er mulig å få frekvensen vi ønsker med alle sensorene
-    Tror det kun er mulig med KUN axl og gyro, ikke med flere enn to.
-
-    IDK how we deal with that, more research required
-
-    Tror også metoden under ikke fungerer
+    print("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14}".format(device_ID,
+           tempData.axl[0],tempData.axl[1],tempData.axl[2],
+           tempData.gyr[0],tempData.gyr[1],tempData.gyr[2],
+           tempData.mag[0],tempData.mag[1],tempData.mag[2],
+           tempData.tp[0],tempData.tp[1],
+           tempData.light.range,tempData.light.lum_vis,tempData.light.lum_ir
+           ))
     '''
-    features = np.array([
-        time.time(),
-        tempData.axl[0], 
-        tempData.axl[1], 
-        tempData.axl[2],                             
-        tempData.gyr[0], 
-        tempData.gyr[1], 
-        tempData.gyr[2],                              
-        tempData.mag[0], 
-        tempData.mag[1], 
-        tempData.mag[2],                             
-        tempData.tp[0], 
-        tempData.tp[1],                                                
-        tempData.light.range, 
-        tempData.light.lum_vis, 
-        tempData.light.lum_ir]             
-    )
-    
-    #feature_list.append(features)
-   
-    #print(features)
-    
-    if (len(feature_list) > window_length_sec*fs-1):
-        ''' FEATURE EXTRACTION AND SCALE '''
-        feature_df = pd.DataFrame(data=feature_list, columns=columns)  
-        feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
-        feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))
-       
-        ''' PCA AND PREDICT '''
-        PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))
-        prediction = halving_classifier.predict(PCA_feature_df)
-        print(prediction)
-        prediction_list[time.time()] = prediction
+    data_buffer = np.zeros((DATA_BUFFER_SIZE, num_values))
+    # print(f"Time: {time.time()}")
+    # print(f"data_buffer (pre): \n {data_buffer}")
+    # print(f"DATA_BUFFER_SIZE: \n {DATA_BUFFER_SIZE}")
+    for k in range(DATA_BUFFER_SIZE):
+        #Decode Accelerometer reading
+        current_packet = bytearray(6)
+        # print(f"Start_idx: {start_idx}, stop: {start_idx + DATA_SIZE + 1}")
+        current_packet[:] = data[header_offset : header_offset + DATA_SIZE + 1] 
+        # print(f"Current Packet: {current_packet}")
 
-        feature_list = []
+        temp_data = [0.0] * num_values
+        for i in range(num_values):
+            # Extract channel raw value (i.e., 2-bytes each)
+            raw_value = current_packet[2*i:2*(i+1)]
+            # Convert to Int16 and apply sensitivity scaling
+            if(0 <= i < 3):
+                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * gyrConfig.Sensitivity
+            elif(3 <= i < 6):
+                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * axlConfig.Sensitivity
+            elif(6 <= i < 9):
+                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * magConfig.Sensitivity
+            elif(i == 10):
+                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False) 
+                temp_data[i] /= 100
+            elif(i == 9):
+                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False)
+                temp_data[i] /= 4096
+            else:
+                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False)
 
         
-    #print(len(feature_list))    
+        feature_list[k+(sample_counter)][0] = time.time()
+        feature_list[k+(sample_counter)][1] = temp_data[4]
+        feature_list[k+(sample_counter)][2] = temp_data[5]
+        feature_list[k+(sample_counter)][3] = temp_data[6]
+        feature_list[k+(sample_counter)][4] = temp_data[0]
+        feature_list[k+(sample_counter)][5] = temp_data[1]
+        feature_list[k+(sample_counter)][6] = temp_data[2]
+        feature_list[k+(sample_counter)][7] = temp_data[6]
+        feature_list[k+(sample_counter)][8] = temp_data[7]
+        feature_list[k+(sample_counter)][9] = temp_data[8]
+        feature_list[k+(sample_counter)][10] = temp_data[10]
+        feature_list[k+(sample_counter)][11] = temp_data[9]
+        feature_list[k+(sample_counter)][12] = temp_data[11]
+        feature_list[k+(sample_counter)][13] = temp_data[12]
+        feature_list[k+(sample_counter)][14] = temp_data[13]
+
+
+        header_offset += DATA_SIZE
+    
+    sample_counter += DATA_BUFFER_SIZE
+
+    # print(f"data_buffer (post): \n {data_buffer}")
+
+    # features = np.array([
+    #     time.time(),
+    #     tempData.axl[0], 
+    #     tempData.axl[1], 
+    #     tempData.axl[2],                             
+    #     tempData.gyr[0], 
+    #     tempData.gyr[1], 
+    #     tempData.gyr[2],                              
+    #     tempData.mag[0], 
+    #     tempData.mag[1], 
+    #     tempData.mag[2],                             
+    #     tempData.tp[0], 
+    #     tempData.tp[1],                                                
+    #     tempData.light.range, 
+    #     tempData.light.lum_vis, 
+    #     tempData.light.lum_ir
+    # ])
+
+    
+    print(sample_counter)
+    
+    if ((sample_counter) > window_length_sec*fs-1):
+        ''' FEATURE EXTRACTION AND SCALE '''
+        feature_df = pd.DataFrame(data=feature_list, columns=columns)  
+        print(feature_df)
+        # feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
+        # feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))
+       
+        # ''' PCA AND PREDICT '''
+        # PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))
+        # prediction = halving_classifier.predict(PCA_feature_df)
+        # print(prediction)
+        # prediction_list[time.time()] = prediction
+
+        sample_counter = 0
+
+    notification_counter += 1   
     return
-
-
-
 
 
 
@@ -205,7 +258,7 @@ async def main():
 
             
             # Set up the command
-            stream_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT
+            stream_mode = data_mode
             cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=False)
 
             # Start notify on data characteristic

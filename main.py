@@ -25,42 +25,39 @@ from machineLearning import trainScaler, setNComponents, makeClassifier, makeSVM
 from plotting import plotBoundaryConditions, biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
 
-
-
 ''' GLOBAL VARIABLES '''
 
 want_feature_extraction = 0
-pickle_files = 1 # Pickle the classifier, scaler and PCA objects.
-separate_types = 1
-want_plots = 0
-ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
-ML_model = "SVM"
-Splitting_method = ["StratifiedKFOLD", "TimeSeriesSplit"]
-Splitting_method = "TimeseriesSplit"
-accuracy_list = []
+pickle_files            = 1 # Pickle the classifier, scaler and PCA objects.
+separate_types          = 1
+want_plots              = 0
+ML_models               = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
+ML_model                = "SVM"
+Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
+Splitting_method        = "TimeseriesSplit"
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 2
-randomness = 333
-window_length_seconds = 20
-test_size = 0.25
-fs = 800
-ds_fs = 800
-variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
+variance_explained      = 2
+random_seed             = 333
+window_length_seconds   = 20
+test_size               = 0.25
+fs                      = 800
+ds_fs                   = 800
+variables               = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
 
 base_params =  {'class_weight': 'balanced', 
-                'random_state': randomness}
+                'random_state': random_seed}
 
-base_paramssvm = {
-    'class_weight': 'balanced',
-    'probability': True,
-    'random_state': randomness
-}
+# base_paramssvm = {
+#     'class_weight': 'balanced',
+#     'probability': True,
+#     'random_state': randomness
+# }
 
-SVM_base    = svm.SVC(**base_paramssvm)
+SVM_base    = svm.SVC(**base_params, probability=True)
 RF_base     = RandomForestClassifier(**base_params)
 KNN_base    = KNeighborsClassifier()
 GNB_base    = GaussianNB()
@@ -159,29 +156,29 @@ search_kwargs = {'n_jobs':              -1,
 
 # Different folder for separated and not separated
 if (separate_types):
-    path = "Preprocessing/DatafilesSeparated" 
+    path        = "Preprocessing/DatafilesSeparated" 
     output_path = "OutputFiles/Separated/"
-    test_path = "testFiles/"
+    test_path   = "testFiles/"
 
-    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-                    'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
-                    'IMPA': (0.5, 0.5, 0.5), 
-                    'SANDSIM': (0.0, 1.0, 0.0), 
-                    'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
+    label_mapping = {
+                    'IDLE':         (0.0, 0.0, 0.0), 
+                    'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
+                    'IMPA':         (0.5, 0.5, 0.5), 
+                    'SANDSIM':      (0.0, 1.0, 0.0), 
+                    'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
+    }
+
 else:
-    path = "Preprocessing/Datafiles"
+    path        = "Preprocessing/Datafiles"
     output_path = "OutputFiles/"
-    test_path = "testFiles/"
+    test_path   = "testFiles/"
 
-    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+    label_mapping = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
 
-path_names = os.listdir(path)
-activity_name = [name.upper() for name in path_names]
+path_names      = os.listdir(path)
+activity_name   = [name.upper() for name in path_names]
 
 sets, sets_labels = fillSets(path, path_names, activity_name)
-# print(f"Content of sets: \n {sets}")
-# print(f"Content of sets_labels: \n {sets_labels}")
-
 
 ''' FEATURE EXTRACTION '''
 
@@ -190,16 +187,15 @@ if (want_feature_extraction):
     # One row in feature_df is all features from one window
     all_window_features = []
     window_labels = []
+
     start_time = time.time()
     
     for i, file in enumerate(sets):
         print(f"Extracting files from file: {file}")
         fe_df = extractDFfromFile(file, fs)
-        print(fe_df['Axl.X'].mean())
 
         if (ds_fs != fs):
             fe_df = downsample(fe_df, fs, ds_fs)
-            print(fe_df['Axl.X'].mean())
         
         window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
@@ -217,6 +213,7 @@ if (want_feature_extraction):
     print(f"Features extracted in {elapsed_time} seconds")
         
     feature_df.to_csv(output_path+str(ds_fs)+"feature_df.csv", index=False)
+
     with open(output_path+"window_labels.txt", "w") as fp:
         for item in window_labels:
             fp.write("%s\n" % item)
@@ -233,17 +230,17 @@ if "feature_df" not in globals():
 
 ''' SPLITTING TEST/TRAIN + SCALING'''
 
-train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=randomness, stratify=window_labels)
+train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=random_seed, stratify=window_labels)
 
 mapped_labels = np.array([label_mapping[label] for label in train_labels])
 
 scaler = StandardScaler()
 scaler.set_output(transform="pandas")
 
-train_data_scaled = scaler.fit_transform(train_data)
-test_data_scaled = scaler.transform(test_data)
+train_data_scaled   = scaler.fit_transform(train_data)
+test_data_scaled    = scaler.transform(test_data)
 
-total_data_scaled = scaler.fit_transform(feature_df)
+total_data_scaled   = scaler.fit_transform(feature_df)
 
 
 # total_data_scaled = scaleFeatures(feature_df, 1)
@@ -253,14 +250,12 @@ total_data_scaled = scaler.fit_transform(feature_df)
 
 ''' Principal Component Analysis (PCA)'''
 
-# Decide nr of PCA components
-PCA_components = setNComponents(train_data_scaled, variance_explained=variance_explained)
+# Calculate PCA components, create PCA object, fit + transform
+PCA_components      = setNComponents(train_data_scaled, variance_explained=variance_explained)
+PCA_final           = PCA(n_components = PCA_components)
 
-# Create PCA object for N components found by variance_explained
-PCA_final = PCA(n_components = PCA_components)
-
-PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
-PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
+PCA_train_df        = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
+PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
@@ -331,11 +326,11 @@ accuracy_list = evaluateCLFs(results, PCA_test_df, test_labels, want_plots, acti
 #     accuracy_list.append(np.round(accuracy_score, 3))
     
 
-if(want_plots):
+if want_plots:
     
     ''' FEATURE IMPORTANCE '''
     
-    # PCA_table_plot(total_data_scaled, 5)   
+    PCA_table_plot(train_data_scaled, 5)   
 
     ''' 2D PLOTS OF PCA '''
 
@@ -383,25 +378,25 @@ guess = guess.sort()
 
 
 ''' Pickling classifier '''
-import pickle
-halving_classifier = results[0]['clf']
 
-#halving_classifier = classifiers[0]
+import pickle
+halving_classifier = results[0]['classifier']
+
 if (pickle_files):
-    # with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-    #     pickle.dump(halving_classifier, CLF_File) 
+    with open(output_path + "classifier.pkl", "wb") as CLF_File: 
+        pickle.dump(halving_classifier, CLF_File) 
     
 
 
     final_model = None
-    for clf, method in zip(classifiers, optimization_list):
-        if method == "HalvingGridSearchCV":
-            final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
-            break
+    # for clf, method in zip(classifiers, optimization_list):
+    #     if method == "HalvingGridSearchCV":
+    #         final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
+    #         break
 
-    if final_model is None:
-        print("Fant ikke modell med HalvingGridSearchCV – bruker første som fallback.")
-        final_model = classifiers[0]
+    # if final_model is None:
+    #     print("Fant ikke modell med HalvingGridSearchCV – bruker første som fallback.")
+    #     final_model = classifiers[0]
 
     # Dobbeltsjekk før lagring
     print("Modell som lagres:", final_model)

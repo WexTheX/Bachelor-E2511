@@ -21,8 +21,8 @@ from sklearn.linear_model import LogisticRegression
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import trainScaler, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF
-from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
+from machineLearning import trainScaler, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF, evaluateCLFs, makeNClassifiers
+from plotting import plotBoundaryConditions, biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
 
 
@@ -52,76 +52,81 @@ variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X"
 base_params =  {'class_weight': 'balanced',
                 'random_state': randomness}
 
-SVM_base = svm.SVC(**base_params)
-RF_base = RandomForestClassifier(**base_params)
-KNN_base = KNeighborsClassifier()
-GNB_base = GaussianNB()
-LR_base = LogisticRegression(**base_params)
+SVM_base    = svm.SVC(**base_params)
+RF_base     = RandomForestClassifier(**base_params)
+KNN_base    = KNeighborsClassifier()
+GNB_base    = GaussianNB()
+LR_base     = LogisticRegression(**base_params)
 
 ''' HYPER PARAMETER VARIABLES '''
 
 num_folds = 3
 
 SVM_param_grid = {
-    "C": [0.001, 0.01],
-    "kernel": ["linear", "poly", "rbf", "sigmoid"],
-    "gamma": [0.01, 0.1],
-    "coef0": [0.0, 1.0],
-    "degree": [2, 3]
+    "C":                    [0.001, 0.01],
+    "kernel":               ["linear", "poly", "rbf", "sigmoid"],
+    "gamma":                [0.01, 0.1],
+    "coef0":                [0.0, 1.0],
+    "degree":               [2, 3]
 }
 
-# smooth_hyperparams_SVM = {
-#     "C": Real(hyperparams_SVM['C'][0], hyperparams_SVM['C'][-1], prior="log-uniform"),  # Continuous log-scale for C
-#     "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
-#     "gamma": Real(hyperparams_SVM['gamma'][0], hyperparams_SVM['gamma'][-1], prior="log-uniform"),  # Log-uniform scale for gamma
-#     "coef0": Real(hyperparams_SVM['coef0'][0], hyperparams_SVM['coef0'][-1]),
-#     "degree": Integer(hyperparams_SVM['degree'][0], hyperparams_SVM['degree'][-1])
-# }
-
 RF_param_grid = {
-    'n_estimators': [50, 100, 200],  # Number of trees in the forest
-    'max_depth': [10, 20, 30, None],  # Maximum depth of each tree
-    # 'min_samples_split': [2, 5, 10],  # Minimum samples required to split a node
-    # 'min_samples_leaf': [1, 2, 4],  # Minimum samples required in a leaf node
-    # 'max_features': ['sqrt', 'log2'],  # Number of features considered for splitting
-    # 'bootstrap': [True, False],  # Whether to use bootstrapped samples
-    'criterion': ['gini', 'entropy']  # Splitting criteria
+    'n_estimators':         [50, 100, 200],  # Number of trees in the forest
+    'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
+    # 'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
+    # 'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
+    # 'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
+    # 'bootstrap':          [True, False],  # Whether to use bootstrapped samples
+    'criterion':            ['gini', 'entropy']  # Splitting criteria
 }
 
 KNN_param_grid = {
-    'algorithm': ['ball_tree', 'kd_tree', 'brute'], 
-    # 'leaf_size': [30], 
-    # 'metric': 'minkowski', 
-    # 'metric_params': None, 
-    # 'n_jobs': None, 
-    'n_neighbors': [3, 4, 5], 
-    'p': [1, 2], 
-    'weights': ['uniform', 'distance']
-    }
+    'algorithm':            ['ball_tree', 'kd_tree', 'brute'], 
+    # 'leaf_size':          [30], 
+    # 'metric':             ['minkowski'], 
+    # 'metric_params':      [None], 
+    # 'n_jobs':             [None], 
+    'n_neighbors':          [3, 4, 5], 
+    'p':                    [1, 2], 
+    'weights':              ['uniform', 'distance']
+}
 
 GNB_param_grid = {
-    'priors': [None], 
-    'var_smoothing': [1e-09]
-    }
-
+    'priors':               [None], 
+    'var_smoothing':        [1e-09]
+}
 
 LR_param_grid = {
-    'C': [0.001, 0.01], 
-    # 'class_weight': 'balanced', 
-    'dual': False, 
-    'fit_intercept': True, 
-    'intercept_scaling': 1, 
-    'l1_ratio': None, 
-    'max_iter': 100, 
-    'multi_class': 'deprecated', 
-    'n_jobs': None, 
-    'penalty': 'l2', 
-    # 'random_state': 333, 
-    'solver': 'lbfgs', 
-    'tol': 0.0001, 
-    'verbose': 0, 
-    'warm_start': False}
+    'C':                    [0.001, 0.01], 
+    'dual':                 [False], 
+    'fit_intercept':        [True], 
+    'intercept_scaling':    [1], 
+    # 'l1_ratio':             [None], 
+    'max_iter':             [100], 
+    'multi_class':          ['deprecated'], 
+    # 'n_jobs':               [None], 
+    'penalty':              ['l2'], 
+    'solver':               ['lbfgs'], 
+    'tol':                  [0.0001], 
+    'warm_start':           [False]
+}
 
+models = {
+        'SVM':  (SVM_base,  SVM_param_grid), 
+        'RF':   (RF_base,   RF_param_grid),
+        'KNN':  (KNN_base,  KNN_param_grid),
+        'GNB':  (GNB_base,  GNB_param_grid),
+        'LR':   (LR_base,   LR_param_grid)
+        }
+
+optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV', 'Base model']
+
+search_kwargs = {'n_jobs':              -1, 
+                 'verbose':             0,
+                 'cv':                  num_folds,
+                 'scoring':             'f1_weighted',
+                 'return_train_score':  True
+                }
 
 ''' USER INPUTS '''
 
@@ -251,33 +256,25 @@ PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-optimization_methods = ['BayesSearchCV1', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
+model_selection     = ['LR', 'GNB', 'KNN', 'SVM']
+method_selection    = ['GridSearchCV', 'RandomizedSearchCV']
 
-classifiers = []
-best_clf_params = []
-optimization_list = []
+results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter=30)
 
-clf_names = []
+# models = (
+#         (SVM_base, SVM_param_grid), 
+#         (RF_base, RF_param_grid),
+#         (KNN_base, KNN_param_grid),
+#         (GNB_base, GNB_param_grid) )
 
-search_kwargs = {'n_jobs': -1, 
-                 'verbose': 0,
-                 'cv': num_folds,
-                 'scoring': 'f1_weighted'
-                }
+# for base_model, param_grid in models:
+#     for method in optimization_methods:
 
-models = [ (SVM_base, SVM_param_grid), 
-          (RF_base, RF_param_grid),
-          (KNN_base, KNN_param_grid)]
-        #   (GNB_base, GNB_param_grid) ]
+#         clf, best_params = makeClassifier(base_model, param_grid, method, PCA_train_df, train_labels, search_kwargs, n_iter=30)
 
-for base_model, param_grid in models:
-    for method in optimization_methods:
-
-        clf, best_params = makeClassifier(base_model, param_grid, method, PCA_train_df, train_labels, search_kwargs, n_iter=30)
-
-        classifiers.append(clf)
-        best_clf_params.append(best_params)
-        optimization_list.append(method)
+#         classifiers.append(clf)
+#         best_clf_params.append(best_params)
+#         optimization_list.append(method)
 
 # print(f"Optimization list: {optimization_list}")
 # print(f"Classifiers: {classifiers}")
@@ -309,44 +306,42 @@ for base_model, param_grid in models:
 
 ''' EVALUATION '''
 
-clf_dict = {}
+accuracy_list = evaluateCLFs(results, PCA_test_df, test_labels, want_plots, activity_name)
 
-for i, classifier in enumerate(classifiers):
-    clf_dict[optimization_list[i]] = classifier
+# clf_dict = {}
 
-print(clf_dict)
+# for i, classifier in enumerate(classifiers):
+#     clf_dict[optimization_list[i]] = classifier
 
-# clf_dict brukes ikke, clf_names er tom
+# print(clf_dict)
 
-for name, clf, clf_name in zip(optimization_list, classifiers, clf_names):
+# # clf_dict brukes ikke, clf_names er tom
+
+# for name, clf, clf_name in zip(optimization_list, classifiers, clf_dict):
     
-    accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name, clf_name)
-    accuracy_list.append(np.round(accuracy_score, 3))
+#     accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name, clf_name)
+#     accuracy_list.append(np.round(accuracy_score, 3))
     
-
-dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
-dummy_clf.fit(PCA_train_df, train_labels)
-dummy_score = dummy_clf.score(PCA_test_df, test_labels)
-
-print("Baseline Accuracy (Dummy Classifier):", dummy_score)
 
 if(want_plots):
     
     ''' FEATURE IMPORTANCE '''
     
-    PCA_table_plot(total_data_scaled, 5)   
+    # PCA_table_plot(total_data_scaled, 5)   
 
     ''' 2D PLOTS OF PCA '''
 
     biplot(total_data_scaled, window_labels, label_mapping)
+    
+    plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, results, accuracy_list)
 
-    plot_SVM_boundaries(PCA_train_df, train_labels, label_mapping,
-                         classifiers, optimization_methods, best_clf_params, accuracy_list)
+    # plot_SVM_boundaries(PCA_train_df, train_labels, label_mapping,
+    #                      classifiers, optimization_methods, best_clf_params, accuracy_list)
 
     ''' KNN PLOT '''
-    if(ML_model.upper() == "KNN"):
-        if (PCA_components == 2):
-            plotKNNboundries(PCA_train_df, clf, mapped_labels)
+    # if(ML_model.upper() == "KNN"):
+    #     if (PCA_components == 2):
+    #         plotKNNboundries(PCA_train_df, clf, mapped_labels)
     
     plt.show()
 
@@ -381,7 +376,7 @@ guess = guess.sort()
 
 ''' Pickling classifier '''
 import pickle
-halving_classifier = classifiers[0]
+halving_classifier = results[0]['clf']
 
 if (pickle_files):
     with open(output_path + "classifier.pkl", "wb") as CLF_File: 

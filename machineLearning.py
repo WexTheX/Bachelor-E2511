@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import train_test_split, KFold, StratifiedKFold, GridSearchCV, HalvingGridSearchCV, RandomizedSearchCV
 from sklearn.decomposition import PCA
-from sklearn import svm, metrics
+from sklearn import svm, metrics, dummy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 import seaborn as sns
@@ -28,9 +28,9 @@ def trainScaler(df):
   return scaler
 
 ''' PCA '''
-def setNComponents(kfold_train_data_scaled, variance_explained):
+def setNComponents(X_train, variance_explained):
     if variance_explained < 1.0:
-      C = np.cov(kfold_train_data_scaled, rowvar=False) # 140x140 Co-variance matrix
+      C = np.cov(X_train, rowvar=False) # 140x140 Co-variance matrix
       eigenvalues, eigenvectors = np.linalg.eig(C)
 
       eig_sum = 0
@@ -87,6 +87,336 @@ def makeSmoothParamGrid(param_grid):
           smooth_param_grid[param] = Integer(int(min_value), int(max_value), name=param)
 
   return smooth_param_grid
+
+def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_name):
+    
+    print(f"{name} scores")
+
+    test_predict = clf.predict(test_df)
+
+    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+    precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
+    recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
+    f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
+
+    print(f"Accuracy: \t {accuracy_score:.4f}")
+    print(f"Precision: \t {precision_score:.4f}")
+    print(f"Recall: \t {recall_score:.4f}")
+    print(f"f1: \t\t {f1_score:.4f}")
+    print("-" * 23)
+
+    if(want_plots):
+        ''' CONFUSION MATRIX '''
+        conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+        plt.title(f'Confusion matrix, {clf_name}, {name}')
+    
+    return accuracy_score
+
+def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_iter=30):
+    
+  print()
+  print(f"Classifier: \t {base_estimator}")
+  print(f"Optimalizer: \t {method}")
+  print("-" * 40)
+
+  start_time = time.time()
+
+  if method.lower() == 'gridsearchcv':
+      
+      clf = GridSearchCV(
+          
+          estimator=base_estimator,
+          param_grid=param_grid,
+
+          **search_kwargs
+
+          ) 
+
+  elif method.lower() == 'halvinggridsearchcv':
+      
+      clf = HalvingGridSearchCV(
+          
+          estimator=base_estimator,
+          param_grid=param_grid,
+
+          **search_kwargs
+
+          ) 
+        
+  elif method.lower() == 'randomizedsearchcv':
+      
+      clf = RandomizedSearchCV(
+          
+          estimator=base_estimator,
+          param_distributions=param_grid,
+
+          n_iter=n_iter,
+          **search_kwargs
+
+          ) 
+      
+  elif method.lower() == 'bayessearchcv':
+      
+      smooth_param_grid = makeSmoothParamGrid(param_grid)
+
+      clf = BayesSearchCV(
+
+          estimator=base_estimator,
+          search_spaces=smooth_param_grid,
+
+          n_iter=n_iter,
+          **search_kwargs
+
+          )
+
+  else:
+      clf = base_estimator
+      best_params = None
+      print(f"{method} not recognized, fitting default {base_estimator}")
+
+  clf.fit(X, y)
+
+  end_time = time.time()  # End timer
+  elapsed_time = end_time - start_time
+
+  if clf != base_estimator: 
+    best_params = clf.best_params_
+
+    best_score = ( clf.cv_results_['mean_test_score'][clf.best_index_] - clf.cv_results_['std_test_score'][clf.best_index_] )
+    print(clf.best_score_)
+    print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
+    print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
+    print(f"\n")  
+
+    return clf, best_params
+
+
+
+def makeNClassifiers(models, optimization_methods, model_selection, method_selection, X, y, search_kwargs, n_iter=30):
+  
+  selected_model_data = []
+  selected_model_names = []
+  results = [] 
+
+  # Create a list of (base model, param grid) pairs based on input models
+  for name in model_selection:
+    if name in models:
+      estimator, grid = models[name]
+      selected_model_data.append((estimator, grid))
+      selected_model_names.append(name)
+
+  # make n classifiers = len(model_selection) * len(method_selection)
+  for (base_estimator, param_grid), model_name_str in zip(selected_model_data, selected_model_names):
+    for selected_method in method_selection:
+      
+      # Choose model, or take base model
+      if selected_method in optimization_methods:
+        method = selected_method
+      else:
+        method = optimization_methods[-1] # Base model
+
+      print()
+      print(f"Classifier: \t {model_name_str}")
+      print(f"Optimalizer: \t {method}")
+      print("-" * 40)
+
+      start_time = time.time()
+
+      if method.lower() == 'gridsearchcv':
+          
+          clf = GridSearchCV(
+              
+              estimator=base_estimator,
+              param_grid=param_grid,
+
+              **search_kwargs
+
+              ) 
+
+      elif method.lower() == 'halvinggridsearchcv':
+          
+          clf = HalvingGridSearchCV(
+              
+              estimator=base_estimator,
+              param_grid=param_grid,
+
+              **search_kwargs
+
+              ) 
+            
+      elif method.lower() == 'randomizedsearchcv':
+          
+          clf = RandomizedSearchCV(
+              
+              estimator=base_estimator,
+              param_distributions=param_grid,
+
+              n_iter=n_iter,
+              **search_kwargs
+
+              ) 
+          
+      elif method.lower() == 'bayessearchcv':
+          
+          smooth_param_grid = makeSmoothParamGrid(param_grid)
+
+          clf = BayesSearchCV(
+
+              estimator=base_estimator,
+              search_spaces=smooth_param_grid,
+
+              n_iter=n_iter,
+              **search_kwargs
+
+              )
+
+      else:
+        clf = base_estimator
+        best_params = None
+        best_score = None
+        train_test_delta = None
+        mean_test_score = None
+        std_test_score = None
+        print(f"Warning: {selected_method} not recognized, fitting default {model_name_str}")
+
+      clf.fit(X, y)
+
+      end_time = time.time()  # End timer
+      elapsed_time = end_time - start_time
+
+      if clf != base_estimator: 
+        
+        # Pack all objects from clf into 
+        best_params = clf.best_params_
+        best_score = clf.best_score_
+
+        k = 1 # Nr of STDs
+        mean_test_score = clf.cv_results_['mean_test_score'][clf.best_index_]
+        std_test_score  = clf.cv_results_['std_test_score'][clf.best_index_]
+        pessimistic_test_score = mean_test_score - k * std_test_score
+
+        mean_train_score  = clf.cv_results_['mean_train_score'][clf.best_index_]
+
+        train_test_delta = mean_train_score - mean_test_score
+        
+
+        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the best worst-case test result: (mean - {k}*std): {pessimistic_test_score}")
+        print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
+        print(f"\n") 
+
+      results.append( {
+                        'model_name':       model_name_str,
+                        'optimalizer':      method,
+
+                        'classifier':       clf,
+                        'best_score':       best_score,
+                        'best_params':      best_params,      
+                        'train_test_delta': train_test_delta, # Higher value -> more overfitted
+                        'mean_test_score':  mean_test_score,
+                        'std_test_score':   std_test_score
+                      })
+
+  return results
+
+
+def evaluateCLFs(results, test_df, test_labels, want_plots, activity_name):
+  
+  accuracy_list = []
+
+  dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
+  dummy_clf.fit(test_df, test_labels)
+  dummy_clf.predict(test_df)
+  dummy_score = dummy_clf.score(test_df, test_labels)
+
+  print("Baseline Accuracy (Dummy Classifier):", dummy_score)
+
+  for result_dict in results:
+    
+    model_name  = result_dict['model_name']
+    clf         = result_dict['classifier']
+    optimalizer = result_dict['optimalizer']
+
+
+    print(f"{model_name}: {optimalizer}")
+
+    test_predict = clf.predict(test_df)
+
+    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
+    precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
+    recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
+    f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
+
+    print(f"Accuracy: \t {accuracy_score:.4f}")
+    print(f"Precision: \t {precision_score:.4f}")
+    print(f"Recall: \t {recall_score:.4f}")
+    print(f"f1: \t\t {f1_score:.4f}")
+    print("-" * 23)
+
+    if(want_plots):
+        ''' CONFUSION MATRIX '''
+        conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+        plt.title(f'Confusion matrix, {model_name}: {optimalizer}')
+
+    accuracy_list.append(round(accuracy_score, 4))
+    
+  return accuracy_list
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# OLD
 
 def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels, train_data, variance_explained):
     
@@ -568,109 +898,3 @@ def makeGNBClassifier(method, base_estimator, num_folds, param_grid, df, labels)
 
         print(clf.get_params())
     return clf
-
-def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_name):
-    
-    print(f"{name} scores")
-
-    test_predict = clf.predict(test_df)
-
-    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-    precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
-    recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
-    f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
-
-    print(f"Accuracy: \t {accuracy_score:.4f}")
-    print(f"Precision: \t {precision_score:.4f}")
-    print(f"Recall: \t {recall_score:.4f}")
-    print(f"f1: \t\t {f1_score:.4f}")
-    print("-" * 23)
-
-    if(want_plots):
-        ''' CONFUSION MATRIX '''
-        conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
-        plt.xlabel("Predicted")
-        plt.ylabel("Actual")
-        plt.title(f'Confusion matrix, {clf_name}, {name}')
-    
-    return accuracy_score
-
-def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_iter=30):
-    
-    print()
-    print(f"Classifier: \t {base_estimator}")
-    print(f"Optimalizer: \t {method}")
-    print("-" * 40)
-
-    start_time = time.time()
-
-    if method.lower() == 'gridsearchcv':
-        
-        clf = GridSearchCV(
-           
-            estimator=base_estimator,
-            param_grid=param_grid,
-
-            **search_kwargs
-
-            ) 
-
-    elif method.lower() == 'halvinggridsearchcv':
-        
-        clf = HalvingGridSearchCV(
-           
-            estimator=base_estimator,
-            param_grid=param_grid,
-
-            **search_kwargs
-
-            ) 
-         
-    elif method.lower() == 'randomizedsearchcv':
-        
-        clf = RandomizedSearchCV(
-           
-            estimator=base_estimator,
-            param_distributions=param_grid,
-
-            n_iter=n_iter,
-            **search_kwargs
-
-            ) 
-        
-    elif method.lower() == 'bayessearchcv':
-        
-        smooth_param_grid = makeSmoothParamGrid(param_grid)
-
-        clf = BayesSearchCV(
-
-            estimator=base_estimator,
-            search_spaces=smooth_param_grid,
-
-            n_iter=n_iter,
-            **search_kwargs
-
-            )
-
-    else:
-       clf = base_estimator
-       best_params = None
-       print(f"{method} not recognized, fitting default {base_estimator}")
-
-    clf.fit(X, y)
-
-    end_time = time.time()  # End timer
-    elapsed_time = end_time - start_time
-
-    if clf != base_estimator: 
-      best_params = clf.best_params_
-
-      best_score = ( clf.cv_results_['mean_test_score'][clf.best_index_] - clf.cv_results_['std_test_score'][clf.best_index_] )
-      print(clf.best_score_)
-      print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
-      print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
-      print(f"\n")  
-
-    return clf, best_params

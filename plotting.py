@@ -189,27 +189,7 @@ def plotBoundaryConditions(X, train_labels, label_mapping, results, accuracy_lis
       ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
       
       # fig.tight_layout()
-      
-      
-      # fig, sub = plt.subplots(2, 2)
-      # plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
-      # for clf, method, title, accuracy, ax in zip(classifiers, optimization_methods, best_clf_params, accuracy_list, sub.flatten()):
-          
-      #     disp = DecisionBoundaryDisplay.from_estimator(
-      #         clf,
-      #         X,
-      #         response_method="predict",
-      #         cmap=plt.cm.coolwarm,
-      #         alpha=0.8,
-      #         ax=ax,
-      #         xlabel='PC1',
-      #         ylabel='PC2',
-      #     )
-      #     ax.scatter(xs, ys, c=mapped_labels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
-      #     ax.set_xticks(())
-      #     ax.set_yticks(())
-      #     ax.set_title(str(method) + "\n" + "Accuracy: " + str(accuracy) + "\n" + str(title) )
 
     else:
       print(f"Warning: Cannot plot decision boundaries. Classifiers has {clf.n_features_in_} features, must be 2.")

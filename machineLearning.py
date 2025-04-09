@@ -198,9 +198,9 @@ def makeNClassifiers(models, optimization_methods, model_selection, method_selec
         clf = base_estimator
         best_params = None
         best_score = None
-        train_test_delta = None
-        mean_test_score = None
-        std_test_score = None
+        train_test_delta = 0.0000
+        mean_test_score = 0.0000
+        std_test_score = 0.0000
         print(f"Warning: {selected_method} not recognized, fitting default {model_name_str}")
 
       clf.fit(X, y)
@@ -244,53 +244,70 @@ def makeNClassifiers(models, optimization_methods, model_selection, method_selec
 
 def evaluateCLFs(results, test_df, test_labels, want_plots, activity_name):
   
+  '''
+  
+  '''
   accuracy_list = []
+  highest_score = 0.0
 
   dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
   dummy_clf.fit(test_df, test_labels)
   dummy_clf.predict(test_df)
   dummy_score = dummy_clf.score(test_df, test_labels)
 
-  print("Baseline Accuracy (Dummy Classifier):", dummy_score)
+  print("Dummy Classifier accuracy:", round(dummy_score, 4))
+  print()
 
   for result_dict in results:
     
-    model_name  = result_dict['model_name']
-    clf         = result_dict['classifier']
-    optimalizer = result_dict['optimalizer']
+    model_name        = result_dict['model_name']
+    clf               = result_dict['classifier']
+    mean_test_score   = result_dict['mean_test_score']
+    std_test_score    = result_dict['std_test_score']
+    train_test_delta  = result_dict['train_test_delta']
+    optimalizer       = result_dict['optimalizer']
 
+    test_predict      = clf.predict(test_df)
+
+    accuracy_score    = metrics.accuracy_score(test_labels, test_predict)
+    f1_score          = metrics.f1_score(test_labels, test_predict, average="weighted")
+    recall_score      = metrics.recall_score(test_labels, test_predict, average="weighted")
+    precision_score   = metrics.precision_score(test_labels, test_predict, average="weighted")
 
     print(f"{model_name}: {optimalizer}")
-
-    test_predict = clf.predict(test_df)
-
-    accuracy_score = metrics.accuracy_score(test_labels, test_predict)
-    precision_score = metrics.precision_score(test_labels, test_predict, average="weighted")
-    recall_score = metrics.recall_score(test_labels, test_predict, average="weighted")
-    f1_score = metrics.f1_score(test_labels, test_predict, average="weighted")
-
     print(f"Accuracy: \t {accuracy_score:.4f}")
-    print(f"Precision: \t {precision_score:.4f}")
-    print(f"Recall: \t {recall_score:.4f}")
-    print(f"f1: \t\t {f1_score:.4f}")
+    print(f"f1_score: \t {f1_score:.4f}")
+    # print(f"---- INTERNAL TEST ----")
+    print(f"Valid. mean: \t {mean_test_score:.4f}")
+    print(f"Valid. std: \t {std_test_score:.4f}")
+    print(f"Valid. delta: \t {train_test_delta:.4f}")
     print("-" * 23)
 
-    if(want_plots):
-        ''' CONFUSION MATRIX '''
-        conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
-        plt.xlabel("Predicted")
-        plt.ylabel("Actual")
-        plt.title(f'Confusion matrix, {model_name}: {optimalizer}')
+    if f1_score > highest_score:
+      highest_score     = f1_score
+      best_model        = model_name
+      best_optimalizer  = optimalizer
+      best_result       = result_dict
+    else:
+      continue
+    
+
+    if want_plots:
+      ''' CONFUSION MATRIX '''
+      conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
+      plt.figure(figsize=(10, 8))
+      sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
+      plt.xlabel("Predicted")
+      plt.ylabel("Actual")
+      plt.title(f'Confusion matrix, {model_name}: {optimalizer}')
 
     accuracy_list.append(round(accuracy_score, 4))
+  
+  print(f"Best clf \t {best_model}: {best_optimalizer}")
+  print(f"f1_score: \t {highest_score:.4f}")
+  print(f"")
 
-
-  for result in results:
-    print(f"{result['model_name']} \t mean: {result['mean_test_score']} \t std: {result['std_test_score']} \t delta: {result['train_test_delta']}")
-    
-  return accuracy_list
+  return best_result, accuracy_list
 
 
 

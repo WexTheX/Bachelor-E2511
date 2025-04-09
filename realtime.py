@@ -59,7 +59,7 @@ columns = ["Timestamp","Axl.X","Axl.Y","Axl.Z","Gyr.X","Gyr.Y","Gyr.Z","Mag.X","
 prediction_list = {}
 
 delta_time = 0.04           # Time difference between samples at 25Hz
-real_time_window_sec = 30  # Time period the program will stream
+real_time_window_sec = 70  # Time period the program will stream
 
 '''
 # Packet dimension and size, according to mode (30 and 4)
@@ -75,7 +75,7 @@ quit()
 
 output_path = "OutputFiles/Separated/"
 with open(output_path + "classifier.pkl", "rb") as CLF_file:
-    halving_classifier = pickle.load(CLF_file)
+    clf = pickle.load(CLF_file)
 
 with open(output_path + "PCA.pkl", "rb" ) as PCA_File:
     PCA_final = pickle.load(PCA_File)
@@ -96,71 +96,77 @@ async def data_notification_handler(sender: int, data: bytearray):
     global feature_list, prediction_list, notification_counter, sample_counter
     header_offset = 8   # ignore packet header
 
-    # decode packet data
-    #tempData = Muse_Utils.DecodePacket(data[header_offset:], 0, stream_mode.value, gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity)
-    # print data as: device_ID, axl_X, axl_Y, axl_Z, gyr_X, gyr_Y, gyr_Z
-
-    '''
-    print("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14}".format(device_ID,
-           tempData.axl[0],tempData.axl[1],tempData.axl[2],
-           tempData.gyr[0],tempData.gyr[1],tempData.gyr[2],
-           tempData.mag[0],tempData.mag[1],tempData.mag[2],
-           tempData.tp[0],tempData.tp[1],
-           tempData.light.range,tempData.light.lum_vis,tempData.light.lum_ir
-           ))
-    '''
-    data_buffer = np.zeros((DATA_BUFFER_SIZE, num_values))
-    # print(f"Time: {time.time()}")
-    # print(f"data_buffer (pre): \n {data_buffer}")
-    # print(f"DATA_BUFFER_SIZE: \n {DATA_BUFFER_SIZE}")
     for k in range(DATA_BUFFER_SIZE):
-        #Decode Accelerometer reading
-        current_packet = bytearray(6)
-        # print(f"Start_idx: {start_idx}, stop: {start_idx + DATA_SIZE + 1}")
-        current_packet[:] = data[header_offset : header_offset + DATA_SIZE + 1] 
-        # print(f"Current Packet: {current_packet}")
-
-        temp_data = [0.0] * num_values
-        for i in range(num_values):
-            # Extract channel raw value (i.e., 2-bytes each)
-            raw_value = current_packet[2*i:2*(i+1)]
-            # Convert to Int16 and apply sensitivity scaling
-            if(0 <= i < 3):
-                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * gyrConfig.Sensitivity
-            elif(3 <= i < 6):
-                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * axlConfig.Sensitivity
-            elif(6 <= i < 9):
-                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * magConfig.Sensitivity
-            elif(i == 10):
-                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False) 
-                temp_data[i] /= 100
-            elif(i == 9):
-                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False)
-                temp_data[i] /= 4096
-            else:
-                temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False)
-
+        current_packet = bytearray(DATA_SIZE)
+        current_packet[:] = data[header_offset : header_offset + DATA_SIZE + 1]
+        temp_data = Muse_Utils.DecodePacket(current_packet, 0, stream_mode.value, gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity)
         
         feature_list[k+(sample_counter)][0] = time.time()
-        feature_list[k+(sample_counter)][1] = temp_data[4]
-        feature_list[k+(sample_counter)][2] = temp_data[5]
-        feature_list[k+(sample_counter)][3] = temp_data[6]
-        feature_list[k+(sample_counter)][4] = temp_data[0]
-        feature_list[k+(sample_counter)][5] = temp_data[1]
-        feature_list[k+(sample_counter)][6] = temp_data[2]
-        feature_list[k+(sample_counter)][7] = temp_data[6]
-        feature_list[k+(sample_counter)][8] = temp_data[7]
-        feature_list[k+(sample_counter)][9] = temp_data[8]
-        feature_list[k+(sample_counter)][10] = temp_data[10]
-        feature_list[k+(sample_counter)][11] = temp_data[9]
-        feature_list[k+(sample_counter)][12] = temp_data[11]
-        feature_list[k+(sample_counter)][13] = temp_data[12]
-        feature_list[k+(sample_counter)][14] = temp_data[13]
+        feature_list[k+(sample_counter)][1] = temp_data.axl[0]
+        feature_list[k+(sample_counter)][2] = temp_data.axl[1]
+        feature_list[k+(sample_counter)][3] = temp_data.axl[2]
+        feature_list[k+(sample_counter)][4] = temp_data.gyr[0]
+        feature_list[k+(sample_counter)][5] = temp_data.gyr[1]
+        feature_list[k+(sample_counter)][6] = temp_data.gyr[2]
+        feature_list[k+(sample_counter)][7] = temp_data.mag[0]
+        feature_list[k+(sample_counter)][8] = temp_data.mag[1]
+        feature_list[k+(sample_counter)][9] = temp_data.mag[2]
+        feature_list[k+(sample_counter)][10] = temp_data.tp[0]
+        feature_list[k+(sample_counter)][11] = temp_data.tp[1]
+        feature_list[k+(sample_counter)][12] = temp_data.light.range
+        feature_list[k+(sample_counter)][13] = temp_data.light.lum_vis
+        feature_list[k+(sample_counter)][14] = temp_data.light.lum_ir
+
+    sample_counter += 4
+
+    # for k in range(DATA_BUFFER_SIZE):
+    #     #Decode Accelerometer reading
+    #     current_packet = bytearray(6)
+    #     # print(f"Start_idx: {start_idx}, stop: {start_idx + DATA_SIZE + 1}")
+    #     current_packet[:] = data[header_offset : header_offset + DATA_SIZE + 1] 
+    #     # print(f"Current Packet: {current_packet}")
+
+    #     temp_data = [0.0] * num_values
+    #     for i in range(num_values):
+    #         # Extract channel raw value (i.e., 2-bytes each)
+    #         raw_value = current_packet[2*i:2*(i+1)]
+    #         # Convert to Int16 and apply sensitivity scaling
+    #         if(0 <= i < 3):
+    #             temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * gyrConfig.Sensitivity
+    #         elif(3 <= i < 6):
+    #             temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * axlConfig.Sensitivity
+    #         elif(6 <= i < 9):
+    #             temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=True) * magConfig.Sensitivity
+    #         elif(i == 10):
+    #             temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False) 
+    #             temp_data[i] /= 100
+    #         elif(i == 9):
+    #             temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False)
+    #             temp_data[i] /= 4096
+    #         else:
+    #             temp_data[i] = int.from_bytes(raw_value, byteorder='little', signed=False)
+
+        
+        # feature_list[k+(sample_counter)][0] = time.time()
+        # feature_list[k+(sample_counter)][1] = temp_data[3]
+        # feature_list[k+(sample_counter)][2] = temp_data[4]
+        # feature_list[k+(sample_counter)][3] = temp_data[5]
+        # feature_list[k+(sample_counter)][4] = temp_data[0]
+        # feature_list[k+(sample_counter)][5] = temp_data[1]
+        # feature_list[k+(sample_counter)][6] = temp_data[2]
+        # feature_list[k+(sample_counter)][7] = temp_data[6]
+        # feature_list[k+(sample_counter)][8] = temp_data[7]
+        # feature_list[k+(sample_counter)][9] = temp_data[8]
+        # feature_list[k+(sample_counter)][10] = temp_data[10]
+        # feature_list[k+(sample_counter)][11] = temp_data[9]
+        # feature_list[k+(sample_counter)][12] = temp_data[11]
+        # feature_list[k+(sample_counter)][13] = temp_data[12]
+        # feature_list[k+(sample_counter)][14] = temp_data[13]
 
 
-        header_offset += DATA_SIZE
+    #     header_offset += DATA_SIZE
     
-    sample_counter += DATA_BUFFER_SIZE
+    # sample_counter += DATA_BUFFER_SIZE
 
     # print(f"data_buffer (post): \n {data_buffer}")
 
@@ -183,20 +189,20 @@ async def data_notification_handler(sender: int, data: bytearray):
     # ])
 
     
-    print(sample_counter)
+    # print(sample_counter)
     
     if ((sample_counter) > window_length_sec*fs-1):
         ''' FEATURE EXTRACTION AND SCALE '''
         feature_df = pd.DataFrame(data=feature_list, columns=columns)  
-        print(feature_df)
-        # feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
-        # feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))
+        # print(feature_df)
+        feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
+        feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))
        
-        # ''' PCA AND PREDICT '''
-        # PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))
-        # prediction = halving_classifier.predict(PCA_feature_df)
-        # print(prediction)
-        # prediction_list[time.time()] = prediction
+        ''' PCA AND PREDICT '''
+        PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))
+        prediction = clf.predict(PCA_feature_df)
+        print(prediction)
+        prediction_list[time.time()] = prediction
 
         sample_counter = 0
 

@@ -43,7 +43,7 @@ random_seed             = 333
 window_length_seconds   = 20
 test_size               = 0.25
 fs                      = 800
-ds_fs                   = 800
+ds_fs                   = 200
 variables               = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
@@ -395,14 +395,16 @@ guess = guess.sort()
 ''' Pickling classifier '''
 
 import pickle
-halving_classifier = results[0]['classifier']
+pickle_clf = results[6]['classifier']
+print(f"reults[0]: \n {results[6]['classifier']}")
 
 if (pickle_files):
     with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-        pickle.dump(halving_classifier, CLF_File) 
+        pickle.dump(pickle_clf, CLF_File)
+
+    print("Modell som lagres:", pickle_clf)
+    print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
     
-
-
     final_model = None
     # for clf, method in zip(classifiers, optimization_list):
     #     if method == "HalvingGridSearchCV":
@@ -414,13 +416,11 @@ if (pickle_files):
     #     final_model = classifiers[0]
 
     # Dobbeltsjekk før lagring
-    print("Modell som lagres:", final_model)
-    print("predict_proba tilgjengelig:", hasattr(final_model, "predict_proba"))
+    
 
     # Lagre
-    with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-        pickle.dump(final_model, CLF_File)
-
+    # with open(output_path + "classifier.pkl", "wb") as CLF_File: 
+    #     pickle.dump(final_model, CLF_File)
 
     with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
         pickle.dump(PCA_final, PCA_File)

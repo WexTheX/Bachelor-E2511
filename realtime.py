@@ -43,11 +43,11 @@ CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7"
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 
 myDev = None
-device_name = "Muse_E2511_GRAY"    # Bluetooth name of sensor
+device_name = "Muse_E2511_GREY"    # Bluetooth name of sensor
 
 window_length_sec = 20          # Length of one window for prediction
 fs = 200                        # Frequency of sensor sampling
-real_time_window_sec = 180      # Time period the program will stream
+real_time_window_sec = 300      # Time period the program will stream
 
 data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT   # Data mode, what sensors is used
 DATA_SIZE = 6 * 5;                                            # Dimension of incomming packet (6 bytes * number of sensors)

@@ -27,7 +27,7 @@ from Preprocessing.preprocessing import fillSets, downsample
 
 ''' GLOBAL VARIABLES '''
 
-want_feature_extraction = 1
+want_feature_extraction = 0
 pickle_files            = 1 # Pickle the classifier, scaler and PCA objects.
 separate_types          = 1
 want_plots              = 1
@@ -38,7 +38,7 @@ Splitting_method        = "TimeseriesSplit"
 
 ''' DATASET VARIABLES '''
 
-variance_explained      = 0.90
+variance_explained      = 0.8
 random_seed             = 333
 window_length_seconds   = 20
 test_size               = 0.25
@@ -68,20 +68,21 @@ LR_base     = LogisticRegression(**base_params)
 num_folds = 3
 
 SVM_param_grid = {
-    "C":                    [0.001, 0.01, 0.1, 1, 10, 100],
+    "C":                    [0.01, 0.1,
+                             1, 10, 100],
     "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-    "gamma":                [0.01, 0.1, 1, 10, 100],
-    "coef0":                [0.0, 0.5, 1.0],
-    "degree":               [2, 3, 4, 5]
+    "gamma":                [0.01, 0.1],
+    "coef0":                [0.0, 1.0],
+    "degree":               [2, 3]
 }
 
 RF_param_grid = {
     'n_estimators':         [50, 100, 200],  # Number of trees in the forest
     'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
-    # 'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
-    # 'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
-    # 'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
-    # 'bootstrap':          [True, False],  # Whether to use bootstrapped samples
+    'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
+    'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
+    'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
+    'bootstrap':          [True, False],  # Whether to use bootstrapped samples
     'criterion':            ['gini', 'entropy']  # Splitting criteria
 }
 
@@ -243,12 +244,6 @@ test_data_scaled    = scaler.transform(test_data)
 
 total_data_scaled   = scaler.fit_transform(feature_df)
 
-
-# total_data_scaled = scaleFeatures(feature_df, 1)
-# train_data_scaled = scaleFeatures(train_data, 1)
-# test_data_scaled = scaleFeatures(test_data, 0)
-
-
 ''' Principal Component Analysis (PCA)'''
 
 # Calculate PCA components, create PCA object, fit + transform
@@ -260,86 +255,14 @@ PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-model_selection     = ['LR', 'GNB', 'KNN', 'SVM']
-method_selection    = ['GridSearchCV', 'RandomizedSearchCV']
+model_selection     = ['SVM', 'GNB']
+method_selection    = ['GridSearchCV', 'BayesSearchCV0', 'RandomizedSearchCV']
 
 results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter=30)
 
-# models = (
-#         (SVM_base, SVM_param_grid), 
-#         (RF_base, RF_param_grid),
-#         (KNN_base, KNN_param_grid),
-#         (GNB_base, GNB_param_grid) )
-
-# for base_model, param_grid in models:
-#     for method in optimization_methods:
-
-#         clf, best_params = makeClassifier(base_model, param_grid, method, PCA_train_df, train_labels, search_kwargs, n_iter=30)
-
-#         classifiers.append(clf)
-#         best_clf_params.append(best_params)
-#         optimization_list.append(method)
-
-# print(f"Optimization list: {optimization_list}")
-# print(f"Classifiers: {classifiers}")
-# print(f"best_params: {best_clf_params}")
-
-# if (ML_model.upper() == "SVM"):
-#     for method in optimization_methods:
-#         t_clf, t_best_clf_params = makeSVMClassifier(method, SVM_base, num_folds, hyperparams_SVM, PCA_train_df, train_labels, train_data, variance_explained)
-#         classifiers.append(t_clf)
-#         best_clf_params.append(t_best_clf_params)
-
-# elif (ML_model.upper() == "RF"):
-#     for method in optimization_methods:
-#         t_clf, t_best_clf_params = makeRFClassifier(method, RF_base, num_folds, hyperparams_RF, PCA_train_df, train_labels)
-#         classifiers.append(t_clf)
-#         best_clf_params.append(t_best_clf_params)
-
-# elif (ML_model.upper() == "KNN"):
-#     for method in optimization_methods:
-#         t_clf, t_best_clf_params = makeKNNClassifier(method, KNN_base, num_folds, hyperparams_KNN, PCA_train_df, train_labels)
-#         classifiers.append(t_clf)
-#         best_clf_params.append(t_best_clf_params)
-
-# elif (ML_model.upper() == "GNB"):
-#     for method in optimization_methods:
-#         t_clf, t_best_clf_params = makeGNBClassifier(method, GNB_base, num_folds, hyperparams_GNB, PCA_train_df, train_labels)
-#         classifiers.append(t_clf)
-#         best_clf_params.append(t_best_clf_params)
-
 ''' EVALUATION '''
 
-accuracy_list = evaluateCLFs(results, PCA_test_df, test_labels, want_plots, activity_name)
-
-
-
-    # results.append( {
-    #                     'model_name':       model_name_str,
-    #                     'optimalizer':      method,
-
-    #                     'classifier':       clf,
-    #                     'best_score':       best_score,
-    #                     'best_params':      best_params,      
-    #                     'train_test_delta': train_test_delta, # Higher value -> more overfitted
-    #                     'mean_test_score':  mean_test_score,
-    #                     'std_test_score':   std_test_score
-    #                   })
-
-# clf_dict = {}
-
-# for i, classifier in enumerate(classifiers):
-#     clf_dict[optimization_list[i]] = classifier
-
-# print(clf_dict)
-
-# # clf_dict brukes ikke, clf_names er tom
-
-# for name, clf, clf_name in zip(optimization_list, classifiers, clf_dict):
-    
-#     accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name, clf_name)
-#     accuracy_list.append(np.round(accuracy_score, 3))
-    
+result, accuracy_list = evaluateCLFs(results, PCA_test_df, test_labels, want_plots, activity_name)
 
 if want_plots:
     
@@ -353,8 +276,6 @@ if want_plots:
     
     plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, results, accuracy_list)
 
-    # plot_SVM_boundaries(PCA_train_df, train_labels, label_mapping,
-    #                      classifiers, optimization_methods, best_clf_params, accuracy_list)
 
     ''' KNN PLOT '''
     # if(ML_model.upper() == "KNN"):
@@ -395,8 +316,8 @@ guess = guess.sort()
 ''' Pickling classifier '''
 
 import pickle
-pickle_clf = results[6]['classifier']
-print(f"reults[0]: \n {results[6]['classifier']}")
+pickle_clf = result['classifier']
+print(f"reults[0]: \n {result['classifier']}")
 
 if (pickle_files):
     with open(output_path + "classifier.pkl", "wb") as CLF_File: 

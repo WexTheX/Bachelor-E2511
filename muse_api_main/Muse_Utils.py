@@ -2320,7 +2320,6 @@ class Muse_Utils:
 
                 current_data.sound = Muse_Utils.DataTypeSound(current_packet)
             
-
             return current_data
         
         return None

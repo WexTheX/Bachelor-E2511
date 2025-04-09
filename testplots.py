@@ -25,7 +25,7 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_2.txt")
 
@@ -43,7 +43,7 @@ datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_5.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_7.txt")
-datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_2.txt")
 

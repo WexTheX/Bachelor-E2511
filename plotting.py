@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import math
 
 from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 from sklearn import svm, metrics, dummy
@@ -70,11 +71,13 @@ def PCA_table_plot(X, n_components):
 
     print(f"Total amount of features: {len(X.columns)}")
 
-    for i in range(len(X.columns) // 34):
+    samples_per_pca = 73
+
+    for i in range(len(X.columns) // samples_per_pca):
       
 
-      loadings_percantage_part = loadings_percantage[i*34:(i*34+34)]
-      feature_names_part = PCA_object.feature_names_in_[i*34:(i*34+34)]
+      loadings_percantage_part = loadings_percantage[i*samples_per_pca:(i*samples_per_pca+samples_per_pca)]
+      feature_names_part = PCA_object.feature_names_in_[i*samples_per_pca:(i*samples_per_pca+samples_per_pca)]
 
       plt.figure(figsize=(10, 8))
       sns.heatmap(loadings_percantage_part, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels = feature_names_part)
@@ -143,6 +146,54 @@ def plot_SVM_boundaries(X, train_labels, label_mapping,
   else:
     print(f"Cannot plot SVM boundaries: Classifiers has {classifiers[0].n_features_in_} features, must be 2.")
 
+def plotBoundaryConditions(X, train_labels, label_mapping, results, accuracy_list):
+  
+  mapped_labels = np.array([label_mapping[label] for label in train_labels])
+  xs, ys = X[0], X[1]
+
+  num_plots = len(results)
+  ncols = math.ceil(math.sqrt(num_plots))
+  nrows = math.ceil(num_plots / ncols)
+
+  fig_width = ncols * 4
+  fig_height = nrows * 4
+  fig, axes = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height), squeeze=False)
+
+  for i, (result_dict, accuracy) in enumerate(zip(results, accuracy_list)):
+    print(len(results))
+    ax = axes.flat[i]
+    model_name  = result_dict['model_name']
+    clf         = result_dict['classifier']
+    optimalizer = result_dict['optimalizer']
+    best_params = result_dict['best_params']
+
+    # Check if there is actually 2 components in the clf
+    if clf.n_features_in_ == 2:
+
+      # fig, ax = plt.subplots(1, 1, figsize=(6, 5)) # Adjust size as needed
+      
+      disp = DecisionBoundaryDisplay.from_estimator(
+              clf,
+              X,
+              response_method="predict",
+              cmap=plt.cm.coolwarm,
+              alpha=0.8,
+              ax=ax,
+              xlabel=' ',
+              ylabel=' ',
+          )
+      
+      ax.scatter(xs, ys, c=mapped_labels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
+      ax.set_xticks(())
+      ax.set_yticks(())
+      ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
+      
+      # fig.tight_layout()
+
+
+    else:
+      print(f"Warning: Cannot plot decision boundaries. Classifiers has {clf.n_features_in_} features, must be 2.")
+      break
 
 
 def old_biplot(X, trainLabels, PCATest, n_components, separate_types, models, optimization_methods, titles, accuracy_list):

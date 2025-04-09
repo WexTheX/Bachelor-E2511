@@ -39,6 +39,11 @@ df_result_all = [] ##Storing results
 
 def run_inference_on_file(file_path, fs, window_length_sec, want_prints, predsave, norm_accel=True):
 
+<<<<<<< HEAD
+=======
+def run_inference_on_file(file_path, fs, window_length_sec, norm_accel=True):
+
+>>>>>>> ea2c1a22c16a7327b3c52c594d8e126a06c4f507
     ### Load trained model
     clf = joblib.load("OutputFiles/Separated/classifier.pkl")
     pca = joblib.load("OutputFiles/Separated/PCA.pkl")
@@ -112,6 +117,7 @@ for filename in test_files:
 
     file_to_test = os.path.join(test_file_path, filename)
     file_to_test_no_ext = file_to_test.replace(".txt", "")
+<<<<<<< HEAD
 
     if filename.endswith(".csv"):
         continue  # Skipping .csv files
@@ -150,6 +156,11 @@ for filename in test_files:
     ### Finished, printing file  for output file
 print("Done running predictions on datasets")
 print(f"Predictions saved in: {filename_out}")
+=======
+    print("_______________________________________________________________________________")
+    print(f"Testing file {file_to_test}")
+    run_inference_on_file(file_to_test_no_ext, fs = fs, window_length_sec = window_length_seconds, norm_accel=False)
+>>>>>>> ea2c1a22c16a7327b3c52c594d8e126a06c4f507
 
 
 

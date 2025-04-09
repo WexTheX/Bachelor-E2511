@@ -116,86 +116,6 @@ def evaluateCLF(name, clf, test_df, test_labels, want_plots, activity_name, clf_
     
     return accuracy_score
 
-def makeClassifier(base_estimator, param_grid, method, X, y, search_kwargs, n_iter=30):
-    
-  print()
-  print(f"Classifier: \t {base_estimator}")
-  print(f"Optimalizer: \t {method}")
-  print("-" * 40)
-
-  start_time = time.time()
-
-  if method.lower() == 'gridsearchcv':
-      
-      clf = GridSearchCV(
-          
-          estimator=base_estimator,
-          param_grid=param_grid,
-
-          **search_kwargs
-
-          ) 
-
-  elif method.lower() == 'halvinggridsearchcv':
-      
-      clf = HalvingGridSearchCV(
-          
-          estimator=base_estimator,
-          param_grid=param_grid,
-
-          **search_kwargs
-
-          ) 
-        
-  elif method.lower() == 'randomizedsearchcv':
-      
-      clf = RandomizedSearchCV(
-          
-          estimator=base_estimator,
-          param_distributions=param_grid,
-
-          n_iter=n_iter,
-          **search_kwargs
-
-          ) 
-      
-  elif method.lower() == 'bayessearchcv':
-      
-      smooth_param_grid = makeSmoothParamGrid(param_grid)
-
-      clf = BayesSearchCV(
-
-          estimator=base_estimator,
-          search_spaces=smooth_param_grid,
-
-          n_iter=n_iter,
-          **search_kwargs
-
-          )
-
-  else:
-      clf = base_estimator
-      best_params = None
-      print(f"{method} not recognized, fitting default {base_estimator}")
-
-  clf.fit(X, y)
-
-  end_time = time.time()  # End timer
-  elapsed_time = end_time - start_time
-
-  if clf != base_estimator: 
-    best_params = clf.best_params_
-
-    best_score = ( clf.cv_results_['mean_test_score'][clf.best_index_] - clf.cv_results_['std_test_score'][clf.best_index_] )
-    print(clf.best_score_)
-    print(f"{clf.cv_results_['params'][clf.best_index_]} gives the parameter setting with the highest (mean - std): {best_score}")
-    print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
-    print(f"\n")  
-
-    return clf, best_params
-
-
-
 def makeNClassifiers(models, optimization_methods, model_selection, method_selection, X, y, search_kwargs, n_iter=30):
   
   selected_model_data = []
@@ -322,7 +242,6 @@ def makeNClassifiers(models, optimization_methods, model_selection, method_selec
 
   return results
 
-
 def evaluateCLFs(results, test_df, test_labels, want_plots, activity_name):
   
   accuracy_list = []
@@ -366,6 +285,10 @@ def evaluateCLFs(results, test_df, test_labels, want_plots, activity_name):
         plt.title(f'Confusion matrix, {model_name}: {optimalizer}')
 
     accuracy_list.append(round(accuracy_score, 4))
+
+
+  for result in results:
+    print(f"{result['model_name']} \t mean: {result['mean_test_score']} \t std: {result['std_test_score']} \t delta: {result['train_test_delta']}")
     
   return accuracy_list
 
@@ -417,6 +340,7 @@ def evaluateCLFs(results, test_df, test_labels, want_plots, activity_name):
 
 
 # OLD
+
 
 def makeSVMClassifier(method, base_estimator, num_folds, param_grid, df, labels, train_data, variance_explained):
     

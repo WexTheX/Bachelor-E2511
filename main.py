@@ -30,7 +30,7 @@ from Preprocessing.preprocessing import fillSets, downsample
 want_feature_extraction = 1
 pickle_files            = 1 # Pickle the classifier, scaler and PCA objects.
 separate_types          = 1
-want_plots              = 0
+want_plots              = 1
 ML_models               = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
 ML_model                = "SVM"
 Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
@@ -128,7 +128,7 @@ optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', '
 
 search_kwargs = {'n_jobs':              -1, 
                  'verbose':             0,
-                 'cv':                  num_folds,
+                 'cv':                  TimeSeriesSplit(n_splits=num_folds),
                  'scoring':             'f1_weighted',
                  'return_train_score':  True
                 }
@@ -156,27 +156,27 @@ search_kwargs = {'n_jobs':              -1,
 
 # Different folder for separated and not separated
 if (separate_types):
-    path        = "Preprocessing/DatafilesSeparated" 
-    output_path = "OutputFiles/Separated/"
-    test_path   = "testFiles/"
+    path            = "Preprocessing/DatafilesSeparated" 
+    output_path     = "OutputFiles/Separated/"
+    test_path       = "testFiles/"
 
-    label_mapping = {
-                    'IDLE':         (0.0, 0.0, 0.0), 
-                    'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
-                    'IMPA':         (0.5, 0.5, 0.5), 
-                    'SANDSIM':      (0.0, 1.0, 0.0), 
-                    'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
+    label_mapping   = {
+                        'IDLE':         (0.0, 0.0, 0.0), 
+                        'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
+                        'IMPA':         (0.5, 0.5, 0.5), 
+                        'SANDSIM':      (0.0, 1.0, 0.0), 
+                        'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
     }
 
 else:
-    path        = "Preprocessing/Datafiles"
-    output_path = "OutputFiles/"
-    test_path   = "testFiles/"
+    path            = "Preprocessing/Datafiles"
+    output_path     = "OutputFiles/"
+    test_path       = "testFiles/"
 
-    label_mapping = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+    label_mapping   = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
 
-path_names      = os.listdir(path)
-activity_name   = [name.upper() for name in path_names]
+path_names          = os.listdir(path)
+activity_name       = [name.upper() for name in path_names]
 
 sets, sets_labels = fillSets(path, path_names, activity_name)
 
@@ -191,7 +191,7 @@ if (want_feature_extraction):
     start_time = time.time()
     
     for i, file in enumerate(sets):
-        print(f"Extracting files from file: {file}")
+        print(f"Extracting features from file: {file}")
         fe_df = extractDFfromFile(file, fs)
 
         if (ds_fs != fs):
@@ -200,6 +200,7 @@ if (want_feature_extraction):
         window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
         all_window_features = all_window_features + window_df
+
         window_labels = window_labels + df_window_labels
 
         print(f"Total number of windows: {len(window_labels)}")
@@ -219,11 +220,11 @@ if (want_feature_extraction):
             fp.write("%s\n" % item)
 
 if "feature_df" not in globals():
-    window_labels = []
-    feature_df = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
-    f = open(output_path+"window_labels.txt", "r") 
-    data = f.read()
-    window_labels = data.split("\n")
+    window_labels   = []
+    feature_df      = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
+    f               = open(output_path+"window_labels.txt", "r") 
+    data            = f.read()
+    window_labels   = data.split("\n")
     f.close()
     window_labels.pop()
 
@@ -310,6 +311,20 @@ results = makeNClassifiers(models, optimization_methods, model_selection, method
 ''' EVALUATION '''
 
 accuracy_list = evaluateCLFs(results, PCA_test_df, test_labels, want_plots, activity_name)
+
+
+
+    # results.append( {
+    #                     'model_name':       model_name_str,
+    #                     'optimalizer':      method,
+
+    #                     'classifier':       clf,
+    #                     'best_score':       best_score,
+    #                     'best_params':      best_params,      
+    #                     'train_test_delta': train_test_delta, # Higher value -> more overfitted
+    #                     'mean_test_score':  mean_test_score,
+    #                     'std_test_score':   std_test_score
+    #                   })
 
 # clf_dict = {}
 

@@ -60,25 +60,15 @@ window_length_seconds = 20
 
 
 
-def run_inference_on_file(file_path, fs, window_length_sec, run, norm_accel=True):
+def run_inference_on_file(file_path, fs, window_length_sec, norm_accel=True):
 
-
-    # from extractFeatures import extractDFfromFile
-    # from extractFeatures import extractFeaturesFromDF
-    if not run:
-        print(f"Skipping inference on {file_path}")
-        return
     ### Load trained model
     clf = joblib.load("OutputFiles/Separated/classifier.pkl")
     pca = joblib.load("OutputFiles/Separated/PCA.pkl")
     scaler = joblib.load("OutputFiles/Separated/scaler.pkl")
-    #print("Probability is set to?:", hasattr(clf, "predict_proba"))
+    #print("Probability is set to?:", hasattr(clf, "predict_proba")) ##Printing 
 
-
-    
     ### Load file and preprocess
-    
-
     df = extractDFfromFile(file_path, fs)
 
     ### Feature extraction
@@ -126,7 +116,7 @@ for filename in test_files:
     file_to_test_no_ext = file_to_test.replace(".txt", "")
     print("_______________________________________________________________________________")
     print(f"Testing file {file_to_test}")
-    run_inference_on_file(file_to_test_no_ext, fs = fs, window_length_sec = window_length_seconds, norm_accel=False, run=True)
+    run_inference_on_file(file_to_test_no_ext, fs = fs, window_length_sec = window_length_seconds, norm_accel=False)
 
 
 

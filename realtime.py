@@ -59,7 +59,7 @@ columns = ["Timestamp","Axl.X","Axl.Y","Axl.Z","Gyr.X","Gyr.Y","Gyr.Z","Mag.X","
 prediction_list = {}
 
 delta_time = 0.04           # Time difference between samples at 25Hz
-real_time_window_sec = 30  # Time period the program will stream
+real_time_window_sec = 70  # Time period the program will stream
 
 '''
 # Packet dimension and size, according to mode (30 and 4)
@@ -189,12 +189,12 @@ async def data_notification_handler(sender: int, data: bytearray):
     # ])
 
     
-    print(sample_counter)
+    # print(sample_counter)
     
     if ((sample_counter) > window_length_sec*fs-1):
         ''' FEATURE EXTRACTION AND SCALE '''
         feature_df = pd.DataFrame(data=feature_list, columns=columns)  
-        print(feature_df)
+        # print(feature_df)
         feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
         feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))
        

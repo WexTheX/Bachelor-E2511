@@ -69,7 +69,8 @@ num_folds = 3
 n_iter = 30
 
 SVM_param_grid = {
-    "C":                    [0.001, 0.01, 0.1, 1, 10, 100],
+    "C":                    [0.01, 0.1,
+                             1, 10, 100],
     "kernel":               ["linear", "poly", "rbf", "sigmoid"],
     "gamma":                [0.01, 0.1],
     "coef0":                [0.0, 1.0],

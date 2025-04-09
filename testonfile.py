@@ -1,67 +1,45 @@
-import joblib
-from extractFeatures import extractDFfromFile, extractFeaturesFromDF
-import pandas as pd
-import numpy as np
-import os
-
-# Implement solution to test a large file of various activities - EH 
-
-# Import file 
-# transform into csv
-# split to windows
-# do feature extraction
-# send through ML
-# get answer of what activity and probability from ML
 
 
+#### Implement solution to test a large file of various activities 
 # 1) check if bin, if bin convert to txt OK
 # 2) Convert date format
 # 3) delete header
 # 4) convert to csv
 # 5) make Windows
 # 6) feature extraction
+# 7) Predict label based on features and trained model
 
 
+import joblib
+import pandas as pd
+import numpy as np
+import os
+import pandas as pd
 
-#     ### Testing trained model on unseen files
-# test_file_path = "testFiles"
-# test_files = os.listdir(test_file_path)
+### Local imports
+from extractFeatures import extractDFfromFile, extractFeaturesFromDF
+from Preprocessing.preprocessing import convert_bin_to_txt
 
 
-# for filename in test_files:
-#     file_to_test = os.path.join(test_file_path, filename)
-#     print(f"Testing file {file_to_test}")
-#     run_inference_on_file(file_to_test, fs = fs, window_length_sec = window_length_seconds, norm_accel=True, run=True)
-
-#------------------------------------------------------
-### Testing trained model on unseen files
-# test_file_path = "testFiles"
-# test_files = os.listdir(test_file_path)
-
-# for filename in test_files:
-#   file_to_test = os.path.join(test_file_path, filename)
-  
-# ### Converts bin to txt and checks if the .bin and .txt file has errors
-#     if filename.endswith(".bin") and not filename.startswith(activity_name[i]):
-#         convert_bin_to_txt(file_to_test)
-#     convert_date_format(filename)
-#     print(f"Testing file {file_to_test}")
-#     run_inference_on_file(file_to_test, fs = fs, window_length_sec = window_length_seconds, norm_accel=True, run=True)
-  
-### Folder path
-test_file_path = "testFiles"
+### Folder paths
+test_file_path = "testOnFile/testFiles"
+predictionSave = "testOnFile"
 test_files = os.listdir(test_file_path)
 
+
 ### Variables
+fs = 800                    ### Sampling rate (800 on logged data and max 200 on live data)
+
+window_length_seconds = 20  ### Setting the window lenth in seconds
+
+want_prints = 0             ### Set to true if you want prints in the terminal aswell as an output file
 
 
-fs = 800
-window_length_seconds = 20
+### Lists
+df_result_all = [] ##Storing results
 
 
-
-def run_inference_on_file(file_path, fs, window_length_sec, norm_accel=True):
-
+def run_inference_on_file(file_path, fs, window_length_sec, want_prints, norm_accel=True):
     ### Load trained model
     clf = joblib.load("OutputFiles/Separated/classifier.pkl")
     pca = joblib.load("OutputFiles/Separated/PCA.pkl")
@@ -81,42 +59,98 @@ def run_inference_on_file(file_path, fs, window_length_sec, norm_accel=True):
 
     ### Predictions
     preds = clf.predict(features_pca)
-    print(f"{'TIME':<10}{'ACTIVITY':<15}{'PROBABILITY':<12}TOP-3 PREDICTIONS")
-    print(f"{'0–10':<10}{'deleted':<15}{'-':<12}-")
+
+    ### Output csv and prints
+
+    results = []   ## making results collection list
+
+    if want_prints == True:
+        print(f"{'TIME':<10}{'ACTIVITY':<15}{'PROBABILITY':<12}TOP-3 PREDICTIONS")
+        print(f"{'0–10':<10}{'deleted':<15}{'-':<12}-")
+
+    ###The first 10 sec of the set gets deleted in extractFeaturesFromDF(). 
+    results.append(["0–10", "deleted", "-", "-"])
+
 
     if hasattr(clf, "predict_proba"):
         probabilities = clf.predict_proba(features_pca)
         class_labels = clf.classes_
 
         for i, probs in enumerate(probabilities):
-            start = (i + 1) * window_length_sec
+            start = (10 + (i * window_length_sec))
             end = start + window_length_sec
             time_range = f"{start}–{end}"
 
-            # Få top-3 klasser og sannsynligheter
+            # Get top 3 predictions
             top_3 = sorted(zip(class_labels, probs), key=lambda x: x[1], reverse=True)[:3]
             top_3_str = ", ".join([f"{lbl} ({p:.2f})" for lbl, p in top_3])
 
-            # Bruk top-1 som activity
+            # Use most probable as activity
             pred, pred_prob = top_3[0]
-            print(f"{time_range:<10}{pred:<15}{pred_prob:<12.2f}{top_3_str}")
+            if want_prints == True:
+                print(f"{time_range:<10}{pred:<15}{pred_prob:<12.2f}{top_3_str}")
+            results.append([time_range, pred, f"{pred_prob:.2f}", top_3_str])
     else:
         for i, pred in enumerate(preds):
-            start = (i + 1) * window_length_sec
+            (10 + (i * window_length_sec))
             end = start + window_length_sec
             time_range = f"{start}–{end}"
-            print(f"{time_range:<10}{pred:<15}{'-':<12}-")
-    print("_______________________________________________________________________________")
+
+            if want_prints == True:
+                print(f"{time_range:<10}{pred:<15}{'-':<12}-")
+
+            results.append([time_range, pred, "-", "-"])
+
+        if want_prints == True:
+            print("_______________________________________________________________________________")
+        
+    df_result = pd.DataFrame(results, columns=["Time", "Activity", "Probability", "Top-3"])
+    return df_result
+    
 
 
 for filename in test_files:
-    if filename.endswith(".csv"):
-        continue  # hopper over .csv-filer
+
+
     file_to_test = os.path.join(test_file_path, filename)
     file_to_test_no_ext = file_to_test.replace(".txt", "")
-    print("_______________________________________________________________________________")
-    print(f"Testing file {file_to_test}")
-    run_inference_on_file(file_to_test_no_ext, fs = fs, window_length_sec = window_length_seconds, norm_accel=False)
 
+    if filename.endswith(".csv"):
+        continue  # Skipping .csv files
 
+    elif filename.endswith(".bin"): ##Converting .bin to .txt
+        convert_bin_to_txt(file_to_test_no_ext)
 
+    if want_prints == True:
+        print("_______________________________________________________________________________")
+
+    print(f"Testing file: {file_to_test}")
+
+    df_result = run_inference_on_file(file_to_test_no_ext, fs=fs, window_length_sec=window_length_seconds, want_prints=want_prints, norm_accel=False)
+
+    ### Line to seperate the different prediction sets       
+    header_lines = [
+        f"_______________________________________________________________________________",
+        f"Predictions from: {os.path.basename(file_to_test)}"
+    ]
+    header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
+                             columns=["Time", "Activity", "Probability", "Top-3"])
+
+    ###Adding header above every prediction set
+    column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
+                                 columns=["Time", "Activity", "Probability", "Top-3"])
+
+    ### Adding the data together
+    df_result_all.append(header_df)
+    df_result_all.append(column_header)
+    df_result_all.append(df_result)
+
+    ### Saving as csv
+
+combined_df = pd.concat(df_result_all, ignore_index=True)
+filename_out = os.path.join(predictionSave, "predictions.csv")
+combined_df.to_csv(filename_out, index=False)
+
+    ### Finished, printing file  for output file
+print("Done running predictions on datasets")
+print(f"Predictions saved in: {filename_out}")

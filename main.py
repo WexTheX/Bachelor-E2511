@@ -38,7 +38,7 @@ Splitting_method        = "TimeseriesSplit"
 
 ''' DATASET VARIABLES '''
 
-variance_explained      = 2
+variance_explained      = 0.90
 random_seed             = 333
 window_length_seconds   = 20
 test_size               = 0.25
@@ -68,11 +68,11 @@ LR_base     = LogisticRegression(**base_params)
 num_folds = 3
 
 SVM_param_grid = {
-    "C":                    [0.001, 0.01],
+    "C":                    [0.001, 0.01, 0.1, 1, 10, 100],
     "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-    "gamma":                [0.01, 0.1],
-    "coef0":                [0.0, 1.0],
-    "degree":               [2, 3]
+    "gamma":                [0.01, 0.1, 1, 10, 100],
+    "coef0":                [0.0, 0.5, 1.0],
+    "degree":               [2, 3, 4, 5]
 }
 
 RF_param_grid = {
@@ -102,7 +102,7 @@ GNB_param_grid = {
 }
 
 LR_param_grid = {
-    'C':                    [0.001, 0.01], 
+    'C':                    [0.001, 0.01, 0.1, 1, 10, 100], 
     'dual':                 [False], 
     'fit_intercept':        [True], 
     'intercept_scaling':    [1], 

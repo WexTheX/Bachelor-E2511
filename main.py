@@ -21,115 +21,117 @@ from sklearn.linear_model import LogisticRegression
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import trainScaler, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF
-from plotting import biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
+from machineLearning import trainScaler, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF, evaluateCLFs, makeNClassifiers
+from plotting import plotBoundaryConditions, biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
-
-
 
 ''' GLOBAL VARIABLES '''
 
 want_feature_extraction = 0
-pickle_files = 1 # Pickle the classifier, scaler and PCA objects.
-separate_types = 1
-want_plots = 0
-ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
-ML_model = "SVM"
-Splitting_method = ["StratifiedKFOLD", "TimeSeriesSplit"]
-Splitting_method = "TimeseriesSplit"
-accuracy_list = []
+pickle_files            = 1 # Pickle the classifier, scaler and PCA objects.
+separate_types          = 1
+want_plots              = 0
+ML_models               = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
+ML_model                = "SVM"
+Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
+Splitting_method        = "TimeseriesSplit"
 
 ''' DATASET VARIABLES '''
 
-variance_explained = 2
-randomness = 333
-window_length_seconds = 20
-test_size = 0.25
-fs = 800
-ds_fs = 800
-variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
+variance_explained      = 2
+random_seed             = 333
+window_length_seconds   = 20
+test_size               = 0.25
+fs                      = 800
+ds_fs                   = 800
+variables               = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
 ''' BASE ESTIMATORS '''
 
 base_params =  {'class_weight': 'balanced', 
-                'random_state': randomness}
+                'random_state': random_seed}
 
-base_paramssvm = {
-    'class_weight': 'balanced',
-    'probability': True,
-    'random_state': randomness
-}
+# base_paramssvm = {
+#     'class_weight': 'balanced',
+#     'probability': True,
+#     'random_state': randomness
+# }
 
-SVM_base = svm.SVC(**base_paramssvm)
-RF_base = RandomForestClassifier(**base_params)
-KNN_base = KNeighborsClassifier()
-GNB_base = GaussianNB()
-LR_base = LogisticRegression(**base_params)
+SVM_base    = svm.SVC(**base_params, probability=True)
+RF_base     = RandomForestClassifier(**base_params)
+KNN_base    = KNeighborsClassifier()
+GNB_base    = GaussianNB()
+LR_base     = LogisticRegression(**base_params)
 
 ''' HYPER PARAMETER VARIABLES '''
 
 num_folds = 3
 
 SVM_param_grid = {
-    "C": [0.001, 0.01],
-    "kernel": ["linear", "poly", "rbf", "sigmoid"],
-    "gamma": [0.01, 0.1],
-    "coef0": [0.0, 1.0],
-    "degree": [2, 3]
+    "C":                    [0.001, 0.01],
+    "kernel":               ["linear", "poly", "rbf", "sigmoid"],
+    "gamma":                [0.01, 0.1],
+    "coef0":                [0.0, 1.0],
+    "degree":               [2, 3]
 }
 
-# smooth_hyperparams_SVM = {
-#     "C": Real(hyperparams_SVM['C'][0], hyperparams_SVM['C'][-1], prior="log-uniform"),  # Continuous log-scale for C
-#     "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),  # Discrete choices
-#     "gamma": Real(hyperparams_SVM['gamma'][0], hyperparams_SVM['gamma'][-1], prior="log-uniform"),  # Log-uniform scale for gamma
-#     "coef0": Real(hyperparams_SVM['coef0'][0], hyperparams_SVM['coef0'][-1]),
-#     "degree": Integer(hyperparams_SVM['degree'][0], hyperparams_SVM['degree'][-1])
-# }
-
 RF_param_grid = {
-    'n_estimators': [50, 100, 200],  # Number of trees in the forest
-    'max_depth': [10, 20, 30, None],  # Maximum depth of each tree
-    # 'min_samples_split': [2, 5, 10],  # Minimum samples required to split a node
-    # 'min_samples_leaf': [1, 2, 4],  # Minimum samples required in a leaf node
-    # 'max_features': ['sqrt', 'log2'],  # Number of features considered for splitting
-    # 'bootstrap': [True, False],  # Whether to use bootstrapped samples
-    'criterion': ['gini', 'entropy']  # Splitting criteria
+    'n_estimators':         [50, 100, 200],  # Number of trees in the forest
+    'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
+    # 'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
+    # 'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
+    # 'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
+    # 'bootstrap':          [True, False],  # Whether to use bootstrapped samples
+    'criterion':            ['gini', 'entropy']  # Splitting criteria
 }
 
 KNN_param_grid = {
-    'algorithm': ['ball_tree', 'kd_tree', 'brute'], 
-    # 'leaf_size': [30], 
-    # 'metric': 'minkowski', 
-    # 'metric_params': None, 
-    # 'n_jobs': None, 
-    'n_neighbors': [3, 4, 5], 
-    'p': [1, 2], 
-    'weights': ['uniform', 'distance']
-    }
+    'algorithm':            ['ball_tree', 'kd_tree', 'brute'], 
+    # 'leaf_size':          [30], 
+    # 'metric':             ['minkowski'], 
+    # 'metric_params':      [None], 
+    # 'n_jobs':             [None], 
+    'n_neighbors':          [3, 4, 5], 
+    'p':                    [1, 2], 
+    'weights':              ['uniform', 'distance']
+}
 
 GNB_param_grid = {
-    'priors': [None], 
-    'var_smoothing': [1e-09]
-    }
-
+    'priors':               [None], 
+    'var_smoothing':        [1e-09]
+}
 
 LR_param_grid = {
-    'C': [0.001, 0.01], 
-    # 'class_weight': 'balanced', 
-    'dual': False, 
-    'fit_intercept': True, 
-    'intercept_scaling': 1, 
-    'l1_ratio': None, 
-    'max_iter': 100, 
-    'multi_class': 'deprecated', 
-    'n_jobs': None, 
-    'penalty': 'l2', 
-    # 'random_state': 333, 
-    'solver': 'lbfgs', 
-    'tol': 0.0001, 
-    'verbose': 0, 
-    'warm_start': False}
+    'C':                    [0.001, 0.01], 
+    'dual':                 [False], 
+    'fit_intercept':        [True], 
+    'intercept_scaling':    [1], 
+    # 'l1_ratio':             [None], 
+    'max_iter':             [100], 
+    'multi_class':          ['deprecated'], 
+    # 'n_jobs':               [None], 
+    'penalty':              ['l2'], 
+    'solver':               ['lbfgs'], 
+    'tol':                  [0.0001], 
+    'warm_start':           [False]
+}
 
+models = {
+        'SVM':  (SVM_base,  SVM_param_grid), 
+        'RF':   (RF_base,   RF_param_grid),
+        'KNN':  (KNN_base,  KNN_param_grid),
+        'GNB':  (GNB_base,  GNB_param_grid),
+        'LR':   (LR_base,   LR_param_grid)
+        }
+
+optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV', 'Base model']
+
+search_kwargs = {'n_jobs':              -1, 
+                 'verbose':             0,
+                 'cv':                  num_folds,
+                 'scoring':             'f1_weighted',
+                 'return_train_score':  True
+                }
 
 ''' USER INPUTS '''
 
@@ -154,29 +156,29 @@ LR_param_grid = {
 
 # Different folder for separated and not separated
 if (separate_types):
-    path = "Preprocessing/DatafilesSeparated" 
+    path        = "Preprocessing/DatafilesSeparated" 
     output_path = "OutputFiles/Separated/"
-    test_path = "testFiles/"
+    test_path   = "testFiles/"
 
-    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-                    'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
-                    'IMPA': (0.5, 0.5, 0.5), 
-                    'SANDSIM': (0.0, 1.0, 0.0), 
-                    'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
+    label_mapping = {
+                    'IDLE':         (0.0, 0.0, 0.0), 
+                    'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
+                    'IMPA':         (0.5, 0.5, 0.5), 
+                    'SANDSIM':      (0.0, 1.0, 0.0), 
+                    'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
+    }
+
 else:
-    path = "Preprocessing/Datafiles"
+    path        = "Preprocessing/Datafiles"
     output_path = "OutputFiles/"
-    test_path = "testFiles/"
+    test_path   = "testFiles/"
 
-    label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+    label_mapping = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
 
-path_names = os.listdir(path)
-activity_name = [name.upper() for name in path_names]
+path_names      = os.listdir(path)
+activity_name   = [name.upper() for name in path_names]
 
 sets, sets_labels = fillSets(path, path_names, activity_name)
-# print(f"Content of sets: \n {sets}")
-# print(f"Content of sets_labels: \n {sets_labels}")
-
 
 ''' FEATURE EXTRACTION '''
 
@@ -185,16 +187,15 @@ if (want_feature_extraction):
     # One row in feature_df is all features from one window
     all_window_features = []
     window_labels = []
+
     start_time = time.time()
     
     for i, file in enumerate(sets):
         print(f"Extracting files from file: {file}")
         fe_df = extractDFfromFile(file, fs)
-        print(fe_df['Axl.X'].mean())
 
         if (ds_fs != fs):
             fe_df = downsample(fe_df, fs, ds_fs)
-            print(fe_df['Axl.X'].mean())
         
         window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
@@ -212,6 +213,7 @@ if (want_feature_extraction):
     print(f"Features extracted in {elapsed_time} seconds")
         
     feature_df.to_csv(output_path+str(ds_fs)+"feature_df.csv", index=False)
+
     with open(output_path+"window_labels.txt", "w") as fp:
         for item in window_labels:
             fp.write("%s\n" % item)
@@ -228,17 +230,17 @@ if "feature_df" not in globals():
 
 ''' SPLITTING TEST/TRAIN + SCALING'''
 
-train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=randomness, stratify=window_labels)
+train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=random_seed, stratify=window_labels)
 
 mapped_labels = np.array([label_mapping[label] for label in train_labels])
 
 scaler = StandardScaler()
 scaler.set_output(transform="pandas")
 
-train_data_scaled = scaler.fit_transform(train_data)
-test_data_scaled = scaler.transform(test_data)
+train_data_scaled   = scaler.fit_transform(train_data)
+test_data_scaled    = scaler.transform(test_data)
 
-total_data_scaled = scaler.fit_transform(feature_df)
+total_data_scaled   = scaler.fit_transform(feature_df)
 
 
 # total_data_scaled = scaleFeatures(feature_df, 1)
@@ -248,53 +250,34 @@ total_data_scaled = scaler.fit_transform(feature_df)
 
 ''' Principal Component Analysis (PCA)'''
 
-# Decide nr of PCA components
-PCA_components = setNComponents(train_data_scaled, variance_explained=variance_explained)
+# Calculate PCA components, create PCA object, fit + transform
+PCA_components      = setNComponents(train_data_scaled, variance_explained=variance_explained)
+PCA_final           = PCA(n_components = PCA_components)
 
-# Create PCA object for N components found by variance_explained
-PCA_final = PCA(n_components = PCA_components)
-
-PCA_train_df = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
-PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
+PCA_train_df        = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
+PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-optimization_methods = ['BayesSearchCV1', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV']
+model_selection     = ['LR', 'GNB', 'KNN', 'SVM']
+method_selection    = ['GridSearchCV', 'RandomizedSearchCV']
 
-classifiers = []
-best_clf_params = []
-optimization_list = []
+results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter=30)
 
-clf_names = []
+# models = (
+#         (SVM_base, SVM_param_grid), 
+#         (RF_base, RF_param_grid),
+#         (KNN_base, KNN_param_grid),
+#         (GNB_base, GNB_param_grid) )
 
-if Splitting_method == "StratifiedKFold":
-    split = StratifiedKFold(n_splits=num_folds)
+# for base_model, param_grid in models:
+#     for method in optimization_methods:
 
-if Splitting_method == "TimeseriesSplit":
-    split = TimeSeriesSplit(n_splits=num_folds)
+#         clf, best_params = makeClassifier(base_model, param_grid, method, PCA_train_df, train_labels, search_kwargs, n_iter=30)
 
-search_kwargs = {'n_jobs': -1, 
-                 'verbose': 0,
-                 'cv': split,
-                 'scoring': 'f1_weighted'
-                }
-
-models = [ (SVM_base, SVM_param_grid), 
-          (RF_base, RF_param_grid),
-          (KNN_base, KNN_param_grid)]
-        #   (GNB_base, GNB_param_grid) ]
-
-
-
-
-for base_model, param_grid in models:
-    for method in optimization_methods:
-
-        clf, best_params = makeClassifier(base_model, param_grid, method, PCA_train_df, train_labels, search_kwargs, n_iter=30)
-
-        classifiers.append(clf)
-        best_clf_params.append(best_params)
-        optimization_list.append(method)
+#         classifiers.append(clf)
+#         best_clf_params.append(best_params)
+#         optimization_list.append(method)
 
 # print(f"Optimization list: {optimization_list}")
 # print(f"Classifiers: {classifiers}")
@@ -326,44 +309,42 @@ for base_model, param_grid in models:
 
 ''' EVALUATION '''
 
-clf_dict = {}
+accuracy_list = evaluateCLFs(results, PCA_test_df, test_labels, want_plots, activity_name)
 
-for i, classifier in enumerate(classifiers):
-    clf_dict[optimization_list[i]] = classifier
+# clf_dict = {}
 
-print(clf_dict)
+# for i, classifier in enumerate(classifiers):
+#     clf_dict[optimization_list[i]] = classifier
 
-# clf_dict brukes ikke, clf_names er tom
+# print(clf_dict)
 
-for name, clf, clf_name in zip(optimization_list, classifiers, clf_names):
+# # clf_dict brukes ikke, clf_names er tom
+
+# for name, clf, clf_name in zip(optimization_list, classifiers, clf_dict):
     
-    accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name, clf_name)
-    accuracy_list.append(np.round(accuracy_score, 3))
+#     accuracy_score = evaluateCLF(name, clf, PCA_test_df, test_labels, want_plots, activity_name, clf_name)
+#     accuracy_list.append(np.round(accuracy_score, 3))
     
 
-dummy_clf = dummy.DummyClassifier(strategy="most_frequent")
-dummy_clf.fit(PCA_train_df, train_labels)
-dummy_score = dummy_clf.score(PCA_test_df, test_labels)
-
-print("Baseline Accuracy (Dummy Classifier):", dummy_score)
-
-if(want_plots):
+if want_plots:
     
     ''' FEATURE IMPORTANCE '''
     
-    PCA_table_plot(total_data_scaled, 5)   
+    PCA_table_plot(train_data_scaled, 5)   
 
     ''' 2D PLOTS OF PCA '''
 
     biplot(total_data_scaled, window_labels, label_mapping)
+    
+    plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, results, accuracy_list)
 
-    plot_SVM_boundaries(PCA_train_df, train_labels, label_mapping,
-                         classifiers, optimization_methods, best_clf_params, accuracy_list)
+    # plot_SVM_boundaries(PCA_train_df, train_labels, label_mapping,
+    #                      classifiers, optimization_methods, best_clf_params, accuracy_list)
 
     ''' KNN PLOT '''
-    if(ML_model.upper() == "KNN"):
-        if (PCA_components == 2):
-            plotKNNboundries(PCA_train_df, clf, mapped_labels)
+    # if(ML_model.upper() == "KNN"):
+    #     if (PCA_components == 2):
+    #         plotKNNboundries(PCA_train_df, clf, mapped_labels)
     
     plt.show()
 
@@ -397,28 +378,25 @@ guess = guess.sort()
 
 
 ''' Pickling classifier '''
+
 import pickle
+halving_classifier = results[0]['classifier']
 
-final_model = classifiers[0]
-if hasattr(final_model, "best_estimator_"):
-    final_model = final_model.best_estimator_
-
-#halving_classifier = classifiers[0]
 if (pickle_files):
-    # with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-    #     pickle.dump(halving_classifier, CLF_File) 
+    with open(output_path + "classifier.pkl", "wb") as CLF_File: 
+        pickle.dump(halving_classifier, CLF_File) 
     
 
 
     final_model = None
-    for clf, method in zip(classifiers, optimization_list):
-        if method == "HalvingGridSearchCV":
-            final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
-            break
+    # for clf, method in zip(classifiers, optimization_list):
+    #     if method == "HalvingGridSearchCV":
+    #         final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
+    #         break
 
-    if final_model is None:
-        print("Fant ikke modell med HalvingGridSearchCV – bruker første som fallback.")
-        final_model = classifiers[0]
+    # if final_model is None:
+    #     print("Fant ikke modell med HalvingGridSearchCV – bruker første som fallback.")
+    #     final_model = classifiers[0]
 
     # Dobbeltsjekk før lagring
     print("Modell som lagres:", final_model)

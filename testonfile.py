@@ -1,13 +1,24 @@
 
 
 #### Implement solution to test a large file of various activities 
-# 1) check if bin, if bin convert to txt OK
+# 1) Check if bin, if bin convert to txt
 # 2) Convert date format
-# 3) delete header
-# 4) convert to csv
-# 5) make Windows
-# 6) feature extraction
-# 7) Predict label based on features and trained model
+# 3) Delete header
+# 4) Convert to csv
+# 5) Downsample if needed
+# 6) Make Windows
+# 7) Feature extraction
+# 8) Predict label based on features and trained model
+# 9) Save results to CSV and prints
+
+'''
+To run this file, enter the correct filepath for the files to be tested in test_file_path
+and where you want the csv file saved in prediction_csv_path. Set fs to the sample frequency
+for the data collection, and ds_fs to the wanted downsample frequency. Keep in mind ds_fs has
+to be set the same as the model is trained for.
+
+Set the window length to the same window length used for training the model.
+'''
 
 
 import joblib
@@ -18,39 +29,41 @@ import pandas as pd
 
 ### Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
-from Preprocessing.preprocessing import convert_bin_to_txt
+from Preprocessing.preprocessing import convert_bin_to_txt, downsample
 
 
 ### Folder paths
 test_file_path = "testOnFile/testFiles"
-predictionSave = "testOnFile"
+prediction_csv_path = "testOnFile"
 test_files = os.listdir(test_file_path)
 
 
 ### Variables
-fs = 800                    ### Sampling rate (800 on logged data and max 200 on live data)
-
-window_length_seconds = 20  ### Setting the window lenth in seconds
-
-want_prints = 0             ### Set to true if you want prints in the terminal aswell as an output file
+fs = 800                   ### Sampling rate (800 on logged data and max 200 on live data)
+ds_fs = 200                ### Downsample to
+window_length_seconds = 20 ### Setting the window lenth in seconds
+want_prints = 1            ### Set to true if you want prints in the terminal aswell as an output file
 
 
 ### Lists
 df_result_all = [] ##Storing results
 
 
-def run_inference_on_file(file_path, fs, window_length_sec, want_prints, norm_accel=True):
+def run_inference_on_file(file_path, fs, ds_fs, window_length_sec, want_prints, norm_accel=False):
     ### Load trained model
     clf = joblib.load("OutputFiles/Separated/classifier.pkl")
     pca = joblib.load("OutputFiles/Separated/PCA.pkl")
     scaler = joblib.load("OutputFiles/Separated/scaler.pkl")
+    #print(clf.classes_)
     #print("Probability is set to?:", hasattr(clf, "predict_proba")) ##Printing 
 
     ### Load file and preprocess
     df = extractDFfromFile(file_path, fs)
+    ### Downsample
+    df=downsample(df, fs, ds_fs)
 
     ### Feature extraction
-    features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, fs, norm_accel)
+    features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_accel)
 
     ### Convert to Dataframe and do PCA
     features_df = pd.DataFrame(features_list)
@@ -60,6 +73,7 @@ def run_inference_on_file(file_path, fs, window_length_sec, want_prints, norm_ac
     ### Predictions
     preds = clf.predict(features_pca)
 
+    ###________________________________________________________________________
     ### Output csv and prints
 
     results = []   ## making results collection list
@@ -74,6 +88,7 @@ def run_inference_on_file(file_path, fs, window_length_sec, want_prints, norm_ac
 
     if hasattr(clf, "predict_proba"):
         probabilities = clf.predict_proba(features_pca)
+
         class_labels = clf.classes_
 
         for i, probs in enumerate(probabilities):
@@ -126,7 +141,7 @@ for filename in test_files:
 
     print(f"Testing file: {file_to_test}")
 
-    df_result = run_inference_on_file(file_to_test_no_ext, fs=fs, window_length_sec=window_length_seconds, want_prints=want_prints, norm_accel=False)
+    df_result = run_inference_on_file(file_to_test_no_ext, fs=fs, ds_fs=ds_fs, window_length_sec=window_length_seconds, want_prints=want_prints, norm_accel=False)
 
     ### Line to seperate the different prediction sets       
     header_lines = [
@@ -134,11 +149,11 @@ for filename in test_files:
         f"Predictions from: {os.path.basename(file_to_test)}"
     ]
     header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
-                             columns=["Time", "Activity", "Probability", "Top-3"])
+                            columns=["Time", "Activity", "Probability", "Top-3"])
 
     ###Adding header above every prediction set
     column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
-                                 columns=["Time", "Activity", "Probability", "Top-3"])
+                            columns=["Time", "Activity", "Probability", "Top-3"])
 
     ### Adding the data together
     df_result_all.append(header_df)
@@ -148,7 +163,7 @@ for filename in test_files:
     ### Saving as csv
 
 combined_df = pd.concat(df_result_all, ignore_index=True)
-filename_out = os.path.join(predictionSave, "predictions.csv")
+filename_out = os.path.join(prediction_csv_path, "predictions.csv")
 combined_df.to_csv(filename_out, index=False)
 
     ### Finished, printing file  for output file

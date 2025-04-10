@@ -154,21 +154,45 @@ search_kwargs = {'n_jobs':              -1,
 #     want_plots = True
 
 
+
 ''' LOAD DATASET '''
 
+cmap_name = 'tab10'
+
 # Different folder for separated and not separated
-if (separate_types):
+if separate_types:
+    
     path            = "Preprocessing/DatafilesSeparated" 
     output_path     = "OutputFiles/Separated/"
     test_path       = "testFiles/"
 
-    label_mapping   = {
-                        'IDLE':         (0.0, 0.0, 0.0), 
-                        'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
-                        'IMPA':         (0.5, 0.5, 0.5), 
-                        'SANDSIM':      (0.0, 1.0, 0.0), 
-                        'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
-    }
+    # label_mapping   = {
+    #                     'IDLE':         (0.0, 0.0, 0.0), 
+    #                     'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
+    #                     'IMPA':         (0.5, 0.5, 0.5), 
+    #                     'SANDSIM':      (0.0, 1.0, 0.0), 
+    #                     'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
+    # }
+
+    labels = ['IDLE',
+            'GRINDBIG', 'GRINDMED', 'GRINDSMALL',
+            'IMPA',
+            'SANDSIM',
+            'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
+    ]
+    
+    num_labels      = len(labels)
+    cmap            = plt.get_cmap(cmap_name, num_labels)
+
+    label_to_index  = {label: i for i, label in enumerate(labels)}
+
+    label_mapping   = {label: cmap(i) for label, i in label_to_index.items()}
+
+    # label_mapping = {}
+
+    # for i, label in enumerate(labels):
+    #     rgba_value = cmap(color_values[i])
+    #     label_mapping[label] = rgba_value
 
 else:
     path            = "Preprocessing/Datafiles"
@@ -181,6 +205,8 @@ path_names          = os.listdir(path)
 activity_name       = [name.upper() for name in path_names]
 
 sets, sets_labels = fillSets(path, path_names, activity_name)
+
+
 
 ''' FEATURE EXTRACTION '''
 
@@ -273,9 +299,9 @@ if want_plots:
 
     ''' 2D PLOTS OF PCA '''
 
-    biplot(total_data_scaled, window_labels, label_mapping)
+    biplot(total_data_scaled, window_labels, label_mapping, cmap_name)
     
-    plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list)
+    plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
 
     ''' KNN PLOT '''

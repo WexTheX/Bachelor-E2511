@@ -38,7 +38,7 @@ Splitting_method        = "TimeseriesSplit"
 
 ''' DATASET VARIABLES '''
 
-variance_explained      = 0.8
+variance_explained      = 2
 random_seed             = 333
 window_length_seconds   = 20
 test_size               = 0.25
@@ -70,20 +70,20 @@ n_iter = 30
 
 SVM_param_grid = {
     "C":                    [0.01, 0.1,
-                             1, 10, 100],
-    "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-    "gamma":                [0.01, 0.1],
-    "coef0":                [0.0, 1.0],
+                             1],
+    # "kernel":               ["linear", "poly", "rbf", "sigmoid"],
+    # "gamma":                [0.01, 0.1],
+    # "coef0":                [0.0, 1.0],
     "degree":               [2, 3]
 }
 
 RF_param_grid = {
     'n_estimators':         [50, 100, 200],  # Number of trees in the forest
-    'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
-    'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
-    'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
-    'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
-    'bootstrap':          [True, False],  # Whether to use bootstrapped samples
+    # 'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
+    # 'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
+    # 'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
+    # 'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
+    # 'bootstrap':          [True, False],  # Whether to use bootstrapped samples
     'criterion':            ['gini', 'entropy']  # Splitting criteria
 }
 
@@ -256,7 +256,7 @@ PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-model_selection     = ['SVM', 'GNB']
+model_selection     = ['SVM', 'SVM']
 method_selection    = ['GridSearchCV', 'BayesSearchCV0', 'RandomizedSearchCV']
 
 n_results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
@@ -269,7 +269,7 @@ if want_plots:
     
     ''' FEATURE IMPORTANCE '''
     
-    PCA_table_plot(train_data_scaled, 5, 73)   
+    # PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
 
     ''' 2D PLOTS OF PCA '''
 

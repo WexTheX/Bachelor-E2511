@@ -9,6 +9,7 @@ from sklearn import svm, metrics, dummy
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.decomposition import PCA
 from typing import List, Dict, Any, Tuple, Sequence
+from matplotlib.lines import Line2D
 
 
 def normDistPlot(dataset, size):
@@ -123,12 +124,24 @@ def biplot(train_data_scaled: pd.DataFrame,
   
   xs, ys = X[0], X[1]
 
+  unique_original_labels = sorted(list(set(train_labels)))
+  legend_handles = []
+  point_colors = [label_mapping[label] for label in train_labels]
+
+  # Create legend handles
+  for label_name in unique_original_labels:
+      color = label_mapping[label_name]
+      handle = Line2D([0], [0], marker='o', color='w', # Dummy data, white line
+                      label=label_name, markerfacecolor=color,
+                      markersize=8, linestyle='None') # No line connecting markers
+      legend_handles.append(handle)
+
   plt.figure(figsize=(10, 8))
 
   # Map RGB values onto train_labels, IDLE -> (0.0, 0.0, 0.0) etc
   mapped_labels = np.array([label_mapping[label] for label in train_labels])
 
-  plt.scatter(xs, ys, c=mapped_labels#, cmap='viridis'
+  plt.scatter(xs, ys, c=point_colors, cmap='viridis'
               )
   
   # Uncomment if you want arrows
@@ -140,6 +153,9 @@ def biplot(train_data_scaled: pd.DataFrame,
   plt.xlabel("PC1")
   plt.ylabel("PC2")
   plt.title("Complete dataset in 2 Principal Components")
+
+  plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
+
 
 def plotBoundaryConditions(X:             pd.DataFrame, 
                            train_labels:  Sequence, 
@@ -158,52 +174,52 @@ def plotBoundaryConditions(X:             pd.DataFrame,
   `label_mapping`, is overlaid on each decision boundary plot.
   '''
 
-  mapped_labels = np.array([label_mapping[label] for label in train_labels])
-  xs, ys = X[0], X[1]
+  if X.shape[1] == 2:
 
-  num_plots = len(results)
-  ncols = math.ceil(math.sqrt(num_plots))
-  nrows = math.ceil(num_plots / ncols)
+    mapped_labels = np.array([label_mapping[label] for label in train_labels])
 
-  fig_width = ncols * 4
-  fig_height = nrows * 4
-  fig, axes = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height), squeeze=False)
+    xs, ys = X[0], X[1]
 
-  for i, (result_dict, accuracy) in enumerate(zip(results, accuracy_list)):
+    num_plots   = len(results)
+    ncols       = math.ceil(math.sqrt(num_plots))
+    nrows       = math.ceil(num_plots / ncols)
+
+    fig_width   = ncols * 4
+    fig_height  = nrows * 4
+    fig, axes   = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height), squeeze=False)
     
-    ax = axes.flat[i]
-    model_name  = result_dict['model_name']
-    clf         = result_dict['classifier']
-    optimalizer = result_dict['optimalizer']
-    best_params = result_dict['best_params']
+    for i, (result_dict, accuracy) in enumerate(zip(results, accuracy_list)):
+      
+      ax = axes.flat[i]
+      model_name  = result_dict['model_name']
+      clf         = result_dict['classifier']
+      optimalizer = result_dict['optimalizer']
+      # best_params = result_dict['best_params']
 
-    # Check if there is actually 2 components in the clf
-    if clf.n_features_in_ == 2:
-
+      if clf.n_features_in_ == 2:
       # fig, ax = plt.subplots(1, 1, figsize=(6, 5)) # Adjust size as needed
       
-      disp = DecisionBoundaryDisplay.from_estimator(
-              clf,
-              X,
-              response_method="predict",
-              cmap=plt.cm.coolwarm,
-              alpha=0.8,
-              ax=ax,
-              xlabel=' ',
-              ylabel=' ',
-          )
-      
-      ax.scatter(xs, ys, c=mapped_labels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
-      ax.set_xticks(())
-      ax.set_yticks(())
-      ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
-      
-      # fig.tight_layout()
+        disp = DecisionBoundaryDisplay.from_estimator(
+                clf,
+                X,
+                response_method="predict",
+                cmap=plt.cm.coolwarm,
+                alpha=0.6,
+                ax=ax,
+                xlabel=' ',
+                ylabel=' ',
+                )
+        
+        ax.scatter(xs, ys, c=mapped_labels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
+        ax.set_xticks(())
+        ax.set_yticks(())
+        ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
+        
+        # fig.tight_layout()
 
+  else:
+    print(f"Warning: Cannot plot decision boundaries. Classifiers has {X.shape[1]} features, must be 2.")
 
-    else:
-      print(f"Warning: Cannot plot decision boundaries. Classifiers has {clf.n_features_in_} features, must be 2.")
-      break
 
 def plotKNNboundries(df, clf, labels):
   

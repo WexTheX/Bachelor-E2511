@@ -81,6 +81,13 @@ with tab2:
 
 
 
+
+
+
+
+
+## TAB NUMBER THREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ##
+
 with tab3:
     c1,c2,c3 = st.columns(3)
     
@@ -134,9 +141,9 @@ with tab3:
             st.success(f"File uploaded and saved to {file_path3}")
 
 
-    c1r2, c2r2, c3r2 = st.columns(3)
+    r2c1, r2c2, r2c3 = st.columns(3)
 
-    with c1r2:
+    with r2c1:
         uploaded_file4 = st.file_uploader("Idle", type=["txt"])
 
         if uploaded_file4 is not None:
@@ -153,7 +160,7 @@ with tab3:
 
     
 
-    with c2r2:
+    with r2c2:
         uploaded_file5 = st.file_uploader("Impa", type=["txt"])
 
         if uploaded_file5 is not None:
@@ -167,7 +174,7 @@ with tab3:
                     
             st.success(f"File uploaded and saved to {file_path5}")
     
-    with c3r2:
+    with r2c3:
         uploaded_file6 = st.file_uploader("SandSim", type=["txt"])
 
         if uploaded_file6 is not None:
@@ -185,10 +192,10 @@ with tab3:
 
     
 
-    c1r3, c2r3,c3r3 = st.columns(3)
+    r3c1, r3c2,r3c3 = st.columns(3)
 
 
-    with c1r3:
+    with r3c1:
         uploaded_file7 = st.file_uploader("WeldAlTIG", type=["txt"])
 
         if uploaded_file7 is not None:
@@ -204,7 +211,7 @@ with tab3:
 
 
     
-    with c2r3:
+    with r3c2:
         uploaded_file8 = st.file_uploader("WeldStMAG", type=["txt"])
 
         if uploaded_file8 is not None:
@@ -223,7 +230,7 @@ with tab3:
 
 
 
-    with c3r3:
+    with r3c3:
         uploaded_file9 = st.file_uploader("WeldStTIG", type=["txt"])
 
         if uploaded_file9 is not None:

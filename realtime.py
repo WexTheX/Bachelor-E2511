@@ -43,11 +43,11 @@ CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7"
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 
 myDev = None
-device_name = "Muse_E2511_GREY"    # Bluetooth name of sensor
-
+device_list = ["Muse_E2511_GREY", "Muse_E2511_RED"]
+device_name = device_list[0]
 window_length_sec = 20          # Length of one window for prediction
 fs = 200                        # Frequency of sensor sampling
-real_time_window_sec = 300      # Time period the program will stream
+real_time_window_sec = 720      # Time period the program will stream
 
 data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT   # Data mode, what sensors is used
 DATA_SIZE = 6 * 5;                                            # Dimension of incomming packet (6 bytes * number of sensors)
@@ -68,14 +68,21 @@ prediction_list = {}                                            # Prepares list 
 
 ''' PICKLE IMPORTS '''
 output_path = "OutputFiles/Separated/"                          # Define import path
-with open(output_path + "classifier.pkl", "rb") as CLF_file:    # Import classifier
+# with open(output_path + "classifier.pkl", "rb") as CLF_file:    # Import classifier
+#with open(output_path + "SVMGridSearchCVclf.pkl", "rb") as CLF_file:    # Import classifier
+with open(output_path + "LRGridSearchCVclf.pkl", "rb") as CLF_file:    # Import classifier
+#with open(output_path + "KNNGridSearchCVclf.pkl", "rb") as CLF_file:    # Import classifier
     clf = pickle.load(CLF_file)
+CLF_file.close()
 
-with open(output_path + "PCA.pkl", "rb" ) as PCA_File:          # Import PCA
-    PCA_final = pickle.load(PCA_File)
+with open(output_path + "PCA.pkl", "rb" ) as PCA_file:          # Import PCA
+    PCA_final = pickle.load(PCA_file)
+PCA_file.close()
 
-with open(output_path + "scaler.pkl", "rb" ) as Scaler_File:    # Import Scaler
-    scaler = pickle.load(Scaler_File)
+with open(output_path + "scaler.pkl", "rb" ) as scaler_File:    # Import Scaler
+    scaler = pickle.load(scaler_File)
+scaler_File.close()
+
 
 ''' NOTIFICATION FUNCTIONS '''
 def cmd_notification_handler(sender, data):

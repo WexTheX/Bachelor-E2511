@@ -53,15 +53,15 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
     num_folds = 3
     n_iter = 30
 
-SVM_param_grid = {
-    "C":                    [0.01, 0.1,
-                             1, 10, 100
-                             ],
-    "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-    "gamma":                [0.01, 0.1, 1, 10, 100],
-    "coef0":                [0.0, 0.5, 1.0],
-    "degree":               [2, 3, 4, 5]
-}
+    SVM_param_grid = {
+        "C":                    [0.01, 0.1,
+                                1, 10, 100
+                                ],
+        "kernel":               ["linear", "poly", "rbf", "sigmoid"],
+        "gamma":                [0.01, 0.1, 1, 10, 100],
+        "coef0":                [0.0, 0.5, 1.0],
+        "degree":               [2, 3, 4, 5]
+    }
 
     RF_param_grid = {
         'n_estimators':         [50, 100, 200],  # Number of trees in the forest
@@ -89,20 +89,20 @@ SVM_param_grid = {
         'var_smoothing':        [1e-09]
     }
 
-LR_param_grid = {
-    'C':                    [0.001, 0.01, 0.1, 1, 10, 100], 
-    #'dual':                 [False],                                # Dual or Primal formulation
-    #'fit_intercept':        [True],                                 # Constant added to function (bias)             
-    #'intercept_scaling':    [1],                                    # Only useful when Solver = liblinear, fit_intercept = true
-    #'l1_ratio':             [None],                                 # ???
-    'max_iter':             [100],                        # Max iterations for solver to converge
-    #'multi_class':          ['deprecated'],                         # Deprecated
-    #'n_jobs':               [None],                                 # Amount of jobs that can run at the same time, (also set in CV, error if both)
-    #'penalty':              ['l1', 'l2', 'elasticnet', None],       # Norm of the penalty 
-    #'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],  # Algorithm for optimization problem
-    'tol':                  [0.0001],                  # Tolerance for stopping criteria
-    #'warm_start':           [False]                                 # Reuse previous calls solution
-}
+    LR_param_grid = {
+        'C':                    [0.001, 0.01, 0.1, 1, 10, 100], 
+        #'dual':                 [False],                                # Dual or Primal formulation
+        #'fit_intercept':        [True],                                 # Constant added to function (bias)             
+        #'intercept_scaling':    [1],                                    # Only useful when Solver = liblinear, fit_intercept = true
+        #'l1_ratio':             [None],                                 # ???
+        'max_iter':             [100],                        # Max iterations for solver to converge
+        #'multi_class':          ['deprecated'],                         # Deprecated
+        #'n_jobs':               [None],                                 # Amount of jobs that can run at the same time, (also set in CV, error if both)
+        #'penalty':              ['l1', 'l2', 'elasticnet', None],       # Norm of the penalty 
+        #'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],  # Algorithm for optimization problem
+        'tol':                  [0.0001],                  # Tolerance for stopping criteria
+        #'warm_start':           [False]                                 # Reuse previous calls solution
+    }
 
     models = {
             'SVM':  (SVM_base,  SVM_param_grid), 
@@ -209,14 +209,14 @@ LR_param_grid = {
 
         fp.close()        
 
-if "feature_df" not in globals():
-        window_labels   = []
-        feature_df      = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
-        f               = open(output_path+"window_labels.txt", "r") 
-        data            = f.read()
-        window_labels   = data.split("\n")
-        f.close()
-        window_labels.pop()
+    if "feature_df" not in globals():
+            window_labels   = []
+            feature_df      = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
+            f               = open(output_path+"window_labels.txt", "r") 
+            data            = f.read()
+            window_labels   = data.split("\n")
+            f.close()
+            window_labels.pop()
 
 
     ''' SPLITTING TEST/TRAIN + SCALING'''
@@ -279,26 +279,26 @@ if "feature_df" not in globals():
     pickle_clf = result['classifier']
     print(f"reults[0]: \n {result['classifier']}")
 
-if (pickle_files):
-    for r in n_results:
-        name = r['model_name']
-        optimizer = r['optimalizer']
-        r_result = r['classifier']
+    if (pickle_files):
+        for r in n_results:
+            name = r['model_name']
+            optimizer = r['optimalizer']
+            r_result = r['classifier']
 
-        with open(output_path + str(name) + "_" +  str(optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
-            pickle.dump(r_result, clf_file)
+            with open(output_path + str(name) + "_" +  str(optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
+                pickle.dump(r_result, clf_file)
 
-        clf_file.close()
+            clf_file.close()
 
-    with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-        pickle.dump(pickle_clf, CLF_File)
+        with open(output_path + "classifier.pkl", "wb") as CLF_File: 
+            pickle.dump(pickle_clf, CLF_File)
 
-    CLF_File.close()
+        CLF_File.close()
 
-    print("Modell som lagres:", pickle_clf)
-    print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
-    
-    final_model = None
+        print("Modell som lagres:", pickle_clf)
+        print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
+        
+        final_model = None
     # for clf, method in zip(classifiers, optimization_list):
     #     if method == "HalvingGridSearchCV":
     #         final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
@@ -306,7 +306,7 @@ if (pickle_files):
         print("Modell som lagres:", pickle_clf)
         print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
         
-        final_model = None
+        
         # for clf, method in zip(classifiers, optimization_list):
         #     if method == "HalvingGridSearchCV":
         #         final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
@@ -326,7 +326,7 @@ if (pickle_files):
         with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
             pickle.dump(PCA_final, PCA_File)
     
-    PCA_File.close()
+        PCA_File.close()
 
         with open(output_path + "scaler.pkl", "wb") as scaler_file:
             pickle.dump(scaler, scaler_file)

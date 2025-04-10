@@ -6,39 +6,39 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-from sklearn.inspection import DecisionBoundaryDisplay, permutation_importance
-from skopt.space import Real, Categorical, Integer
-from sklearn import svm, metrics, dummy
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.inspection import permutation_importance
+from sklearn import svm
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.model_selection import KFold, StratifiedKFold, TimeSeriesSplit, cross_val_score, train_test_split, GridSearchCV
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.experimental import enable_halving_search_cv
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import trainScaler, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF, evaluateCLFs, makeNClassifiers
-from plotting import plotBoundaryConditions, biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
+from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
+from plotting import plotBoundaryConditions, biplot, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
 
 ''' GLOBAL VARIABLES '''
 
 want_feature_extraction = 0
-pickle_files            = 1 # Pickle the classifier, scaler and PCA objects.
+pickle_files            = 0 # Pickle the classifier, scaler and PCA objects.
 separate_types          = 1
 want_plots              = 1
-ML_models               = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
+ML_models               = ["SVM", "RF", "KNN", "GNB"]
 ML_model                = "SVM"
 Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
 Splitting_method        = "TimeseriesSplit"
 
 ''' DATASET VARIABLES '''
 
-variance_explained      = 0.8
+variance_explained      = 0.9
 random_seed             = 333
 window_length_seconds   = 20
 test_size               = 0.25
@@ -66,23 +66,25 @@ LR_base     = LogisticRegression(**base_params)
 ''' HYPER PARAMETER VARIABLES '''
 
 num_folds = 3
+n_iter = 30
 
 SVM_param_grid = {
     "C":                    [0.01, 0.1,
-                             1, 10, 100],
+                             1, 10, 100
+                             ],
     "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-    "gamma":                [0.01, 0.1],
-    "coef0":                [0.0, 1.0],
-    "degree":               [2, 3]
+    "gamma":                [0.01, 0.1, 1, 10, 100],
+    "coef0":                [0.0, 0.5, 1.0],
+    "degree":               [2, 3, 4, 5]
 }
 
 RF_param_grid = {
     'n_estimators':         [50, 100, 200],  # Number of trees in the forest
-    'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
-    'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
-    'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
-    'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
-    'bootstrap':          [True, False],  # Whether to use bootstrapped samples
+    # 'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
+    # 'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
+    # 'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
+    # 'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
+    # 'bootstrap':          [True, False],  # Whether to use bootstrapped samples
     'criterion':            ['gini', 'entropy']  # Splitting criteria
 }
 
@@ -104,17 +106,17 @@ GNB_param_grid = {
 
 LR_param_grid = {
     'C':                    [0.001, 0.01, 0.1, 1, 10, 100], 
-    'dual':                 [False], 
-    'fit_intercept':        [True], 
-    'intercept_scaling':    [1], 
-    # 'l1_ratio':             [None], 
-    'max_iter':             [100], 
-    'multi_class':          ['deprecated'], 
-    # 'n_jobs':               [None], 
-    'penalty':              ['l2'], 
-    'solver':               ['lbfgs'], 
-    'tol':                  [0.0001], 
-    'warm_start':           [False]
+    #'dual':                 [False],                                # Dual or Primal formulation
+    #'fit_intercept':        [True],                                 # Constant added to function (bias)             
+    #'intercept_scaling':    [1],                                    # Only useful when Solver = liblinear, fit_intercept = true
+    #'l1_ratio':             [None],                                 # ???
+    'max_iter':             [100],                        # Max iterations for solver to converge
+    #'multi_class':          ['deprecated'],                         # Deprecated
+    #'n_jobs':               [None],                                 # Amount of jobs that can run at the same time, (also set in CV, error if both)
+    #'penalty':              ['l1', 'l2', 'elasticnet', None],       # Norm of the penalty 
+    #'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],  # Algorithm for optimization problem
+    'tol':                  [0.0001],                  # Tolerance for stopping criteria
+    #'warm_start':           [False]                                 # Reuse previous calls solution
 }
 
 models = {
@@ -220,6 +222,8 @@ if (want_feature_extraction):
         for item in window_labels:
             fp.write("%s\n" % item)
 
+    fp.close()        
+
 if "feature_df" not in globals():
     window_labels   = []
     feature_df      = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
@@ -255,26 +259,26 @@ PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
 ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-model_selection     = ['SVM', 'GNB']
-method_selection    = ['GridSearchCV', 'BayesSearchCV0', 'RandomizedSearchCV']
+model_selection     = ['SVM', 'LR', 'KNN']
+method_selection    = ['GridSearchCV']
 
-results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter=30)
+n_results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
 
 ''' EVALUATION '''
 
-result, accuracy_list = evaluateCLFs(results, PCA_test_df, test_labels, want_plots, activity_name)
+result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
 
 if want_plots:
     
     ''' FEATURE IMPORTANCE '''
     
-    PCA_table_plot(train_data_scaled, 5)   
+    # PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
 
     ''' 2D PLOTS OF PCA '''
 
     biplot(total_data_scaled, window_labels, label_mapping)
     
-    plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, results, accuracy_list)
+    plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list)
 
 
     ''' KNN PLOT '''
@@ -285,34 +289,6 @@ if want_plots:
     plt.show()
 
 
-''' Real time streaming '''
-# import pickle
-# from muse_api_main import ble_conn, Muse_Utils, ble_TESTING
-# from bleak import BleakScanner, BleakClient
-# import asyncio
-
-''' REAL TEST '''
-
-'''
-# File path to testing file
-# test_data_df = pd.read_csv(test_path+"test_data.csv")
-
-test_feature, windowLabel = extractAllFeatures('testFiles/06-03-2025 123529', sets_labels, window_length_seconds*Fs, False, 800)
-
-# Scale incoming data
-test_data_scaled = scaleFeatures(test_feature)
-
-# PCA transform test_data_scaled using already fitted PCA
-PCA_test_df = pd.DataFrame(PCA_final.transform(test_data_scaled))
-
-# Use best CLF
-guess = clf1.predict(PCA_test_df)
-
-guess = guess.sort()
-'''
-
-
-
 ''' Pickling classifier '''
 
 import pickle
@@ -320,8 +296,20 @@ pickle_clf = result['classifier']
 print(f"reults[0]: \n {result['classifier']}")
 
 if (pickle_files):
+    for r in n_results:
+        name = r['model_name']
+        optimizer = r['optimalizer']
+        r_result = r['classifier']
+
+        with open(output_path + str(name) + "_" +  str(optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
+            pickle.dump(r_result, clf_file)
+
+        clf_file.close()
+
     with open(output_path + "classifier.pkl", "wb") as CLF_File: 
         pickle.dump(pickle_clf, CLF_File)
+
+    CLF_File.close()
 
     print("Modell som lagres:", pickle_clf)
     print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
@@ -345,9 +333,13 @@ if (pickle_files):
 
     with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
         pickle.dump(PCA_final, PCA_File)
+    
+    PCA_File.close()
 
     with open(output_path + "scaler.pkl", "wb") as scaler_file:
         pickle.dump(scaler, scaler_file)
+
+    scaler_file.close()
 
 # from testonfile import run_inference_on_file
 #     ### Testing trained model on unseen files

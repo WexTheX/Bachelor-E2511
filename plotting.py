@@ -8,6 +8,8 @@ from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 from sklearn import svm, metrics, dummy
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.decomposition import PCA
+from typing import List, Dict, Any, Tuple, Sequence
+from matplotlib.lines import Line2D
 
 
 def normDistPlot(dataset, size):
@@ -59,9 +61,26 @@ def testWelch(sets_n, variables_n, fs):
 
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
 
-def PCA_table_plot(X, n_components):
+def PCA_table_plot(X:                 pd.DataFrame, 
+                   n_components:      int,
+                   features_per_PCA:  int
+                   ) -> None:
   
-  if 3 < n_components < 10:
+  '''
+  Generates heatmap(s) visualizing scaled PCA loadings.
+
+  Fits PCA to the input data `X` for the specified `n_components`. It then
+  calculates the principal component loadings (components scaled by the
+  square root of their explained variance). These loadings are min-max scaled
+  across all features and components for visualization purposes.
+
+  If the number of features exceeds `features_per_PCA`, the heatmap is
+  split into multiple plots, each displaying a chunk of features. This
+  function only generates plots if `n_components` is between 3 and 10
+  (inclusive), based on an assumption about visual clarity.
+  '''
+  
+  if 3 <= n_components <= 10:
 
     PCA_object = PCA(n_components = n_components)
     PCA_object.fit(X)
@@ -71,13 +90,11 @@ def PCA_table_plot(X, n_components):
 
     print(f"Total amount of features: {len(X.columns)}")
 
-    samples_per_pca = 73
-
-    for i in range(len(X.columns) // samples_per_pca):
+    for i in range(len(X.columns) // features_per_PCA):
       
 
-      loadings_percantage_part = loadings_percantage[i*samples_per_pca:(i*samples_per_pca+samples_per_pca)]
-      feature_names_part = PCA_object.feature_names_in_[i*samples_per_pca:(i*samples_per_pca+samples_per_pca)]
+      loadings_percantage_part = loadings_percantage[i*features_per_PCA:(i*features_per_PCA+features_per_PCA)]
+      feature_names_part = PCA_object.feature_names_in_[i*features_per_PCA:(i*features_per_PCA+features_per_PCA)]
 
       plt.figure(figsize=(10, 8))
       sns.heatmap(loadings_percantage_part, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels = feature_names_part)
@@ -87,20 +104,44 @@ def PCA_table_plot(X, n_components):
     print(f"Too many principal components to plot in a meaningful way")
     pass
 
-def biplot(train_data_scaled, train_labels, label_mapping):
+def biplot(train_data_scaled: pd.DataFrame,
+           train_labels:      Sequence,
+           label_mapping:     Dict[str, Any]
+           ) -> None:
   
+  '''
+  Generates a 2D scatter plot of data projected onto its first two Principal Components (PCs).
+
+  Performs PCA on the scaled input data to reduce it to 2 dimensions.
+  It then creates a scatter plot where each point represents a sample projected
+  onto the first two PCs (PC1 vs PC2). Points are colored according to their
+  original labels using the provided `label_mapping`.
+  '''
+
   # Create PCA object for 2 components
   PCA_object = PCA(n_components = 2)
   X = pd.DataFrame(PCA_object.fit_transform(train_data_scaled))
   
   xs, ys = X[0], X[1]
 
+  unique_original_labels = sorted(list(set(train_labels)))
+  legend_handles = []
+  point_colors = [label_mapping[label] for label in train_labels]
+
+  # Create legend handles
+  for label_name in unique_original_labels:
+      color = label_mapping[label_name]
+      handle = Line2D([0], [0], marker='o', color='w', # Dummy data, white line
+                      label=label_name, markerfacecolor=color,
+                      markersize=8, linestyle='None') # No line connecting markers
+      legend_handles.append(handle)
+
   plt.figure(figsize=(10, 8))
 
   # Map RGB values onto train_labels, IDLE -> (0.0, 0.0, 0.0) etc
   mapped_labels = np.array([label_mapping[label] for label in train_labels])
 
-  plt.scatter(xs, ys, c=mapped_labels#, cmap='viridis'
+  plt.scatter(xs, ys, c=point_colors, cmap='viridis'
               )
   
   # Uncomment if you want arrows
@@ -113,213 +154,72 @@ def biplot(train_data_scaled, train_labels, label_mapping):
   plt.ylabel("PC2")
   plt.title("Complete dataset in 2 Principal Components")
 
-def plot_SVM_boundaries(X, train_labels, label_mapping,
-                        classifiers, optimization_methods, best_clf_params, accuracy_list):
+  plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 
-  # Check if there is actually 2 components in the clf
-  if classifiers[0].n_features_in_ == 2:
+
+def plotBoundaryConditions(X:             pd.DataFrame, 
+                           train_labels:  Sequence, 
+                           label_mapping: Dict[str, Any],
+                           results:       List[Dict[str, Any]],
+                           accuracy_list: List[float]
+                          ) -> None:
+  
+  '''
+  Plots decision boundaries for multiple classifiers on 2D data.
+
+  Generates a grid of subplots, where each subplot displays the decision
+  boundary of a classifier provided in the `results` list. It assumes the
+  input data `X` and the fitted classifiers operate on exactly two features.
+  A scatter plot of the original data points, colored according to
+  `label_mapping`, is overlaid on each decision boundary plot.
+  '''
+
+  if X.shape[1] == 2:
 
     mapped_labels = np.array([label_mapping[label] for label in train_labels])
 
     xs, ys = X[0], X[1]
-    
-    fig, sub = plt.subplots(2, 2)
-    plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
-    for clf, method, title, accuracy, ax in zip(classifiers, optimization_methods, best_clf_params, accuracy_list, sub.flatten()):
-        
+    num_plots   = len(results)
+    ncols       = math.ceil(math.sqrt(num_plots))
+    nrows       = math.ceil(num_plots / ncols)
+
+    fig_width   = ncols * 4
+    fig_height  = nrows * 4
+    fig, axes   = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height), squeeze=False)
+    
+    for i, (result_dict, accuracy) in enumerate(zip(results, accuracy_list)):
+      
+      ax = axes.flat[i]
+      model_name  = result_dict['model_name']
+      clf         = result_dict['classifier']
+      optimalizer = result_dict['optimalizer']
+      # best_params = result_dict['best_params']
+
+      if clf.n_features_in_ == 2:
+      # fig, ax = plt.subplots(1, 1, figsize=(6, 5)) # Adjust size as needed
+      
         disp = DecisionBoundaryDisplay.from_estimator(
-            clf,
-            X,
-            response_method="predict",
-            cmap=plt.cm.coolwarm,
-            alpha=0.8,
-            ax=ax,
-            xlabel='PC1',
-            ylabel='PC2',
-        )
+                clf,
+                X,
+                response_method="predict",
+                cmap=plt.cm.coolwarm,
+                alpha=0.6,
+                ax=ax,
+                xlabel=' ',
+                ylabel=' ',
+                )
+        
         ax.scatter(xs, ys, c=mapped_labels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
         ax.set_xticks(())
         ax.set_yticks(())
-        ax.set_title(str(method) + "\n" + "Accuracy: " + str(accuracy) + "\n" + str(title) )
+        ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
+        
+        # fig.tight_layout()
 
   else:
-    print(f"Cannot plot SVM boundaries: Classifiers has {classifiers[0].n_features_in_} features, must be 2.")
+    print(f"Warning: Cannot plot decision boundaries. Classifiers has {X.shape[1]} features, must be 2.")
 
-def plotBoundaryConditions(X, train_labels, label_mapping, results, accuracy_list):
-  
-  mapped_labels = np.array([label_mapping[label] for label in train_labels])
-  xs, ys = X[0], X[1]
-
-  num_plots = len(results)
-  ncols = math.ceil(math.sqrt(num_plots))
-  nrows = math.ceil(num_plots / ncols)
-
-  fig_width = ncols * 4
-  fig_height = nrows * 4
-  fig, axes = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height), squeeze=False)
-
-  for i, (result_dict, accuracy) in enumerate(zip(results, accuracy_list)):
-    print(len(results))
-    ax = axes.flat[i]
-    model_name  = result_dict['model_name']
-    clf         = result_dict['classifier']
-    optimalizer = result_dict['optimalizer']
-    best_params = result_dict['best_params']
-
-    # Check if there is actually 2 components in the clf
-    if clf.n_features_in_ == 2:
-
-      # fig, ax = plt.subplots(1, 1, figsize=(6, 5)) # Adjust size as needed
-      
-      disp = DecisionBoundaryDisplay.from_estimator(
-              clf,
-              X,
-              response_method="predict",
-              cmap=plt.cm.coolwarm,
-              alpha=0.8,
-              ax=ax,
-              xlabel=' ',
-              ylabel=' ',
-          )
-      
-      ax.scatter(xs, ys, c=mapped_labels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
-      ax.set_xticks(())
-      ax.set_yticks(())
-      ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
-      
-      # fig.tight_layout()
-
-
-    else:
-      print(f"Warning: Cannot plot decision boundaries. Classifiers has {clf.n_features_in_} features, must be 2.")
-      break
-
-
-def old_biplot(X, trainLabels, PCATest, n_components, separate_types, models, optimization_methods, titles, accuracy_list):
-  
-  # OLD BIPLOT FUNCTION, NOT IN USE
-  # PCA_object = PCA(n_components = n_components)
-
-  if n_components == 2:
-
-    coeff = PCATest.components_.T
-    labels = PCATest.feature_names_in_
-
-    # loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
-    # plt.figure(figsize=(10, 8))
-    # sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
-    # plt.title('Feature Importance in Principal Components')
-    
-    xs, ys = X[0], X[1]
-
-    plt.figure(figsize=(10, 8))
-
-    if(separate_types):
-      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
-                       'SANDSIM': (0.0, 1.0, 0.0), 
-                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
-    else:
-      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
-
-    y_labels = np.array(trainLabels)
-    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
-
-    plt.scatter(xs, ys, c=mappedLabels#, cmap='viridis'
-                )
-    
-    
-    # Check if there is actually 2 components in the clf
-    if models[0].n_features_in_ == 2:
-
-      fig, sub = plt.subplots(2, 2)
-      plt.subplots_adjust(wspace=0.4, hspace=0.4)
-
-      for clf, method, title, accuracy, ax in zip(models, optimization_methods, titles, accuracy_list, sub.flatten()):
-          
-          disp = DecisionBoundaryDisplay.from_estimator(
-              clf,
-              X,
-              response_method="predict",
-              cmap=plt.cm.coolwarm,
-              alpha=0.8,
-              ax=ax,
-              xlabel='PC1',
-              ylabel='PC2',
-          )
-          ax.scatter(xs, ys, c=mappedLabels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
-          ax.set_xticks(())
-          ax.set_yticks(())
-          ax.set_title(str(method) + "\n" + "Accuracy: " + str(accuracy) + "\n" + str(title) )
-
-
-    # Uncomment if you want arrows
-    # for i in range(len(coeff)):
-    #     plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
-    #     plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
-
-    plt.xlabel("PC1")
-    plt.ylabel("PC2")
-    # plt.title("Biplot")
-    # plt.figure()
-
-  elif n_components == 3:
-
-    coeff = PCATest.components_.T
-    labels = PCATest.feature_names_in_
-
-    # loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
-    # plt.figure(figsize=(10, 8))
-    # sns.heatmap(loadings, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2', 'PC3'], yticklabels=PCATest.feature_names_in_)
-    # plt.title('Feature Importance in Principal Components')
-
-    xs, ys, zs = X[0], X[1], X[2]
-
-    # Create a 3D plot
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    if (separate_types):
-      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 
-                       'GRINDBIG': (1.0, 0.0, 0.0),'GRINDMED': (1.0, 0.5, 0.0), 'GRINDSMALL': (1.0, 0.0, 0.5),
-                       'SANDSIM': (0.0, 1.0, 0.0), 
-                       'WELDALTIG': (0.0, 0.0, 1.0), 'WELDSTMAG': (0.5, 0.0, 1.0), 'WELDSTTIG': (0.0, 0.5, 1.0)}
-    else:
-      label_mapping = {'IDLE': (0.0, 0.0, 0.0)  , 'GRINDING': (1.0, 0.0, 0.0), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
-    y_labels = np.array(trainLabels)
-    mappedLabels = np.array([label_mapping[label] for label in trainLabels])
-
-    # Create 3D scatter plot
-    sc = ax.scatter(xs, ys, zs, c=mappedLabels#, cmap='inferno'
-                    )
-
-    # Draw arrows for the components
-    # for i in range(len(coeff)):
-    #     ax.quiver(0, 0, 0, coeff[i, 0], coeff[i, 1], coeff[i, 2], color='r', alpha=0.5)
-
-    #     ax.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, coeff[i, 2] * 1.2, labels[i], color='g')
-
-    ax.set_xlabel('PC1')
-    ax.set_ylabel('PC2')
-    ax.set_zlabel('PC3')
-    ax.set_title("3D Biplot")
-    # plt.figure()
-
-  elif 3 < n_components < 10:
-
-    coeff = PCATest.components_.T
-    labels = PCATest.feature_names_in_
-
-    loadings = PCATest.components_.T * np.sqrt(PCATest.explained_variance_)
-
-    loadingsPerc = (loadings - np.min(loadings)) / (np.max(loadings) - np.min(loadings))
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(loadingsPerc, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels=PCATest.feature_names_in_)
-    plt.title('Feature Importance in Principal Components')
-
-  else:
-    print(f"Too many principal components to plot in a meaningful way")
-    pass
 
 def plotKNNboundries(df, clf, labels):
   

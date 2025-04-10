@@ -63,6 +63,7 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
         # "degree":               [2, 3, 4, 5]
     }
 
+
     RF_param_grid = {
         'n_estimators':         [50, 100, 200],  # Number of trees in the forest
         # 'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree

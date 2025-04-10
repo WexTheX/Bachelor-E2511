@@ -296,7 +296,7 @@ pickle_clf = result['classifier']
 print(f"reults[0]: \n {result['classifier']}")
 
 if (pickle_files):
-    for r in results:
+    for r in n_results:
         name = r['model_name']
         optimizer = r['optimalizer']
         r_result = r['classifier']

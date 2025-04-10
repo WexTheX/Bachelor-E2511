@@ -31,7 +31,7 @@ Hva forventer vi å bli ferdig med til påske?
 
 1) Skrive i metode-bit hvordan vi prosesserer data før vi sender inn i maskinlæring 
 
-2) Sette opp pipeline for å teste filer inne i testFiles
+2) Sette opp pipeline for å teste filer inne i testFiles 
 2.1) Logge resultatet, lagre resultatet i en fil
 
 3) Få til Real-Time

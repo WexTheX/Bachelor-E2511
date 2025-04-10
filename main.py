@@ -6,23 +6,23 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-from sklearn.inspection import DecisionBoundaryDisplay, permutation_importance
-from skopt.space import Real, Categorical, Integer
-from sklearn import svm, metrics, dummy
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.inspection import permutation_importance
+from sklearn import svm
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.model_selection import KFold, StratifiedKFold, TimeSeriesSplit, cross_val_score, train_test_split, GridSearchCV
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.experimental import enable_halving_search_cv
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import trainScaler, setNComponents, makeClassifier, makeSVMClassifier, makeRFClassifier, makeKNNClassifier, makeGNBClassifier, evaluateCLF, evaluateCLFs, makeNClassifiers
-from plotting import plotBoundaryConditions, biplot, plot_SVM_boundaries, PCA_table_plot, plotKNNboundries
+from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
+from plotting import plotBoundaryConditions, biplot, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
 
 ''' GLOBAL VARIABLES '''
@@ -66,6 +66,7 @@ LR_base     = LogisticRegression(**base_params)
 ''' HYPER PARAMETER VARIABLES '''
 
 num_folds = 3
+n_iter = 30
 
 SVM_param_grid = {
     "C":                    [0.01, 0.1,
@@ -79,11 +80,11 @@ SVM_param_grid = {
 
 RF_param_grid = {
     'n_estimators':         [50, 100, 200],  # Number of trees in the forest
-    'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
-    'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
-    'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
-    'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
-    'bootstrap':          [True, False],  # Whether to use bootstrapped samples
+    # 'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
+    # 'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
+    # 'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
+    # 'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
+    # 'bootstrap':          [True, False],  # Whether to use bootstrapped samples
     'criterion':            ['gini', 'entropy']  # Splitting criteria
 }
 
@@ -261,23 +262,23 @@ PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 model_selection     = ['SVM', 'LR', 'KNN']
 method_selection    = ['GridSearchCV']
 
-results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter=30)
+n_results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
 
 ''' EVALUATION '''
 
-result, accuracy_list = evaluateCLFs(results, PCA_test_df, test_labels, want_plots, activity_name)
+result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
 
 if want_plots:
     
     ''' FEATURE IMPORTANCE '''
     
-    PCA_table_plot(train_data_scaled, 5)   
+    # PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
 
     ''' 2D PLOTS OF PCA '''
 
     biplot(total_data_scaled, window_labels, label_mapping)
     
-    plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, results, accuracy_list)
+    plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list)
 
 
     ''' KNN PLOT '''

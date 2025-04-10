@@ -166,7 +166,6 @@ def biplot(train_data_scaled: pd.DataFrame,
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 
-
 def plotBoundaryConditions(X:             pd.DataFrame, 
                            train_labels:  Sequence, 
                            label_mapping: Dict[str, Any],
@@ -187,31 +186,14 @@ def plotBoundaryConditions(X:             pd.DataFrame,
 
   if X.shape[1] == 2:
     
-    labels = ['IDLE',
-            'GRINDBIG', 'GRINDMED', 'GRINDSMALL',
-            'IMPA',
-            'SANDSIM',
-            'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
-    ]
+   
+    unique_original_labels = sorted(list(set(train_labels)))
+    num_labels    = len(unique_original_labels)
+    cmap          = plt.get_cmap(cmap_name, num_labels)
 
-    label_to_index = {label: i for i, label in enumerate(labels)}
-    num_labels = len(labels)
-    # cmap = plt.get_cmap(cmap_name, num_labels)
+    point_colors = np.array([label_mapping[label] for label in train_labels]) 
 
-    base_cmap = plt.get_cmap(cmap_name)
-    colors = [base_cmap(i) for i in range(num_labels)]
-    cmap = ListedColormap(colors)
-
-    label_indices = np.array([label_to_index[label] for label in train_labels])
-    point_colors = cmap(label_indices)
-
-    # unique_original_labels = sorted(list(set(train_labels)))
-    # num_labels    = len(unique_original_labels)
-    # cmap          = plt.get_cmap(cmap_name, num_labels)
-
-    # point_colors = np.array([label_mapping[label] for label in train_labels]) 
-
-    # cmap          = plt.get_cmap(cmap_name, num_labels)
+    cmap          = plt.get_cmap(cmap_name, num_labels)
 
     xs, ys = X[0], X[1]
 

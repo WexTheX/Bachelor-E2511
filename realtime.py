@@ -187,10 +187,6 @@ async def waitForQuit():
             shutdown_event.set()
             break
 
-async def quitProgram(client):
-    client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
-    return
-
 
 def list_services(client):
     #print all services and characteristic
@@ -256,12 +252,11 @@ async def main():
             # Start Streaming using the above configuration (direct streaming, IMU mode and Sampling Frequency = 200 Hz)
             await client.write_gatt_char(CMD_UUID, cmd_stream, True)
             processing_task = asyncio.create_task(processSamples())
-
             wait_for_quit_task = asyncio.create_task(waitForQuit())
 
             # Set streaming duration to real_time_window_sec seconds, then stop
             # await asyncio.sleep(real_time_window_sec)    
-            # await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
+            await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
 
             await shutdown_event.wait()
             end_time = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())

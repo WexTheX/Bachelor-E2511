@@ -313,7 +313,7 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
             optimizer = r['optimalizer']
             r_result = r['classifier']
 
-            with open(output_path + str(name) + "_" +  str(optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
+            with open(output_path + "/classifiers/" + str(name) + "_" +  str(optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
                 pickle.dump(r_result, clf_file)
 
             clf_file.close()
@@ -392,12 +392,12 @@ if __name__ == "__main__":
     Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
     Splitting_method        = "TimeseriesSplit"
 
-    model_selection         = ['KNN']
-    method_selection        = ['GridSearchCV']
+    model_selection         = ['LR', 'SVM','RF','KNN','GNB']
+    method_selection        = ['RandomizedSearchCV', 'GridSearchCV', 'Base model']
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 2
+    variance_explained      = 0.95
     random_seed             = 333
     window_length_seconds   = 20
     test_size               = 0.25

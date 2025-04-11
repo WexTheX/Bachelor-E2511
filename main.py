@@ -25,11 +25,11 @@ from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeatur
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
 from plotting import plotBoundaryConditions, biplot, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
-from testonfile import run_inference_on_file, offline_test, label_filter, calc_workload
+from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcWorkload
 
 
 
-def main(want_feature_extraction, pickle_files, separate_types, want_plots, Splitting_method, model_selection, method_selection, variance_explained ,random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name ):
+def main(want_feature_extraction, pickle_files, separate_types, want_plots, model_selection, method_selection, variance_explained ,random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name, test_file_path ):
 
     variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
@@ -57,12 +57,12 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                1, 10, 100
+                                # 1, 10, 100
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        "gamma":                [0.01, 0.1, 1, 10, 100],
-        "coef0":                [0.0, 0.5, 1.0],
-        "degree":               [2, 3, 4, 5]
+        # "gamma":                [0.01, 0.1, 1, 10, 100],
+        # "coef0":                [0.0, 0.5, 1.0],
+        # "degree":               [2, 3, 4, 5]
     }
 
 
@@ -152,9 +152,9 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
         output_path     = "OutputFiles/Separated/"
         test_path       = "testFiles/"
 
-        labels = ['IDLE',
-                'GRINDBIG', 'GRINDMED', 'GRINDSMALL',
-                'IMPA',
+        labels = [
+                'GRINDBIG', 'GRINDSMALL',
+                'IDLE','IMPA','GRINDMED', 
                 'SANDSIM',
                 'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
@@ -169,6 +169,7 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
     num_labels      = len(labels)
     cmap            = plt.get_cmap(cmap_name, num_labels)
     label_mapping   = {label: cmap(i) for i, label in enumerate(labels)}
+
 
     path_names          = os.listdir(path)
     activity_name       = [name.upper() for name in path_names]
@@ -230,8 +231,6 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=random_seed, stratify=window_labels)
 
-    mapped_labels = np.array([label_mapping[label] for label in train_labels])
-
     scaler = StandardScaler()
     scaler.set_output(transform="pandas")
 
@@ -243,7 +242,7 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
     ''' Principal Component Analysis (PCA)'''
 
     # Calculate PCA components, create PCA object, fit + transform
-    PCA_components      = setNComponents(train_data_scaled, variance_explained=variance_explained)
+    PCA_components      = setNComponents(train_data_scaled, variance_explained)
     PCA_final           = PCA(n_components = PCA_components)
 
     PCA_train_df        = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
@@ -265,19 +264,13 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
         ''' 2D PLOTS OF PCA '''
 
-        biplot(total_data_scaled, window_labels, label_mapping, cmap_name, want_arrows=True)
+        biplot(total_data_scaled, window_labels, label_mapping, want_arrows=False)
         
-        plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap)
 
-
-        ''' KNN PLOT '''
-        # if(ML_model.upper() == "KNN"):
-        #     if (PCA_components == 2):
-        #         plotKNNboundries(PCA_train_df, clf, mapped_labels)
-        
         plt.show()
 
-    ''' Pickling classifier '''
+    ''' PICKLING CLASSIFIER '''
 
     if (pickle_files):
         for r in n_results:
@@ -298,9 +291,8 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
         best_clf_file.close()
 
-        print("Modell som lagres:", pickle_clf)
-        print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
-        
+        # print("Modell som lagres:", pickle_clf)
+        # print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
 
         # Pickle PCA and scaler
         with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
@@ -313,14 +305,12 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
         scaler_file.close()
 
-
-    
-
-    
+ 
     ''' OFFLINE TEST '''
     
-    # offline_test()
+    combined_df = offlineTest(test_file_path, fs, ds_fs, window_length_seconds, want_prints=True)
 
+    calcWorkload(combined_df, window_length_seconds)
 
 
 
@@ -332,28 +322,28 @@ if __name__ == "__main__":
     want_feature_extraction = 0
     pickle_files            = 1 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
-    want_plots              = 1
+    want_plots              = 0
 
-    Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
-    Splitting_method        = "TimeseriesSplit"
-
-    model_selection         = ['KNN', 'SVM', 'RF', '234243']
-    method_selection        = ['GridSearchCV', '6']
+    model_selection         = ['SVM']
+    method_selection        = ['GridSearchCV']
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 0.95
-    random_seed             = 333
+    variance_explained      = 2
+    random_seed             = 1231
     window_length_seconds   = 20
     test_size               = 0.25
     fs                      = 800
     ds_fs                   = 200
+    cmap_name               = 'tab10'
 
-    cmap_name = 'tab10'
+    ''' LOAD PATH NAMES'''
+    test_file_path = "testOnFile/testFiles"
 
 
     main(want_feature_extraction, pickle_files, 
-         separate_types, want_plots, Splitting_method, 
+         separate_types, want_plots,
          model_selection, method_selection, variance_explained ,
-         random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name)
+         random_seed ,window_length_seconds ,test_size , fs, ds_fs, 
+         cmap_name, test_file_path)
 

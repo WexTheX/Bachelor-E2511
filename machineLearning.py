@@ -308,14 +308,14 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
       best_optimalizer  = optimalizer
       best_result       = result_dict
 
-    if want_plots:
-      ''' CONFUSION MATRIX '''
-      conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
-      plt.figure(figsize=(10, 8))
-      sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
-      plt.xlabel("Predicted")
-      plt.ylabel("Actual")
-      plt.title(f'Confusion matrix, {model_name}: {optimalizer}')
+    # if want_plots:
+    #   ''' CONFUSION MATRIX '''
+    #   conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
+    #   plt.figure(figsize=(10, 8))
+    #   sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
+    #   plt.xlabel("Predicted")
+    #   plt.ylabel("Actual")
+    #   plt.title(f'Confusion matrix, {model_name}: {optimalizer}')
 
     accuracy_list.append(round(accuracy_score, 4))
   

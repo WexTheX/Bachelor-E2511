@@ -10,6 +10,7 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.decomposition import PCA
 from typing import List, Dict, Any, Tuple, Sequence
 from matplotlib.lines import Line2D
+from matplotlib.colors import ListedColormap
 
 
 def normDistPlot(dataset, size):
@@ -89,12 +90,14 @@ def PCA_table_plot(X:                 pd.DataFrame,
     loadings_percantage = (loadings - np.min(loadings)) / (np.max(loadings) - np.min(loadings))
 
     print(f"Total amount of features: {len(X.columns)}")
-
+    
     for i in range(len(X.columns) // features_per_PCA):
       
+      start_idx = i * features_per_PCA
+      end_idx   = start_idx + features_per_PCA
 
-      loadings_percantage_part = loadings_percantage[i*features_per_PCA:(i*features_per_PCA+features_per_PCA)]
-      feature_names_part = PCA_object.feature_names_in_[i*features_per_PCA:(i*features_per_PCA+features_per_PCA)]
+      loadings_percantage_part  = loadings_percantage[start_idx:end_idx]
+      feature_names_part        = PCA_object.feature_names_in_[start_idx:end_idx]
 
       plt.figure(figsize=(10, 8))
       sns.heatmap(loadings_percantage_part, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels = feature_names_part)
@@ -106,7 +109,8 @@ def PCA_table_plot(X:                 pd.DataFrame,
 
 def biplot(train_data_scaled: pd.DataFrame,
            train_labels:      Sequence,
-           label_mapping:     Dict[str, Any]
+           label_mapping:     Dict[str, Any],
+           cmap_name:         str
            ) -> None:
   
   '''
@@ -125,11 +129,17 @@ def biplot(train_data_scaled: pd.DataFrame,
   xs, ys = X[0], X[1]
 
   unique_original_labels = sorted(list(set(train_labels)))
-  legend_handles = []
+  
   point_colors = [label_mapping[label] for label in train_labels]
+  
+
+  # unique_labels = np.unique(point_colors)
+  # num_labels    = len(unique_labels)
 
   # Create legend handles
+  legend_handles = []
   for label_name in unique_original_labels:
+      
       color = label_mapping[label_name]
       handle = Line2D([0], [0], marker='o', color='w', # Dummy data, white line
                       label=label_name, markerfacecolor=color,
@@ -139,9 +149,9 @@ def biplot(train_data_scaled: pd.DataFrame,
   plt.figure(figsize=(10, 8))
 
   # Map RGB values onto train_labels, IDLE -> (0.0, 0.0, 0.0) etc
-  mapped_labels = np.array([label_mapping[label] for label in train_labels])
+  # mapped_labels = np.array([label_mapping[label] for label in train_labels])
 
-  plt.scatter(xs, ys, c=point_colors, cmap='viridis'
+  plt.scatter(xs, ys, c=point_colors #, cmap='viridis'
               )
   
   # Uncomment if you want arrows
@@ -156,12 +166,12 @@ def biplot(train_data_scaled: pd.DataFrame,
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 
-
 def plotBoundaryConditions(X:             pd.DataFrame, 
                            train_labels:  Sequence, 
                            label_mapping: Dict[str, Any],
                            results:       List[Dict[str, Any]],
-                           accuracy_list: List[float]
+                           accuracy_list: List[float],
+                           cmap_name:     str,
                           ) -> None:
   
   '''
@@ -175,8 +185,15 @@ def plotBoundaryConditions(X:             pd.DataFrame,
   '''
 
   if X.shape[1] == 2:
+    
+   
+    unique_original_labels = sorted(list(set(train_labels)))
+    num_labels    = len(unique_original_labels)
+    cmap          = plt.get_cmap(cmap_name, num_labels)
 
-    mapped_labels = np.array([label_mapping[label] for label in train_labels])
+    point_colors = np.array([label_mapping[label] for label in train_labels]) 
+
+    cmap          = plt.get_cmap(cmap_name, num_labels)
 
     xs, ys = X[0], X[1]
 
@@ -198,19 +215,21 @@ def plotBoundaryConditions(X:             pd.DataFrame,
 
       if clf.n_features_in_ == 2:
       # fig, ax = plt.subplots(1, 1, figsize=(6, 5)) # Adjust size as needed
-      
+
+        # Background
         disp = DecisionBoundaryDisplay.from_estimator(
                 clf,
                 X,
                 response_method="predict",
-                cmap=plt.cm.coolwarm,
+                cmap=cmap,
                 alpha=0.6,
                 ax=ax,
                 xlabel=' ',
                 ylabel=' ',
                 )
         
-        ax.scatter(xs, ys, c=mapped_labels, cmap=plt.cm.coolwarm, s=20, edgecolors="k")
+        # Scatter plots
+        ax.scatter(xs, ys, c=point_colors, cmap=cmap, s=20, edgecolors="k")
         ax.set_xticks(())
         ax.set_yticks(())
         ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))

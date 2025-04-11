@@ -55,13 +55,14 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                1, 10, 100
+                                # 1, 10, 100
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        "gamma":                [0.01, 0.1, 1, 10, 100],
-        "coef0":                [0.0, 0.5, 1.0],
-        "degree":               [2, 3, 4, 5]
+        # "gamma":                [0.01, 0.1, 1, 10, 100],
+        # "coef0":                [0.0, 0.5, 1.0],
+        # "degree":               [2, 3, 4, 5]
     }
+
 
     RF_param_grid = {
         'n_estimators':         [50, 100, 200],  # Number of trees in the forest
@@ -142,26 +143,55 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     ''' LOAD DATASET '''
 
+    cmap_name = 'tab10'
+
     # Different folder for separated and not separated
-    if (separate_types):
+    if separate_types:
+        
         path            = "Preprocessing/DatafilesSeparated" 
         output_path     = "OutputFiles/Separated/"
         test_path       = "testFiles/"
 
-        label_mapping   = {
-                            'IDLE':         (0.0, 0.0, 0.0), 
-                            'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
-                            'IMPA':         (0.5, 0.5, 0.5), 
-                            'SANDSIM':      (0.0, 1.0, 0.0), 
-                            'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
-        }
+        # label_mapping   = {
+        #                     'IDLE':         (0.0, 0.0, 0.0), 
+        #                     'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
+        #                     'IMPA':         (0.5, 0.5, 0.5), 
+        #                     'SANDSIM':      (0.0, 1.0, 0.0), 
+        #                     'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
+        # }
+
+        labels = ['IDLE',
+                'GRINDBIG', 'GRINDMED', 'GRINDSMALL',
+                'IMPA',
+                'SANDSIM',
+                'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
+        ]
+
+        # label_mapping = {}
+
+        # for i, label in enumerate(labels):
+        #     rgba_value = cmap(color_values[i])
+        #     label_mapping[label] = rgba_value
 
     else:
         path            = "Preprocessing/Datafiles"
         output_path     = "OutputFiles/"
         test_path       = "testFiles/"
 
-        label_mapping   = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+        # label_mapping   = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
+        labels = ['IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING']
+
+
+    num_labels      = len(labels)
+    cmap            = plt.get_cmap(cmap_name, num_labels)
+
+    label_to_index  = {label: i for i, label in enumerate(labels)}
+
+    label_mapping   = {label: cmap(i) for label, i in label_to_index.items()}
+    print(label_mapping)
+
+
+
 
     path_names          = os.listdir(path)
     activity_name       = [name.upper() for name in path_names]
@@ -244,8 +274,6 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-
-
     n_results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
 
     ''' EVALUATION '''
@@ -260,9 +288,9 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
         ''' 2D PLOTS OF PCA '''
 
-        biplot(total_data_scaled, window_labels, label_mapping)
+        biplot(total_data_scaled, window_labels, label_mapping, cmap_name)
         
-        plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list)
+        plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
 
         ''' KNN PLOT '''
@@ -277,7 +305,7 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     import pickle
     pickle_clf = result['classifier']
-    print(f"reults[0]: \n {result['classifier']}")
+    # print(f"reults[0]: \n {result['classifier']}")
 
     if (pickle_files):
         for r in n_results:
@@ -359,13 +387,13 @@ if __name__ == "__main__":
     want_feature_extraction = 0
     pickle_files            = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
-    want_plots              = 0
+    want_plots              = 1
 
     Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
     Splitting_method        = "TimeseriesSplit"
 
-    model_selection     = ['SVM', 'SVM']
-    method_selection    = ['GridSearchCV', 'BayesSearchCV0', 'RandomizedSearchCV']
+    model_selection         = ['KNN']
+    method_selection        = ['GridSearchCV']
 
     ''' DATASET VARIABLES '''
 

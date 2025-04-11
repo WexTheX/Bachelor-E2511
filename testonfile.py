@@ -49,7 +49,17 @@ want_prints = 1            ### Set to true if you want prints in the terminal as
 df_result_all = [] ##Storing results
 
 
-def run_inference_on_file(file_path, fs, ds_fs, window_length_sec, want_prints, norm_accel=False):
+def run_inference_on_file(file_path:            str,
+                          fs:                   int,
+                          ds_fs:                int,
+                          window_length_sec:    int,
+                          want_prints:          bool,
+                          file_to_test:         str,
+                          norm_accel=False):
+    
+    print("_______________________________________________________________________________")
+    print(f"Testing file {file_to_test}")
+
     ### Load trained model
     clf = joblib.load("OutputFiles/Separated/classifier.pkl")
     pca = joblib.load("OutputFiles/Separated/PCA.pkl")
@@ -60,15 +70,15 @@ def run_inference_on_file(file_path, fs, ds_fs, window_length_sec, want_prints, 
     ### Load file and preprocess
     df = extractDFfromFile(file_path, fs)
     ### Downsample
-    df=downsample(df, fs, ds_fs)
+    df = downsample(df, fs, ds_fs)
 
     ### Feature extraction
     features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_accel)
 
     ### Convert to Dataframe and do PCA
-    features_df = pd.DataFrame(features_list)
+    features_df     = pd.DataFrame(features_list)
     features_scaled = scaler.transform(features_df)
-    features_pca = pca.transform(features_scaled)
+    features_pca    = pca.transform(features_scaled)
 
     ### Predictions
     preds = clf.predict(features_pca)
@@ -120,52 +130,56 @@ def run_inference_on_file(file_path, fs, ds_fs, window_length_sec, want_prints, 
             print("_______________________________________________________________________________")
         
     df_result = pd.DataFrame(results, columns=["Time", "Activity", "Probability", "Top-3"])
+
     return df_result
     
 
+def offline_test():
+    for filename in test_files:
 
-for filename in test_files:
+        file_to_test = os.path.join(test_file_path, filename)
+        file_to_test_no_ext = file_to_test.replace(".txt", "")
 
+        if filename.endswith(".csv"):
+            continue  # Skipping .csv files
 
-    file_to_test = os.path.join(test_file_path, filename)
-    file_to_test_no_ext = file_to_test.replace(".txt", "")
+        elif filename.endswith(".bin"): ##Converting .bin to .txt
+            convert_bin_to_txt(file_to_test_no_ext)
 
-    if filename.endswith(".csv"):
-        continue  # Skipping .csv files
+        print(f"Testing file: {file_to_test}")
 
-    elif filename.endswith(".bin"): ##Converting .bin to .txt
-        convert_bin_to_txt(file_to_test_no_ext)
+        df_result = run_inference_on_file(file_to_test_no_ext, fs=fs, ds_fs=ds_fs, window_length_sec=window_length_seconds, want_prints=want_prints, norm_accel=False)
+        print(df_result)
 
-    if want_prints == True:
-        print("_______________________________________________________________________________")
+        ### Line to seperate the different prediction sets       
+        header_lines = [
+            f"_______________________________________________________________________________",
+            f"Predictions from: {os.path.basename(file_to_test)}"
+        ]
+        header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
+                                columns=["Time", "Activity", "Probability", "Top-3"])
 
-    print(f"Testing file: {file_to_test}")
+        ###Adding header above every prediction set
+        column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
+                                columns=["Time", "Activity", "Probability", "Top-3"])
 
-    df_result = run_inference_on_file(file_to_test_no_ext, fs=fs, ds_fs=ds_fs, window_length_sec=window_length_seconds, want_prints=want_prints, norm_accel=False)
+        ### Adding the data together
+        df_result_all.append(header_df)
+        df_result_all.append(column_header)
+        df_result_all.append(df_result)
 
-    ### Line to seperate the different prediction sets       
-    header_lines = [
-        f"_______________________________________________________________________________",
-        f"Predictions from: {os.path.basename(file_to_test)}"
-    ]
-    header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
-                            columns=["Time", "Activity", "Probability", "Top-3"])
+        ### Saving as csv
 
-    ###Adding header above every prediction set
-    column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
-                            columns=["Time", "Activity", "Probability", "Top-3"])
+    combined_df = pd.concat(df_result_all, ignore_index=True)
+    filename_out = os.path.join(prediction_csv_path, "predictions.csv")
+    combined_df.to_csv(filename_out, index=False)
 
-    ### Adding the data together
-    df_result_all.append(header_df)
-    df_result_all.append(column_header)
-    df_result_all.append(df_result)
+        ### Finished, printing file  for output file
+    print("Done running predictions on datasets")
+    print(f"Predictions saved in: {filename_out}")
 
-    ### Saving as csv
+def label_filter():
+    return 0
 
-combined_df = pd.concat(df_result_all, ignore_index=True)
-filename_out = os.path.join(prediction_csv_path, "predictions.csv")
-combined_df.to_csv(filename_out, index=False)
-
-    ### Finished, printing file  for output file
-print("Done running predictions on datasets")
-print(f"Predictions saved in: {filename_out}")
+def calc_workload():
+    return 0

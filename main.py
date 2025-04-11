@@ -1,6 +1,7 @@
 ''' IMPORTS '''
 import time
 import os
+import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -24,12 +25,13 @@ from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeatur
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
 from plotting import plotBoundaryConditions, biplot, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample
+from testonfile import run_inference_on_file, offline_test, label_filter, calc_workload
 
 
 
-def main(want_feature_extraction, pickle_files, separate_types, want_plots, Splitting_method, model_selection, method_selection, variance_explained ,random_seed ,window_length_seconds ,test_size , fs, ds_fs ):
+def main(want_feature_extraction, pickle_files, separate_types, want_plots, Splitting_method, model_selection, method_selection, variance_explained ,random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name ):
 
-    variables               = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
+    variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
     ''' BASE ESTIMATORS '''
 
@@ -115,7 +117,7 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV', 'Base model']
 
-    search_kwargs = {'n_jobs':              -1, 
+    search_kwargs = {'n_jobs':             -1, 
                     'verbose':             0,
                     'cv':                  TimeSeriesSplit(n_splits=num_folds),
                     'scoring':             'f1_weighted',
@@ -143,22 +145,12 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     ''' LOAD DATASET '''
 
-    cmap_name = 'tab10'
-
     # Different folder for separated and not separated
     if separate_types:
         
         path            = "Preprocessing/DatafilesSeparated" 
         output_path     = "OutputFiles/Separated/"
         test_path       = "testFiles/"
-
-        # label_mapping   = {
-        #                     'IDLE':         (0.0, 0.0, 0.0), 
-        #                     'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
-        #                     'IMPA':         (0.5, 0.5, 0.5), 
-        #                     'SANDSIM':      (0.0, 1.0, 0.0), 
-        #                     'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
-        # }
 
         labels = ['IDLE',
                 'GRINDBIG', 'GRINDMED', 'GRINDSMALL',
@@ -167,36 +159,21 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
                 'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
 
-        # label_mapping = {}
-
-        # for i, label in enumerate(labels):
-        #     rgba_value = cmap(color_values[i])
-        #     label_mapping[label] = rgba_value
-
     else:
         path            = "Preprocessing/Datafiles"
         output_path     = "OutputFiles/"
         test_path       = "testFiles/"
 
-        # label_mapping   = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
         labels = ['IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING']
-
 
     num_labels      = len(labels)
     cmap            = plt.get_cmap(cmap_name, num_labels)
-
-    label_to_index  = {label: i for i, label in enumerate(labels)}
-
-    label_mapping   = {label: cmap(i) for label, i in label_to_index.items()}
-    print(label_mapping)
-
-
-
+    label_mapping   = {label: cmap(i) for i, label in enumerate(labels)}
 
     path_names          = os.listdir(path)
     activity_name       = [name.upper() for name in path_names]
 
-    sets, sets_labels = fillSets(path, path_names, activity_name)
+    sets, sets_labels   = fillSets(path, path_names, activity_name)
 
     ''' FEATURE EXTRACTION '''
 
@@ -284,11 +261,11 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
         
         ''' FEATURE IMPORTANCE '''
         
-        # PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
+        PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
 
         ''' 2D PLOTS OF PCA '''
 
-        biplot(total_data_scaled, window_labels, label_mapping, cmap_name)
+        biplot(total_data_scaled, window_labels, label_mapping, cmap_name, want_arrows=True)
         
         plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
@@ -300,57 +277,32 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
         
         plt.show()
 
-
     ''' Pickling classifier '''
-
-    import pickle
-    pickle_clf = result['classifier']
-    # print(f"reults[0]: \n {result['classifier']}")
 
     if (pickle_files):
         for r in n_results:
-            name = r['model_name']
-            optimizer = r['optimalizer']
-            r_result = r['classifier']
+            r_name          = r['model_name']
+            r_optimizer     = r['optimalizer']
+            r_clf           = r['classifier']
 
-            with open(output_path + str(name) + "_" +  str(optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
-                pickle.dump(r_result, clf_file)
+            with open(output_path + str(r_name) + "_" +  str(r_optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
+                pickle.dump(r_clf, clf_file)
 
             clf_file.close()
+        
+        # Pickle best clf
+        pickle_clf = result['classifier']
 
-        with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-            pickle.dump(pickle_clf, CLF_File)
+        with open(output_path + "classifier.pkl", "wb") as best_clf_file: 
+            pickle.dump(pickle_clf, best_clf_file)
 
-        CLF_File.close()
+        best_clf_file.close()
 
         print("Modell som lagres:", pickle_clf)
         print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
         
-        final_model = None
-    # for clf, method in zip(classifiers, optimization_list):
-    #     if method == "HalvingGridSearchCV":
-    #         final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
-    #         break
-        print("Modell som lagres:", pickle_clf)
-        print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
-        
-        
-        # for clf, method in zip(classifiers, optimization_list):
-        #     if method == "HalvingGridSearchCV":
-        #         final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
-        #         break
 
-        # if final_model is None:
-        #     print("Fant ikke modell med HalvingGridSearchCV – bruker første som fallback.")
-        #     final_model = classifiers[0]
-
-        # Dobbeltsjekk før lagring
-        
-
-        # Lagre
-        # with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-        #     pickle.dump(final_model, CLF_File)
-
+        # Pickle PCA and scaler
         with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
             pickle.dump(PCA_final, PCA_File)
     
@@ -361,20 +313,13 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
         scaler_file.close()
 
-# from testonfile import run_inference_on_file
-    #     ### Testing trained model on unseen files
-    # test_file_path = "testFiles"
-    # test_files = os.listdir(test_file_path)
 
+    
 
-    # for filename in test_files:
-    #     if filename.endswith(".csv"):
-    #         continue  # hopper over .csv-filer
-    #     file_to_test = os.path.join(test_file_path, filename)
-    #     file_to_test_no_ext = file_to_test.replace(".txt", "")
-    #     print("_______________________________________________________________________________")
-    #     print(f"Testing file {file_to_test}")
-    #     run_inference_on_file(file_to_test_no_ext, fs = fs, window_length_sec = window_length_seconds, norm_accel=False, run=True)
+    
+    ''' OFFLINE TEST '''
+    
+    # offline_test()
 
 
 
@@ -385,15 +330,15 @@ if __name__ == "__main__":
     ''' GLOBAL VARIABLES '''
 
     want_feature_extraction = 0
-    pickle_files            = 0 # Pickle the classifier, scaler and PCA objects.
+    pickle_files            = 1 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
     want_plots              = 1
 
     Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
     Splitting_method        = "TimeseriesSplit"
 
-    model_selection         = ['KNN']
-    method_selection        = ['GridSearchCV']
+    model_selection         = ['KNN', 'SVM', 'RF', '234243']
+    method_selection        = ['GridSearchCV', '6']
 
     ''' DATASET VARIABLES '''
 
@@ -404,9 +349,11 @@ if __name__ == "__main__":
     fs                      = 800
     ds_fs                   = 200
 
+    cmap_name = 'tab10'
+
 
     main(want_feature_extraction, pickle_files, 
          separate_types, want_plots, Splitting_method, 
          model_selection, method_selection, variance_explained ,
-         random_seed ,window_length_seconds ,test_size , fs, ds_fs )
+         random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name)
 

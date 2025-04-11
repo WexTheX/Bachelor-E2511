@@ -1,29 +1,3 @@
-""" ble_conn.py: main file of example usage for Python Muse API.
-
-This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later
-version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with
-this program. If not, see <http://www.gnu.org/licenses/>.
-"""
-
-__authors__ = ["Francesca Palazzo", "Roberto Bortoletto", "Luigi Mattiello"]
-__contact__ = "info@221e.com"
-__copyright__ = "Copyright (c) 2020 by 221e srl."
-__credits__ = ["Francesca Palazzo", "Roberto Bortoletto", "Luigi Mattiello"]
-__deprecated__ = False
-__email__ =  "roberto.bortoletto@221e.com"
-__license__ = "GNU General Public License"
-__maintainer__ = "Roberto Bortoletto"
-__status__ = "Production"
-__version__ = "1.3.0"
-
 import time
 import numpy as np
 import pandas as pd
@@ -44,20 +18,24 @@ DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 
 myDev = None
 device_list = ["Muse_E2511_GREY", "Muse_E2511_RED"]
-device_name = device_list[0]
-window_length_sec = 20          # Length of one window for prediction
-fs = 200                        # Frequency of sensor sampling
-real_time_window_sec = 720      # Time period the program will stream
+device_name = device_list[1]
+window_length_sec = 20                  # Length of one window for prediction
+fs = 200                                # Frequency of sensor sampling
+window_size = window_length_sec * fs
+real_time_window_sec = 50               # Time period the program will stream
+sample_queue = asyncio.Queue()
+shutdown_event = asyncio.Event()
 
-data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT   # Data mode, what sensors is used
-DATA_SIZE = 6 * 5;                                            # Dimension of incomming packet (6 bytes * number of sensors)
-DATA_BUFFER_SIZE = int((128 - 8) / DATA_SIZE)               # Number of packets for each 128-bytes notification
+data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT       # Data mode, what sensors is used
+DATA_SIZE = 6 * 5;                                              # Dimension of incomming packet (6 bytes * number of sensors)
+DATA_BUFFER_SIZE = int((128 - 8) / DATA_SIZE)                   # Number of packets for each 128-bytes notification
 
 notification_counter = 0    # Counter for total notifications              
 sample_counter = 0          # Counter for number of samples, resets on new prediction
+prediction_counter = 0
 num_values = 14             # Number of values the sensors will give, (3 (axl, xyz) + 3 (gyo, xyz) + 3 (mag, xyz) + 2 (temp, press) + 3 (range, light, ir-light))
 
-sample_list = np.zeros((fs*window_length_sec, num_values+1))    # Preloads list of samples as zeroes
+# sample_list = np.zeros((fs*window_length_sec, num_values+1))    # Preloads list of samples as zeroes
 columns = ["Timestamp",                                         # Predefines columns names of dataframe
            "Axl.X","Axl.Y","Axl.Z",
            "Gyr.X","Gyr.Y","Gyr.Z",
@@ -68,10 +46,10 @@ prediction_list = {}                                            # Prepares list 
 
 ''' PICKLE IMPORTS '''
 output_path = "OutputFiles/Separated/"                          # Define import path
-# with open(output_path + "classifier.pkl", "rb") as CLF_file:    # Import classifier
-#with open(output_path + "SVMGridSearchCVclf.pkl", "rb") as CLF_file:    # Import classifier
-with open(output_path + "LRGridSearchCVclf.pkl", "rb") as CLF_file:    # Import classifier
-#with open(output_path + "KNNGridSearchCVclf.pkl", "rb") as CLF_file:    # Import classifier
+with open(output_path + "classifier.pkl", "rb") as CLF_file:    # Import classifier
+# with open(output_path + "classifiers/SVM_Grid_SearchCV_clf.pkl", "rb") as CLF_file:    # Import classifier
+# with open(output_path + "classifiers/LR_GridSearchCV_clf.pkl", "rb") as CLF_file:    # Import classifier
+# with open(output_path + "classifiers/KNN_GridSearchCV_clf.pkl", "rb") as CLF_file:    # Import classifier
     clf = pickle.load(CLF_file)
 CLF_file.close()
 
@@ -91,9 +69,9 @@ def cmd_notification_handler(sender, data):
 
     return
 
-async def data_notification_handler(sender: int, data: bytearray):
+async def data_notification_handlerOLD(sender: int, data: bytearray):
     """Decode data"""
-    global sample_list, prediction_list, notification_counter, sample_counter
+    global sample_list, notification_counter, sample_counter
     header_offset = 8   # Ignore part of notification that is header data (8 bytes)
 
     for k in range(DATA_BUFFER_SIZE):
@@ -102,10 +80,10 @@ async def data_notification_handler(sender: int, data: bytearray):
         temp_data = Muse_Utils.DecodePacket(                                                            # Decode packet to covert values and store them in MuseData Object
             current_packet, 0, stream_mode.value, 
             gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity
-            )   
+        )
         
         if(k+sample_counter >= 4000):                                           # If samples number is higher than allowed, reset sample
-            print(f"Error sample counter = {k+sample_counter}, resetting")
+            print(f"Error sample counter = {k+sample_counter}, resetting. {time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())}")
             sample_counter = 0
         else:                                                                   # Store data in predefined sample_list
             sample_list[k+(sample_counter)][0]  = time.time()                   # sample_list[row][column]
@@ -125,7 +103,7 @@ async def data_notification_handler(sender: int, data: bytearray):
             sample_list[k+(sample_counter)][14] = temp_data.light.lum_ir
 
     sample_counter += DATA_BUFFER_SIZE                                          # Increase sample counter for samples included in notification
-    
+
     if (sample_counter >= window_length_sec*fs):                                                        # When window_length time in seconds has passed
         ''' FEATURE EXTRACTION AND SCALE '''
         feature_df = pd.DataFrame(data=sample_list, columns=columns)                                    # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
@@ -138,10 +116,76 @@ async def data_notification_handler(sender: int, data: bytearray):
         print(prediction)                                                           
         prediction_list[time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())] = prediction[0] # Add prediction to prediction list dict, with timemark as reference
 
-        sample_counter = 0                                                                              # Reset sample counter to prepare for next window
+        sample_counter = 0
+        prediction_counter += 1
 
     notification_counter += 1
     return
+
+async def dataNotificationHandler(sender: int, data: bytearray, start_time):
+    """Decode data"""
+    global notification_counter, sample_counter
+    header_offset = 8   # Ignore part of notification that is header data (8 bytes)
+
+    for k in range(DATA_BUFFER_SIZE):
+        current_packet = bytearray(DATA_SIZE)                                   # Define size of first packet in notification
+        current_packet[:] = data[header_offset : header_offset + DATA_SIZE + 1] # Get packet data
+        temp_data = Muse_Utils.DecodePacket(                                    # Decode packet to covert values and store them in MuseData Object
+            current_packet, 0, stream_mode.value, 
+            gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity
+        )   
+
+        sample = [
+            time.time(),
+            temp_data.axl[0], temp_data.axl[1], temp_data.axl[2],
+            temp_data.gyr[0], temp_data.gyr[1], temp_data.gyr[2],
+            temp_data.mag[0], temp_data.mag[1], temp_data.mag[2],
+            temp_data.tp[0], temp_data.tp[1],
+            temp_data.light.range, temp_data.light.lum_vis, temp_data.light.lum_ir            
+        ]
+
+        await sample_queue.put(sample)
+
+        notification_counter += 1
+        if notification_counter % 100 == 0:
+            elapsed = time.time() - start_time
+            print(f"Avg freq: {notification_counter / elapsed:.2f} notifications/sec")
+    return
+
+async def processSamples():
+    sample_list = []
+
+    while True:
+        sample = await sample_queue.get()
+        sample_list.append(sample)
+
+        if len(sample_list) >= window_size:
+            try:
+                ''' CONVERT TO DF, FEATURE EXTRACT AND SCALE '''
+                feature_df = pd.DataFrame(data=sample_list, columns=columns)                                    # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
+                feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
+                feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))                       # Scale data with scaled from training data
+            
+                ''' PCA AND PREDICT '''
+                PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))                           # Convert to PC found from training data
+                prediction = clf.predict(PCA_feature_df)                                                        # Predict label using classifier                                                         
+                prediction_list[time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())] = prediction[0] # Add prediction to prediction list dict, with timemark as reference
+                prediction_counter += 1
+
+                print(prediction)  
+            except Exception as e:
+                print(f"Error when predicting: {e}.")
+
+            sample_list.clear()
+
+async def waitForQuit():
+    loop = asyncio.get_event_loop()
+    print("Type q for to end streaming.")
+    while True:
+        user_input = await loop.run_in_executor(None, input)
+        if user_input.strip().lower() in ("q", "exit"):
+            shutdown_event.set()
+            break
 
 async def quitProgram(client):
     client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
@@ -205,18 +249,21 @@ async def main():
             cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=False)
 
             # Start notify on data characteristic
-            await client.start_notify(DATA_UUID, data_notification_handler)
+            await client.start_notify(DATA_UUID, dataNotificationHandler, time.time())
 
             start_time = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
             print(f"Start streaming, {start_time}")
             # Start Streaming using the above configuration (direct streaming, IMU mode and Sampling Frequency = 200 Hz)
             await client.write_gatt_char(CMD_UUID, cmd_stream, True)
-            
-            # Set streaming duration to real_time_window_sec seconds
-            await asyncio.sleep(real_time_window_sec)
+            processing_task = asyncio.create_task(processSamples())
 
-            # Stop data acquisition in STREAMING mode      
-            await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
+            wait_for_quit_task = asyncio.create_task(waitForQuit())
+
+            # Set streaming duration to real_time_window_sec seconds, then stop
+            # await asyncio.sleep(real_time_window_sec)    
+            # await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
+
+            await shutdown_event.wait()
             end_time = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
             print(f"Streaming stopped, {end_time}")
 

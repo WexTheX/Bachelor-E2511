@@ -92,15 +92,15 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     LR_param_grid = {
         'C':                    [0.001, 0.01, 0.1, 1, 10, 100], 
-        #'dual':                 [False],                                # Dual or Primal formulation
-        #'fit_intercept':        [True],                                 # Constant added to function (bias)             
-        #'intercept_scaling':    [1],                                    # Only useful when Solver = liblinear, fit_intercept = true
-        #'l1_ratio':             [None],                                 # ???
+        # 'dual':                 [False],                                # Dual or Primal formulation
+        # 'fit_intercept':        [True],                                 # Constant added to function (bias)             
+        # 'intercept_scaling':    [1],                                    # Only useful when Solver = liblinear, fit_intercept = true
+        # 'l1_ratio':             [None],                                 # ???
         'max_iter':             [100],                        # Max iterations for solver to converge
-        #'multi_class':          ['deprecated'],                         # Deprecated
-        #'n_jobs':               [None],                                 # Amount of jobs that can run at the same time, (also set in CV, error if both)
-        #'penalty':              ['l1', 'l2', 'elasticnet', None],       # Norm of the penalty 
-        #'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],  # Algorithm for optimization problem
+        # 'multi_class':          ['deprecated'],                         # Deprecated
+        # 'n_jobs':               [None],                                 # Amount of jobs that can run at the same time, (also set in CV, error if both)
+        # 'penalty':              ['l1', 'l2', 'elasticnet', None],       # Norm of the penalty 
+        # 'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],  # Algorithm for optimization problem
         'tol':                  [0.0001],                  # Tolerance for stopping criteria
         #'warm_start':           [False]                                 # Reuse previous calls solution
     }

@@ -134,6 +134,8 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
       estimator, grid = models[name]
       selected_model_data.append((estimator, grid))
       selected_model_names.append(name)
+    else:
+       print(f"Warning: Classifier {name} not recognized.")
 
   # make n classifiers = len(model_selection) * len(method_selection)
   for (base_estimator, param_grid), model_name_str in zip(selected_model_data, selected_model_names):
@@ -153,18 +155,24 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
       start_time = time.time()
 
       if method.lower() == 'gridsearchcv':
-          
-          clf = GridSearchCV(
-              
-              estimator=base_estimator,
-              param_grid=param_grid,
 
-              **search_kwargs
+        try:
+            clf = GridSearchCV(
+                
+                estimator=base_estimator,
+                param_grid=param_grid,
 
-              ) 
+                **search_kwargs,
+
+                )
+            
+        except Exception as clf_error:
+          print(f"Error in makeNClassifiers: {clf_error}")
+          continue
 
       elif method.lower() == 'halvinggridsearchcv':
-          
+        
+        try:
           clf = HalvingGridSearchCV(
               
               estimator=base_estimator,
@@ -173,9 +181,14 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
               **search_kwargs
 
               ) 
-            
+          
+        except Exception as clf_error:
+          print(f"Error in makeNClassifiers: {clf_error}")
+          continue
+              
       elif method.lower() == 'randomizedsearchcv':
           
+        try:
           clf = RandomizedSearchCV(
               
               estimator=base_estimator,
@@ -186,8 +199,13 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
 
               ) 
           
+        except Exception as clf_error:
+          print(f"Error in makeNClassifiers: {clf_error}")
+          continue
+          
       elif method.lower() == 'bayessearchcv':
           
+        try:
           smooth_param_grid = makeSmoothParamGrid(param_grid)
 
           clf = BayesSearchCV(
@@ -199,6 +217,10 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
               **search_kwargs
 
               )
+          
+        except Exception as clf_error:
+          print(f"Error in makeNClassifiers: {clf_error}")
+          continue
 
       else:
         clf = base_estimator

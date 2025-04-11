@@ -110,7 +110,7 @@ def PCA_table_plot(X:                 pd.DataFrame,
 def biplot(train_data_scaled: pd.DataFrame,
            train_labels:      Sequence,
            label_mapping:     Dict[str, Any],
-           cmap_name:         str
+           want_arrows:       bool
            ) -> None:
   
   '''
@@ -125,16 +125,11 @@ def biplot(train_data_scaled: pd.DataFrame,
   # Create PCA object for 2 components
   PCA_object = PCA(n_components = 2)
   X = pd.DataFrame(PCA_object.fit_transform(train_data_scaled))
-  
+
   xs, ys = X[0], X[1]
 
   unique_original_labels = sorted(list(set(train_labels)))
-  
   point_colors = [label_mapping[label] for label in train_labels]
-  
-
-  # unique_labels = np.unique(point_colors)
-  # num_labels    = len(unique_labels)
 
   # Create legend handles
   legend_handles = []
@@ -147,18 +142,16 @@ def biplot(train_data_scaled: pd.DataFrame,
       legend_handles.append(handle)
 
   plt.figure(figsize=(10, 8))
-
-  # Map RGB values onto train_labels, IDLE -> (0.0, 0.0, 0.0) etc
-  # mapped_labels = np.array([label_mapping[label] for label in train_labels])
-
-  plt.scatter(xs, ys, c=point_colors #, cmap='viridis'
-              )
+  plt.scatter(xs, ys, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
   
-  # Uncomment if you want arrows
-  # coeff = PCA_object.components_.T
-  # for i in range(len(coeff)):
-  #     plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
-  #     plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, labels[i], color='g')
+  if want_arrows:
+
+    # Decide which indices to make arrows from
+    start_index = 90
+    coeff = PCA_object.components_.T[start_index:start_index+15]
+    for i in range(len(coeff)):
+        plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
+        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, train_data_scaled.columns[i+start_index], color='g')
 
   plt.xlabel("PC1")
   plt.ylabel("PC2")
@@ -171,7 +164,7 @@ def plotBoundaryConditions(X:             pd.DataFrame,
                            label_mapping: Dict[str, Any],
                            results:       List[Dict[str, Any]],
                            accuracy_list: List[float],
-                           cmap_name:     str,
+                           cmap:          str,
                           ) -> None:
   
   '''
@@ -185,15 +178,8 @@ def plotBoundaryConditions(X:             pd.DataFrame,
   '''
 
   if X.shape[1] == 2:
-    
-   
-    unique_original_labels = sorted(list(set(train_labels)))
-    num_labels    = len(unique_original_labels)
-    cmap          = plt.get_cmap(cmap_name, num_labels)
-
+  
     point_colors = np.array([label_mapping[label] for label in train_labels]) 
-
-    cmap          = plt.get_cmap(cmap_name, num_labels)
 
     xs, ys = X[0], X[1]
 
@@ -201,7 +187,7 @@ def plotBoundaryConditions(X:             pd.DataFrame,
     ncols       = math.ceil(math.sqrt(num_plots))
     nrows       = math.ceil(num_plots / ncols)
 
-    fig_width   = ncols * 4
+    fig_width   = ncols * 4.5
     fig_height  = nrows * 4
     fig, axes   = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height), squeeze=False)
     
@@ -214,7 +200,6 @@ def plotBoundaryConditions(X:             pd.DataFrame,
       # best_params = result_dict['best_params']
 
       if clf.n_features_in_ == 2:
-      # fig, ax = plt.subplots(1, 1, figsize=(6, 5)) # Adjust size as needed
 
         # Background
         disp = DecisionBoundaryDisplay.from_estimator(
@@ -224,21 +209,16 @@ def plotBoundaryConditions(X:             pd.DataFrame,
                 cmap=cmap,
                 alpha=0.6,
                 ax=ax,
-                xlabel=' ',
-                ylabel=' ',
                 )
         
-        # Scatter plots
-        ax.scatter(xs, ys, c=point_colors, cmap=cmap, s=20, edgecolors="k")
-        ax.set_xticks(())
-        ax.set_yticks(())
+        # Foreground
+        ax.scatter(xs, ys, c=point_colors, s=25, edgecolors="k", linewidths=0.35)
         ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
         
         # fig.tight_layout()
 
   else:
     print(f"Warning: Cannot plot decision boundaries. Classifiers has {X.shape[1]} features, must be 2.")
-
 
 def plotKNNboundries(df, clf, labels):
   

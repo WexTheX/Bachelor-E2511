@@ -55,23 +55,23 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                # 1, 10, 100
+                                1, 10, 100
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10, 100],
-        # "coef0":                [0.0, 0.5, 1.0],
-        # "degree":               [2, 3, 4, 5]
+        "gamma":                [0.01, 0.1, 1, 10, 100],
+        "coef0":                [0.0, 0.5, 1.0],
+        "degree":               [2, 3, 4, 5]
     }
 
 
     RF_param_grid = {
-        'n_estimators':         [50, 100, 200],  # Number of trees in the forest
-        # 'max_depth':            [10, 20, 30, None],  # Maximum depth of each tree
-        # 'min_samples_split':  [2, 5, 10],  # Minimum samples required to split a node
-        # 'min_samples_leaf':   [1, 2, 4],  # Minimum samples required in a leaf node
-        # 'max_features':       ['sqrt', 'log2'],  # Number of features considered for splitting
-        # 'bootstrap':          [True, False],  # Whether to use bootstrapped samples
-        'criterion':            ['gini', 'entropy']  # Splitting criteria
+        'n_estimators':         [50, 100, 200],         # Number of trees in the forest
+        'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
+        'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
+        'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
+        'max_features':         ['sqrt', 'log2'],       # Number of features considered for splitting
+        # 'bootstrap':            [True, False],          # Whether to use bootstrapped samples
+        'criterion':            ['gini', 'entropy']     # Splitting criteria
     }
 
     KNN_param_grid = {
@@ -313,7 +313,7 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
             optimizer = r['optimalizer']
             r_result = r['classifier']
 
-            with open(output_path + str(name) + "_" +  str(optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
+            with open(output_path + "/classifiers/" + str(name) + "_" +  str(optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
                 pickle.dump(r_result, clf_file)
 
             clf_file.close()
@@ -325,31 +325,6 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
 
         print("Modell som lagres:", pickle_clf)
         print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
-        
-        final_model = None
-    # for clf, method in zip(classifiers, optimization_list):
-    #     if method == "HalvingGridSearchCV":
-    #         final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
-    #         break
-        print("Modell som lagres:", pickle_clf)
-        print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
-        
-        
-        # for clf, method in zip(classifiers, optimization_list):
-        #     if method == "HalvingGridSearchCV":
-        #         final_model = clf.best_estimator_ if hasattr(clf, "best_estimator_") else clf
-        #         break
-
-        # if final_model is None:
-        #     print("Fant ikke modell med HalvingGridSearchCV – bruker første som fallback.")
-        #     final_model = classifiers[0]
-
-        # Dobbeltsjekk før lagring
-        
-
-        # Lagre
-        # with open(output_path + "classifier.pkl", "wb") as CLF_File: 
-        #     pickle.dump(final_model, CLF_File)
 
         with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
             pickle.dump(PCA_final, PCA_File)
@@ -360,24 +335,6 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, Spli
             pickle.dump(scaler, scaler_file)
 
         scaler_file.close()
-
-# from testonfile import run_inference_on_file
-    #     ### Testing trained model on unseen files
-    # test_file_path = "testFiles"
-    # test_files = os.listdir(test_file_path)
-
-
-    # for filename in test_files:
-    #     if filename.endswith(".csv"):
-    #         continue  # hopper over .csv-filer
-    #     file_to_test = os.path.join(test_file_path, filename)
-    #     file_to_test_no_ext = file_to_test.replace(".txt", "")
-    #     print("_______________________________________________________________________________")
-    #     print(f"Testing file {file_to_test}")
-    #     run_inference_on_file(file_to_test_no_ext, fs = fs, window_length_sec = window_length_seconds, norm_accel=False, run=True)
-
-
-
 
 
 if __name__ == "__main__":
@@ -392,12 +349,12 @@ if __name__ == "__main__":
     Splitting_method        = ["StratifiedKFOLD", "TimeSeriesSplit"]
     Splitting_method        = "TimeseriesSplit"
 
-    model_selection         = ['KNN']
-    method_selection        = ['GridSearchCV']
+    model_selection         = ['LR', 'SVM','RF','KNN','GNB']
+    method_selection        = ['RandomizedSearchCV', 'GridSearchCV', 'Base model']
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 2
+    variance_explained      = 0.95
     random_seed             = 333
     window_length_seconds   = 20
     test_size               = 0.25

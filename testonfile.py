@@ -26,6 +26,7 @@ import pandas as pd
 import numpy as np
 import os
 import pandas as pd
+import random
 
 ### Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
@@ -225,62 +226,79 @@ def offlineTest(test_file_path:         str,
     return combined_df
 
 def labelFilter():
+    # TODO 
+    # Plan: Midlingsfilter til output av combined_df['Activity']
+    # for å smoothe over typ WELD-WELD-WELD-SANDSIM-WELD-WELD-WELD til kun WELD
     return 0
 
-def calcWorkload(combined_df, window_length_seconds, labels):
+def calcWorkload(want_calc_workload:    bool,
+                 combined_df:           pd.DataFrame,
+                 window_length_seconds: int,
+                 labels:                list[str], 
+                 exposures:             list[str]
+                ) -> None:
     
-    labels = [
-                'GRINDBIG', 'GRINDSMALL',
-                'IDLE','IMPA','GRINDMED', 
-                'SANDSIM',
-                'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
-        ]
+    if want_calc_workload:
+        
+        # labels = [
+        #             'GRINDBIG', 'GRINDSMALL',
+        #             'IDLE','IMPA','GRINDMED', 
+        #             'SANDSIM',
+        #             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
+        #     ]
+        
+        # exposure_list = ['CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK']
+
+        num_exposures   = len(exposures)
+        default_value = 0.0
+        
+        print(f"Calculating exposure... ")
+
+        predicted_activities        = combined_df['Activity']
+        activity_counts             = predicted_activities.value_counts()
+        activity_length             = activity_counts * window_length_seconds / 3600
+        activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
+
+        # x
+        activity_duration_vector    = activity_length_complete.values
+
+        # A
+        exposure_intensity_matrix   = initialize_exposure_intensity_matrix(exposures, labels)
+
+        # b
+        total_exposure_vector       = np.zeros(num_exposures)
+
+        # b = Ax
+        total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
+
+        exposure_df                 = pd.Series(total_exposure_vector, index=exposures)
+
+        print()
+        print(f"Risk factors increased. Grind big!")
+        print(exposure_df.round(decimals=1))
+        print()
     
-    exposure_list = ['CARCINOGEN', 'RRESPIRATORY', 'NEUROTOXIN', 'NOISE', 'RADIATION', 'VIBRATION', 'THERMAL', 'MSK']
+        return 0
 
-    num_labels      = len(labels)
-    num_exposures = len(exposure_list)
+def initialize_exposure_intensity_matrix(exposures:                     list[str], 
+                                         activities:                    list[str],
+                                         gravityless_norm_accel_mean    = round(random.uniform(10.0, 20.0), 1) - 9.81,
+                                         gravityless_norm_accel_energy  = round(random.uniform(10.0, 20.0), 1) - 9.81,
+                                         temperature_energy             = round(random.uniform(10.0, 20.0), 1)
+                                         ) -> pd.DataFrame:
     
-    print(f"Calculating exposure")
-
-    default_value = 0.0
-
-    predicted_activities        = combined_df['Activity']
-    activity_counts             = predicted_activities.value_counts()
-    activity_length             = activity_counts * window_length_seconds / 3600
-    activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
-
-
-    activity_length_complete_dict = activity_length_complete.to_dict()
+    # exposure_matrix = np.ones((num_exposures, num_labels))
+    df = pd.DataFrame(0.0, index=exposures, columns=activities) 
     
-    time_vector = np.zeros(num_labels)
+    df.loc['CARCINOGEN', ['WELDSTMAG', 'WELDSTTIG']]                = round(random.uniform(10.0, 20.0), 1)
+    df.loc['RESPIRATORY', ['SANDSIM', 'WELDALTIG']]                 = round(random.uniform(10.0, 20.0), 1) 
+    df.loc['NEUROTOXIN', 'WELDSTTIG']                               = round(random.uniform(10.0, 20.0), 1)
+    df.loc['RADIATION', ['WELDALTIG', 'WELDSTMAG', 'WELDSTTIG']]    = round(random.uniform(10.0, 20.0), 1)
+    df.loc['NOISE', ['GRINDBIG', 'IMPA']]                           = round(random.uniform(10.0, 20.0), 1)
+    df.loc['VIBRATION', ['GRINDBIG', 'GRINDSMALL', 'GRINDMED']]     = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
+    df.loc['THERMAL', ['GRINDBIG', 'GRINDSMALL', 'GRINDMED']]       = temperature_energy
+    df.loc['MSK', ['GRINDBIG', 'GRINDSMALL', 'GRINDMED', 'IMPA']]   = gravityless_norm_accel_energy
 
-    for i, key in enumerate(labels):
-        time_vector[i] = activity_length_complete_dict[key]
+    print(df)
 
-    print(time_vector)
-
-    
-    exposure_matrix = np.ones((num_exposures, num_labels))
-    print(exposure_matrix.shape)
-
-    # exposure_matrix = 
-
-    # print(time_dict)
-    # GRINDSMALL_time = activity_counts.get(['GRINDSMALL'], default_value)
-    # GRINDMED_time   = activity_counts.get(['GRINDSMED'], default_value)
-    # GRINDBIG_time   = activity_counts.get(['GRINDSBIG'], default_value)
-    
-
-
-
-    # grinding _time = activity_length['GRINDSMALL'] + activity_length['GRINDMED'] #+ activity_length['GRINDBIG']
-
-    # # print(activity_counts)
-    # print(activity_length)
-
-    # print(f"You spent {round((grinding_time / 60), 1)} minutes grinding today. Grind big!")
-
-
-
-    return 0
+    return df

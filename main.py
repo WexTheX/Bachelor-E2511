@@ -29,7 +29,7 @@ from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcWorkloa
 
 
 
-def main(want_feature_extraction, want_pickle, separate_types, want_plots, model_selection, method_selection,
+def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_calc_workload, model_selection, method_selection,
          variance_explained ,random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name, test_file_path,
          prediction_csv_path ):
 
@@ -136,10 +136,10 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, model
         test_path       = "testFiles/"
 
         labels = [
-                'GRINDBIG', 'GRINDSMALL',
-                'IDLE','IMPA','GRINDMED', 
-                'SANDSIM',
-                'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
+            'GRINDBIG', 'GRINDSMALL',
+            'IDLE', 'IMPA', 'GRINDMED', 
+            'SANDSIM',
+            'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
 
     else:
@@ -147,7 +147,13 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, model
         output_path     = "OutputFiles/"
         test_path       = "testFiles/"
 
-        labels = ['IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING']
+        labels = [
+            'IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING'
+        ]
+
+    exposures = [
+        'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
+    ]
 
     num_labels      = len(labels)
     cmap            = plt.get_cmap(cmap_name, num_labels)
@@ -263,7 +269,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, model
     
     combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
 
-    calcWorkload(combined_df, window_length_seconds, labels)
+    calcWorkload(want_calc_workload, combined_df, window_length_seconds, labels, exposures)
 
 
 
@@ -275,7 +281,8 @@ if __name__ == "__main__":
     want_feature_extraction = 0
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
-    want_plots              = 1
+    want_plots              = 0
+    want_calc_workload      = 0
 
     model_selection         = ['SVM']
     method_selection        = ['GridSearchCV']
@@ -296,8 +303,8 @@ if __name__ == "__main__":
 
 
     main(want_feature_extraction, want_pickle, 
-         separate_types, want_plots,
-         model_selection, method_selection, variance_explained ,
-         random_seed ,window_length_seconds ,test_size , fs, ds_fs, 
+         separate_types, want_plots, want_calc_workload,
+         model_selection, method_selection, variance_explained,
+         random_seed ,window_length_seconds, test_size, fs, ds_fs, 
          cmap_name, test_file_path, prediction_csv_path)
 

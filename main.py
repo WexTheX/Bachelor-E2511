@@ -95,18 +95,18 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, model
     }
 
     LR_param_grid = {
-        'C':                    [0.001, 0.01, 0.1, 1, 10, 100], 
-        # 'dual':                 [False],                                # Dual or Primal formulation
-        # 'fit_intercept':        [True],                                 # Constant added to function (bias)             
-        # 'intercept_scaling':    [1],                                    # Only useful when Solver = liblinear, fit_intercept = true
-        # 'l1_ratio':             [None],                                 # ???
-        'max_iter':             [100],                        # Max iterations for solver to converge
-        # 'multi_class':          ['deprecated'],                         # Deprecated
-        # 'n_jobs':               [None],                                 # Amount of jobs that can run at the same time, (also set in CV, error if both)
-        # 'penalty':              ['l1', 'l2', 'elasticnet', None],       # Norm of the penalty 
-        # 'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],  # Algorithm for optimization problem
-        'tol':                  [0.0001],                  # Tolerance for stopping criteria
-        #'warm_start':           [False]                                 # Reuse previous calls solution
+        'C':                    [0.001, 0.01, 0.1, 1, 10, 100],             #
+        # 'dual':                 [False],                                    # Dual or Primal formulation
+        # 'fit_intercept':        [True],                                     # Constant added to function (bias)             
+        # 'intercept_scaling':    [1],                                        # Only useful when Solver = liblinear, fit_intercept = true
+        # 'l1_ratio':             [None],                                     # ???
+        'max_iter':             [100],                                      # Max iterations for solver to converge
+        # 'multi_class':          ['deprecated'],                             # Deprecated
+        # 'n_jobs':               [None],                                     # Amount of jobs that can run at the same time, (also set in CV, error if both)
+        # 'penalty':              ['l1', 'l2', 'elasticnet', None],           # Norm of the penalty 
+        # 'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],      # Algorithm for optimization problem
+        'tol':                  [0.0001],                                   # Tolerance for stopping criteria
+        #'warm_start':           [False]                                      # Reuse previous calls solution
     }
 
     models = {
@@ -125,25 +125,6 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, model
                     'scoring':             'f1_weighted',
                     'return_train_score':  True
                     }
-
-    ''' USER INPUTS '''
-
-    # answer_FE = input("Do you want feature extraction? (Y | N) (Default N)")
-    # if(answer_FE.upper() == "Y"):
-    #     want_feature_extraction = True
-
-    # answer_ST = input("Do you want to separate by type (TIG and MIG vs only welding)? (Y | N) (Default N)")
-    # if(answer_ST.upper() == "Y"):
-    #     separate_types = True
-
-    # answer_ML = input(f"Choose ML model (Default SVM): {ML_models}.")
-    # if(answer_ML.upper() = "RF"):
-    #     ML_model = ML_models[1]
-
-    # answer_plot = input("Do you want plots? (Y | N) (Default N)")
-    # if(answer_plot.upper() == "Y"):
-    #     want_plots = True
-
 
     ''' LOAD DATASET '''
 

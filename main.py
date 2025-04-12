@@ -23,7 +23,7 @@ from sklearn.experimental import enable_halving_search_cv
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotBoundaryConditions, biplot, PCA_table_plot, plotKNNboundries
+from plotting import plotBoundaryConditions, biplot, biplot3D, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcWorkload
 
@@ -267,6 +267,8 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, model
         ''' 2D PLOTS OF PCA '''
 
         biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+
+        biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
         plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap)
 
@@ -290,11 +292,11 @@ if __name__ == "__main__":
     ''' GLOBAL VARIABLES '''
 
     want_feature_extraction = 0
-    want_pickle             = 1 # Pickle the classifier, scaler and PCA objects.
+    want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
-    want_plots              = 0
+    want_plots              = 1
 
-    model_selection         = ['GNB']
+    model_selection         = ['SVM']
     method_selection        = ['GridSearchCV']
 
     ''' DATASET VARIABLES '''

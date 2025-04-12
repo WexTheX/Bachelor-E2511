@@ -19,10 +19,12 @@ DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 myDev = None
 device_list = ["Muse_E2511_GREY", "Muse_E2511_RED"]
 device_name = device_list[1]
+
 window_length_sec = 20                  # Length of one window for prediction
 fs = 200                                # Frequency of sensor sampling
 window_size = window_length_sec * fs
 real_time_window_sec = 50               # Time period the program will stream
+
 sample_queue = asyncio.Queue()
 shutdown_event = asyncio.Event()
 start_time = time.time()
@@ -68,59 +70,6 @@ def cmd_notification_handler(sender, data):
     """Simple notification handler which prints the data received."""
     print("{0}: {1}".format(sender, data))
 
-    return
-
-async def data_notification_handlerOLD(sender: int, data: bytearray):
-    """Decode data"""
-    global sample_list, notification_counter, sample_counter
-    header_offset = 8   # Ignore part of notification that is header data (8 bytes)
-
-    for k in range(DATA_BUFFER_SIZE):
-        current_packet = bytearray(DATA_SIZE)                                                           # Define size of first packet in notification
-        current_packet[:] = data[header_offset : header_offset + DATA_SIZE + 1]                         # Get packet data
-        temp_data = Muse_Utils.DecodePacket(                                                            # Decode packet to covert values and store them in MuseData Object
-            current_packet, 0, stream_mode.value, 
-            gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity
-        )
-        
-        if(k+sample_counter >= 4000):                                           # If samples number is higher than allowed, reset sample
-            print(f"Error sample counter = {k+sample_counter}, resetting. {time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())}")
-            sample_counter = 0
-        else:                                                                   # Store data in predefined sample_list
-            sample_list[k+(sample_counter)][0]  = time.time()                   # sample_list[row][column]
-            sample_list[k+(sample_counter)][1]  = temp_data.axl[0]
-            sample_list[k+(sample_counter)][2]  = temp_data.axl[1]
-            sample_list[k+(sample_counter)][3]  = temp_data.axl[2]
-            sample_list[k+(sample_counter)][4]  = temp_data.gyr[0]
-            sample_list[k+(sample_counter)][5]  = temp_data.gyr[1]
-            sample_list[k+(sample_counter)][6]  = temp_data.gyr[2]
-            sample_list[k+(sample_counter)][7]  = temp_data.mag[0]
-            sample_list[k+(sample_counter)][8]  = temp_data.mag[1]
-            sample_list[k+(sample_counter)][9]  = temp_data.mag[2]
-            sample_list[k+(sample_counter)][10] = temp_data.tp[0]
-            sample_list[k+(sample_counter)][11] = temp_data.tp[1]
-            sample_list[k+(sample_counter)][12] = temp_data.light.range
-            sample_list[k+(sample_counter)][13] = temp_data.light.lum_vis
-            sample_list[k+(sample_counter)][14] = temp_data.light.lum_ir
-
-    sample_counter += DATA_BUFFER_SIZE                                          # Increase sample counter for samples included in notification
-
-    if (sample_counter >= window_length_sec*fs):                                                        # When window_length time in seconds has passed
-        ''' FEATURE EXTRACTION AND SCALE '''
-        feature_df = pd.DataFrame(data=sample_list, columns=columns)                                    # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
-        feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
-        feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))                       # Scale data with scaled from training data
-       
-        ''' PCA AND PREDICT '''
-        PCA_feature_df = pd.DataFrame(PCA_final.transform(feature_df_scaled))                           # Convert to PC found from training data
-        prediction = clf.predict(PCA_feature_df)                                                        # Predict label using classifier
-        print(prediction)                                                           
-        prediction_list[time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())] = prediction[0] # Add prediction to prediction list dict, with timemark as reference
-
-        sample_counter = 0
-        prediction_counter += 1
-
-    notification_counter += 1
     return
 
 async def dataNotificationHandler(sender: int, data: bytearray):

@@ -229,21 +229,44 @@ def labelFilter():
 
 def calcWorkload(combined_df, window_length_seconds, labels):
     
+    labels = [
+                'GRINDBIG', 'GRINDSMALL',
+                'IDLE','IMPA','GRINDMED', 
+                'SANDSIM',
+                'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
+        ]
+    
+    exposure_list = ['CARCINOGEN', 'RRESPIRATORY', 'NEUROTOXIN', 'NOISE', 'RADIATION', 'VIBRATION', 'THERMAL', 'MSK']
+
+    num_labels      = len(labels)
+    num_exposures = len(exposure_list)
+    
     print(f"Calculating exposure")
 
-    predicted_activities    = combined_df['Activity']
-    activity_counts         = predicted_activities.value_counts()
-    activity_length         = activity_counts * window_length_seconds / 3600
+    default_value = 0.0
 
-    default_value = 0
-    time_vector = {}
+    predicted_activities        = combined_df['Activity']
+    activity_counts             = predicted_activities.value_counts()
+    activity_length             = activity_counts * window_length_seconds / 3600
+    activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
 
-    for key in labels:
-        time_vector[key] = activity_length.get([key], default_value)
+
+    activity_length_complete_dict = activity_length_complete.to_dict()
+    
+    time_vector = np.zeros(num_labels)
+
+    for i, key in enumerate(labels):
+        time_vector[i] = activity_length_complete_dict[key]
+
+    print(time_vector)
+
+    
+    exposure_matrix = np.ones((num_exposures, num_labels))
+    print(exposure_matrix.shape)
 
     # exposure_matrix = 
 
-    print(time_vector)
+    # print(time_dict)
     # GRINDSMALL_time = activity_counts.get(['GRINDSMALL'], default_value)
     # GRINDMED_time   = activity_counts.get(['GRINDSMED'], default_value)
     # GRINDBIG_time   = activity_counts.get(['GRINDSBIG'], default_value)

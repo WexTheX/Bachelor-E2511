@@ -228,27 +228,22 @@ def labelFilter():
     return 0
 
 def calcWorkload(combined_df, window_length_seconds, labels):
-
-    labels = [
-                'GRINDBIG', 'GRINDSMALL',
-                'IDLE','IMPA','GRINDMED', 
-                'SANDSIM',
-                'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
-        ]
     
-    print(f"Activity length: ")
+    print(f"Calculating exposure")
 
     predicted_activities    = combined_df['Activity']
     activity_counts         = predicted_activities.value_counts()
-    activity_length         = activity_counts * window_length_seconds
+    activity_length         = activity_counts * window_length_seconds / 3600
 
     default_value = 0
+    time_vector = {}
 
-    dict = {}
     for key in labels:
-        dict[key] = activity_length.get([key], default_value)
+        time_vector[key] = activity_length.get([key], default_value)
 
-    print(dict)
+    # exposure_matrix = 
+
+    print(time_vector)
     # GRINDSMALL_time = activity_counts.get(['GRINDSMALL'], default_value)
     # GRINDMED_time   = activity_counts.get(['GRINDSMED'], default_value)
     # GRINDBIG_time   = activity_counts.get(['GRINDSBIG'], default_value)

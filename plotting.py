@@ -107,7 +107,8 @@ def PCA_table_plot(X:                 pd.DataFrame,
     print(f"Too many principal components to plot in a meaningful way")
     pass
 
-def biplot(train_data_scaled: pd.DataFrame,
+def biplot(feature_df:        pd.DataFrame,
+           scaler:            Any,
            train_labels:      Sequence,
            label_mapping:     Dict[str, Any],
            want_arrows:       bool
@@ -122,21 +123,22 @@ def biplot(train_data_scaled: pd.DataFrame,
   original labels using the provided `label_mapping`.
   '''
 
-  # Create PCA object for 2 components
-  PCA_object = PCA(n_components = 2)
-  X = pd.DataFrame(PCA_object.fit_transform(train_data_scaled))
+  # Fit scaler and PCA transform
+  PCA_object        = PCA(n_components = 2)
+  total_data_scaled = scaler.fit_transform(feature_df)
+  X                 = pd.DataFrame(PCA_object.fit_transform(total_data_scaled))
 
   xs, ys = X[0], X[1]
 
-  unique_original_labels = sorted(list(set(train_labels)))
-  point_colors = [label_mapping[label] for label in train_labels]
+  unique_original_labels  = sorted(list(set(train_labels)))
+  point_colors            = [label_mapping[label] for label in train_labels]
 
   # Create legend handles
   legend_handles = []
   for label_name in unique_original_labels:
       
-      color = label_mapping[label_name]
-      handle = Line2D([0], [0], marker='o', color='w', # Dummy data, white line
+      color   = label_mapping[label_name]
+      handle  = Line2D([0], [0], marker='o', color='w', # Dummy data, white line
                       label=label_name, markerfacecolor=color,
                       markersize=8, linestyle='None') # No line connecting markers
       legend_handles.append(handle)
@@ -149,9 +151,10 @@ def biplot(train_data_scaled: pd.DataFrame,
     # Decide which indices to make arrows from
     start_index = 90
     coeff = PCA_object.components_.T[start_index:start_index+15]
+    
     for i in range(len(coeff)):
         plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
-        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, train_data_scaled.columns[i+start_index], color='g')
+        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, total_data_scaled.columns[i+start_index], color='g')
 
   plt.xlabel("PC1")
   plt.ylabel("PC2")

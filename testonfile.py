@@ -148,6 +148,7 @@ def runInferenceOnFile(file_path:           str,
     
 
 def offlineTest(test_file_path:         str,
+                prediction_csv_path:    str,
                  fs:                    int, 
                  ds_fs:                 int,
                  window_length_seconds: int,
@@ -175,7 +176,6 @@ def offlineTest(test_file_path:         str,
     print(f"Making predictions on data from {test_file_path}: ")
 
     # Paths
-    prediction_csv_path = "testOnFile"
     test_files          = os.listdir(test_file_path)
     df_result_all       = [] #Storing results
 
@@ -217,7 +217,7 @@ def offlineTest(test_file_path:         str,
     filename_out = os.path.join(prediction_csv_path, "predictions.csv")
     combined_df.to_csv(filename_out, index=False)
 
-        ### Finished, printing file  for output file
+    ### Finished, printing file  for output file
     print("Done running predictions on datasets")
     print(f"Predictions saved in: {filename_out}")
     print("-" * 50)
@@ -227,19 +227,42 @@ def offlineTest(test_file_path:         str,
 def labelFilter():
     return 0
 
-def calcWorkload(combined_df, window_length_seconds):
+def calcWorkload(combined_df, window_length_seconds, labels):
 
+    labels = [
+                'GRINDBIG', 'GRINDSMALL',
+                'IDLE','IMPA','GRINDMED', 
+                'SANDSIM',
+                'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
+        ]
+    
     print(f"Activity length: ")
 
     predicted_activities    = combined_df['Activity']
     activity_counts         = predicted_activities.value_counts()
     activity_length         = activity_counts * window_length_seconds
 
-    grinding_time           = activity_length['GRINDSMALL'] + activity_length['GRINDMED'] #+ activity_length['GRINDBIG']
+    default_value = 0
 
-    # print(activity_counts)
-    print(activity_length)
+    dict = {}
+    for key in labels:
+        dict[key] = activity_length.get([key], default_value)
 
-    print(f"You spent {round((grinding_time / 60), 1)} minutes grinding today. Grind big!")
+    print(dict)
+    # GRINDSMALL_time = activity_counts.get(['GRINDSMALL'], default_value)
+    # GRINDMED_time   = activity_counts.get(['GRINDSMED'], default_value)
+    # GRINDBIG_time   = activity_counts.get(['GRINDSBIG'], default_value)
+    
+
+
+
+    # grinding _time = activity_length['GRINDSMALL'] + activity_length['GRINDMED'] #+ activity_length['GRINDBIG']
+
+    # # print(activity_counts)
+    # print(activity_length)
+
+    # print(f"You spent {round((grinding_time / 60), 1)} minutes grinding today. Grind big!")
+
+
 
     return 0

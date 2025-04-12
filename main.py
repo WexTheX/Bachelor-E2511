@@ -24,12 +24,14 @@ from sklearn.experimental import enable_halving_search_cv
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
 from plotting import plotBoundaryConditions, biplot, PCA_table_plot, plotKNNboundries
-from Preprocessing.preprocessing import fillSets, downsample
+from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcWorkload
 
 
 
-def main(want_feature_extraction, pickle_files, separate_types, want_plots, model_selection, method_selection, variance_explained ,random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name, test_file_path ):
+def main(want_feature_extraction, want_pickle, separate_types, want_plots, model_selection, method_selection,
+         variance_explained ,random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name, test_file_path,
+         prediction_csv_path ):
 
     variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
@@ -233,19 +235,19 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, mode
 
     scaler = StandardScaler()
     scaler.set_output(transform="pandas")
+    scaler.fit(train_data)
 
-    train_data_scaled   = scaler.fit_transform(train_data)
+    train_data_scaled   = scaler.transform(train_data)
     test_data_scaled    = scaler.transform(test_data)
-
-    total_data_scaled   = scaler.fit_transform(feature_df)
 
     ''' Principal Component Analysis (PCA)'''
 
     # Calculate PCA components, create PCA object, fit + transform
     PCA_components      = setNComponents(train_data_scaled, variance_explained)
     PCA_final           = PCA(n_components = PCA_components)
+    PCA_final.fit(train_data_scaled)
 
-    PCA_train_df        = pd.DataFrame(PCA_final.fit_transform(train_data_scaled))
+    PCA_train_df        = pd.DataFrame(PCA_final.transform(train_data_scaled))
     PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
     ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
@@ -264,7 +266,7 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, mode
 
         ''' 2D PLOTS OF PCA '''
 
-        biplot(total_data_scaled, window_labels, label_mapping, want_arrows=False)
+        biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
         plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap)
 
@@ -272,45 +274,13 @@ def main(want_feature_extraction, pickle_files, separate_types, want_plots, mode
 
     ''' PICKLING CLASSIFIER '''
 
-    if (pickle_files):
-        for r in n_results:
-            r_name          = r['model_name']
-            r_optimizer     = r['optimalizer']
-            r_clf           = r['classifier']
+    pickleFiles(want_pickle, n_results, result, output_path, PCA_final, scaler)
 
-            with open(output_path + str(r_name) + "_" +  str(r_optimizer) + "_" + "clf.pkl", "wb") as  clf_file:
-                pickle.dump(r_clf, clf_file)
-
-            clf_file.close()
-        
-        # Pickle best clf
-        pickle_clf = result['classifier']
-
-        with open(output_path + "classifier.pkl", "wb") as best_clf_file: 
-            pickle.dump(pickle_clf, best_clf_file)
-
-        best_clf_file.close()
-
-        # print("Modell som lagres:", pickle_clf)
-        # print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
-
-        # Pickle PCA and scaler
-        with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
-            pickle.dump(PCA_final, PCA_File)
-    
-        PCA_File.close()
-
-        with open(output_path + "scaler.pkl", "wb") as scaler_file:
-            pickle.dump(scaler, scaler_file)
-
-        scaler_file.close()
-
- 
     ''' OFFLINE TEST '''
     
-    combined_df = offlineTest(test_file_path, fs, ds_fs, window_length_seconds, want_prints=True)
+    combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
 
-    calcWorkload(combined_df, window_length_seconds)
+    calcWorkload(combined_df, window_length_seconds, labels)
 
 
 
@@ -320,11 +290,11 @@ if __name__ == "__main__":
     ''' GLOBAL VARIABLES '''
 
     want_feature_extraction = 0
-    pickle_files            = 1 # Pickle the classifier, scaler and PCA objects.
+    want_pickle             = 1 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
     want_plots              = 0
 
-    model_selection         = ['SVM']
+    model_selection         = ['GNB']
     method_selection        = ['GridSearchCV']
 
     ''' DATASET VARIABLES '''
@@ -339,11 +309,12 @@ if __name__ == "__main__":
 
     ''' LOAD PATH NAMES'''
     test_file_path = "testOnFile/testFiles"
+    prediction_csv_path = "testOnFile"
 
 
-    main(want_feature_extraction, pickle_files, 
+    main(want_feature_extraction, want_pickle, 
          separate_types, want_plots,
          model_selection, method_selection, variance_explained ,
          random_seed ,window_length_seconds ,test_size , fs, ds_fs, 
-         cmap_name, test_file_path)
+         cmap_name, test_file_path, prediction_csv_path)
 

@@ -9,16 +9,17 @@ antall .txt filer i hver Datafiles mappe blir telt, og navnet blir lagt inn i li
 # TODO 
 
 1) Separer typer uten å måtte ha en folder for hver (unngå dobbelt opp med filer) [Low pri]
-2) Implementer K-nearest og Naive-Bayers, Gradient boosting
+2) Implementer K-nearest og Naive-Bayers, Gradient boosting [2/3 ferdig]
 3) Skisser boundary conditions i SVM [Problem med 2d PCA] [ferdig]
 4) Legge RF inn i machineLearning.py [Ferdig]
-5) Kode som tar inn test som logger aktiviteter
+5) Kode som tar inn test som logger aktiviteter [Ferdig]?
 6) Lage en downsampler [Ferdig]
-    6.1) Implementer downsampler naturlig or something
+    6.1) Implementer downsampler naturlig or something [Ferdig]
 
 ...
 
-100) Sanntidslogging
+100) Sanntidslogging [Ferdig]*
+*Ikke sampler på 180 bc python er ikke real time compatible
 
 ...
 

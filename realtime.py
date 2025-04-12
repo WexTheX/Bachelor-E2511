@@ -129,8 +129,13 @@ async def dataNotificationHandler(sender: int, data: bytearray):
     header_offset = 8   # Ignore part of notification that is header data (8 bytes)
 
     for k in range(DATA_BUFFER_SIZE):
-        current_packet = bytearray(DATA_SIZE)                                   # Define size of first packet in notification
-        current_packet[:] = data[header_offset : header_offset + DATA_SIZE + 1] # Get packet data
+        current_packet = bytearray(DATA_SIZE)
+        
+        start_idx   = k * DATA_SIZE + header_offset
+        end_idx     = start_idx + DATA_SIZE + 1
+
+        # Define size of first packet in notification
+        current_packet[:] = data[start_idx : end_idx] # Get packet data
         temp_data = Muse_Utils.DecodePacket(                                    # Decode packet to covert values and store them in MuseData Object
             current_packet, 0, stream_mode.value, 
             gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity
@@ -147,21 +152,25 @@ async def dataNotificationHandler(sender: int, data: bytearray):
 
         await sample_queue.put(sample)
 
-        # sample_counter += 1
-        # if sample_counter % 1000 == 0:
-        #     elapsed = time.time() - start_time
-        #     print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
+        sample_counter += 1
+        if sample_counter % 1000 == 0:
+            elapsed = time.time() - start_time
+            print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
     return
 
 async def processSamples():
     global prediction_counter, prediction_list
     sample_list = []
 
+    
     while True:
         sample = await sample_queue.get()
         sample_list.append(sample)
 
         if len(sample_list) >= window_size:
+            
+            start_time = time.time()
+            
             try:
                 ''' CONVERT TO DF, FEATURE EXTRACT AND SCALE '''
                 feature_df = pd.DataFrame(data=sample_list, columns=columns)                                    # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
@@ -174,13 +183,20 @@ async def processSamples():
                 prediction_list[time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())] = prediction[0] # Add prediction to prediction list dict, with timemark as reference
                 prediction_counter += 1
 
-                print(prediction)  
+                print(prediction)
+
             except Exception as e:
                 print(f"Error when predicting: {e}.")
 
+            
             sample_list.clear()
 
+            end_time = time.time()  # End timer
+            elapsed_time = end_time - start_time
+            print(f"Process sampling completed in {elapsed_time} seconds.")
+
 async def waitForQuit():
+
     loop = asyncio.get_event_loop()
     print("Type q for to end streaming.")
     while True:

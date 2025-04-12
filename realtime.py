@@ -25,6 +25,7 @@ window_size = window_length_sec * fs
 real_time_window_sec = 50               # Time period the program will stream
 sample_queue = asyncio.Queue()
 shutdown_event = asyncio.Event()
+start_time = time.time()
 
 data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT       # Data mode, what sensors is used
 DATA_SIZE = 6 * 5;                                              # Dimension of incomming packet (6 bytes * number of sensors)
@@ -122,9 +123,9 @@ async def data_notification_handlerOLD(sender: int, data: bytearray):
     notification_counter += 1
     return
 
-async def dataNotificationHandler(sender: int, data: bytearray, start_time):
+async def dataNotificationHandler(sender: int, data: bytearray):
     """Decode data"""
-    global notification_counter, sample_counter
+    global notification_counter, sample_counter, start_time
     header_offset = 8   # Ignore part of notification that is header data (8 bytes)
 
     for k in range(DATA_BUFFER_SIZE):
@@ -146,13 +147,14 @@ async def dataNotificationHandler(sender: int, data: bytearray, start_time):
 
         await sample_queue.put(sample)
 
-        notification_counter += 1
-        if notification_counter % 100 == 0:
-            elapsed = time.time() - start_time
-            print(f"Avg freq: {notification_counter / elapsed:.2f} notifications/sec")
+        # sample_counter += 1
+        # if sample_counter % 1000 == 0:
+        #     elapsed = time.time() - start_time
+        #     print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
     return
 
 async def processSamples():
+    global prediction_counter, prediction_list
     sample_list = []
 
     while True:
@@ -209,6 +211,7 @@ async def main():
 
     global device_ID, stream_mode
     global gyrConfig, axlConfig, magConfig, hdrConfig
+    global start_time
 
 
     #DEVICE ENUMERATION
@@ -245,22 +248,23 @@ async def main():
             cmd_stream = Muse_Utils.Cmd_StartStream(mode=stream_mode, frequency=MH.DataFrequency.DATA_FREQ_200Hz, enableDirect=False)
 
             # Start notify on data characteristic
-            await client.start_notify(DATA_UUID, dataNotificationHandler, time.time())
+            start_time = time.time()
+            await client.start_notify(DATA_UUID, dataNotificationHandler)
 
-            start_time = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
-            print(f"Start streaming, {start_time}")
+            start_time_local = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
+            print(f"Start streaming, {start_time_local}")
             # Start Streaming using the above configuration (direct streaming, IMU mode and Sampling Frequency = 200 Hz)
             await client.write_gatt_char(CMD_UUID, cmd_stream, True)
             processing_task = asyncio.create_task(processSamples())
             wait_for_quit_task = asyncio.create_task(waitForQuit())
 
             # Set streaming duration to real_time_window_sec seconds, then stop
-            # await asyncio.sleep(real_time_window_sec)    
+            # await asyncio.sleep(real_time_window_sec) 
+            await shutdown_event.wait()   
+           
             await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
-
-            await shutdown_event.wait()
-            end_time = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
-            print(f"Streaming stopped, {end_time}")
+            end_time_local = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
+            print(f"Streaming stopped, {end_time_local}")
 
             print(f"Prediction list: \n {prediction_list}")
 

@@ -26,6 +26,7 @@ import pandas as pd
 import numpy as np
 import os
 import pandas as pd
+import random
 
 ### Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
@@ -62,7 +63,7 @@ def runInferenceOnFile(file_path:           str,
 
     results = []
 
-    print("_______________________________________________________________________________")
+    print("___________________________________________________________________________________")
     print(f"Testing file {file_to_test}")
     
     ### Load trained model
@@ -78,7 +79,7 @@ def runInferenceOnFile(file_path:           str,
     df = extractDFfromFile(file_path, fs)
     ### Downsample
     df = downsample(df, fs, ds_fs)
-
+    
     ### Feature extraction
     features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_accel)
 
@@ -86,6 +87,16 @@ def runInferenceOnFile(file_path:           str,
     features_df     = pd.DataFrame(features_list)
     features_scaled = scaler.transform(features_df)
     features_pca    = pca.transform(features_scaled)
+
+    # Can be used to help calculate exposure_intensity_matrix 
+    # xyz_accel = abs(np.sqrt(np.power(features_df['mean_accel_X'], 2) +
+    #                         np.power(features_df['mean_accel_Y'], 2) +
+    #                         np.power(features_df['mean_accel_Z'], 2) ))
+    
+    # g_constant = np.mean(xyz_accel)
+    # print(f"g constant: {g_constant}")
+    # gravless_norm = np.subtract(xyz_accel, g_constant) 
+    # print(gravless_norm)
 
     ### Predictions
     preds = clf.predict(features_pca)
@@ -147,13 +158,14 @@ def runInferenceOnFile(file_path:           str,
     return df_result
     
 
-def offlineTest(test_file_path:         str,
+def offlineTest(want_offline_test:      bool,
+                test_file_path:         str,
                 prediction_csv_path:    str,
-                 fs:                    int, 
-                 ds_fs:                 int,
-                 window_length_seconds: int,
-                 want_prints:           bool
-                 ) -> pd.DataFrame:
+                fs:                    int, 
+                ds_fs:                 int,
+                window_length_seconds: int,
+                want_prints:           bool
+                ) -> pd.DataFrame:
     
     '''
     Runs inference on all compatible files within a specified directory and
@@ -172,115 +184,207 @@ def offlineTest(test_file_path:         str,
       files.
     - Saves the combined results to a specified CSV file in the output directory.
     '''
+    if want_offline_test:
+        print(f"Making predictions on data from {test_file_path}: ")
 
-    print(f"Making predictions on data from {test_file_path}: ")
+        # Paths
+        test_files          = os.listdir(test_file_path)
+        df_result_all       = [] #Storing results
 
-    # Paths
-    test_files          = os.listdir(test_file_path)
-    df_result_all       = [] #Storing results
+        for filename in test_files:
 
-    for filename in test_files:
+            file_to_test = os.path.join(test_file_path, filename)
+            file_to_test_no_ext = file_to_test.replace(".txt", "")
+            
+            if filename.endswith(".csv"):
+                continue  # Skipping .csv files
 
-        file_to_test = os.path.join(test_file_path, filename)
-        file_to_test_no_ext = file_to_test.replace(".txt", "")
+            elif filename.endswith(".bin"): ##Converting .bin to .txt
+                convert_bin_to_txt(file_to_test_no_ext)
+
+
+            df_result = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints, file_to_test, norm_accel=False)
         
-        if filename.endswith(".csv"):
-            continue  # Skipping .csv files
+            header_lines = [
+                f"_______________________________________________________________________________",
+                f"Predictions from: {os.path.basename(file_to_test)}"
+            ]
 
-        elif filename.endswith(".bin"): ##Converting .bin to .txt
-            convert_bin_to_txt(file_to_test_no_ext)
+            # header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
+            #                         columns=["Time", "Activity", "Probability", "Top-3"])
 
+            ###Adding header above every prediction set
+            # column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
+            #                         columns=["Time", "Activity", "Probability", "Top-3"])
 
-        df_result = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints, file_to_test, norm_accel=False)
-    
-        header_lines = [
-            f"_______________________________________________________________________________",
-            f"Predictions from: {os.path.basename(file_to_test)}"
-        ]
+            ### Adding the data together
+            # df_result_all.append(header_df)
+            # df_result_all.append(column_header)
 
-        # header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
-        #                         columns=["Time", "Activity", "Probability", "Top-3"])
+            df_result_all.append(df_result)
 
-        ###Adding header above every prediction set
-        # column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
-        #                         columns=["Time", "Activity", "Probability", "Top-3"])
+            # TODO
+            # df.append() er på vei ut, må finne alternativ
 
-        ### Adding the data together
-        # df_result_all.append(header_df)
-        # df_result_all.append(column_header)
+            ### Saving as csv
 
-        df_result_all.append(df_result)
+        combined_df = pd.concat(df_result_all, ignore_index=True)
+        filename_out = os.path.join(prediction_csv_path, "predictions.csv")
+        combined_df.to_csv(filename_out, index=False)
 
-        ### Saving as csv
+        ### Finished, printing file  for output file
+        print("Done running predictions on datasets")
+        print(f"Predictions saved in: {filename_out}")
+        print("-" * 50)
 
-    combined_df = pd.concat(df_result_all, ignore_index=True)
-    filename_out = os.path.join(prediction_csv_path, "predictions.csv")
-    combined_df.to_csv(filename_out, index=False)
-
-    ### Finished, printing file  for output file
-    print("Done running predictions on datasets")
-    print(f"Predictions saved in: {filename_out}")
-    print("-" * 50)
-
-    return combined_df
+        return combined_df
 
 def labelFilter():
+    # TODO 
+    # Plan: Midlingsfilter til output av combined_df['Activity']
+    # for å smoothe over typ WELD-WELD-WELD-SANDSIM-WELD-WELD-WELD til kun WELD
     return 0
 
-def calcWorkload(combined_df, window_length_seconds, labels):
+def calcExposure(want_calc_exposure:    bool,
+                 combined_df:           pd.DataFrame,
+                 window_length_seconds: int,
+                 labels:                list[str], 
+                 exposures:             list[str],
+                 safe_limit_vector:     list[float]
+                ) -> pd.DataFrame:
     
-    labels = [
-                'GRINDBIG', 'GRINDSMALL',
-                'IDLE','IMPA','GRINDMED', 
-                'SANDSIM',
-                'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
-        ]
+    '''
+    Calculates exposure workload based on activity durations and intensity.
+
+    Determines the duration of each predicted activity within a given DataFrame,
+    calculates the total exposure score for various hazard types using a
+    predefined intensity matrix, and generates a summary comparing these
+    scores to safe limits. Prints intermediate results and the final summary.
+    '''
+
+    if want_calc_exposure:
+        
+        # labels = [
+        #             'GRINDBIG', 'GRINDSMALL',
+        #             'IDLE','IMPA','GRINDMED', 
+        #             'SANDSIM',
+        #             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
+        #     ]
+        
+        # exposure_list = ['CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK']
+
+        default_value = 0.0
+        
+        print(f"Calculating exposure... ")
+
+        predicted_activities        = combined_df['Activity']
+        activity_counts             = predicted_activities.value_counts()
+        activity_length             = activity_counts * window_length_seconds / 3600
+        activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
+
+        # x
+        activity_duration_vector    = activity_length_complete.values
+
+        # A
+        exposure_intensity_matrix   = initialize_exposure_intensity_matrix(exposures, labels)
+
+        # b = Ax
+        total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
+
+        summary_df = exposure_summary(total_exposure_vector, safe_limit_vector, exposures)
+
+        print()
+        print(f"Predicted hours: \n {activity_length_complete.round(decimals=2)}")
+        print(f"Risk factors increased. Grind big!")
+        print("-" * 99)
+        print(f"Exposure intensity matrix: \n {exposure_intensity_matrix}")
+        print("-" * 99)
+        print(summary_df.round(decimals=1))
+        print("-" * 57)
+
+        return summary_df
+
+def initialize_exposure_intensity_matrix(exposures:                     list[str], 
+                                         activities:                    list[str],
+                                         gravityless_norm_accel_mean    = round(random.uniform(10.0, 20.0), 1) - 9.81,
+                                         gravityless_norm_accel_energy  = round(random.uniform(10.0, 20.0), 1) - 9.81,
+                                         temperature_energy             = round(random.uniform(10.0, 20.0), 1)
+                                         ) -> pd.DataFrame:
     
-    exposure_list = ['CARCINOGEN', 'RRESPIRATORY', 'NEUROTOXIN', 'NOISE', 'RADIATION', 'VIBRATION', 'THERMAL', 'MSK']
+    '''
+    Initializes and populates the exposure intensity matrix.
 
-    num_labels      = len(labels)
-    num_exposures = len(exposure_list)
+    Creates a DataFrame where rows represent exposure types and columns represent
+    activities. Each cell (i, j) indicates the intensity rate (e.g., score
+    units per hour) at which activity j contributes to exposure type i.
+
+    The matrix is populated using a combination of:
+    - Fixed estimates for certain activity-exposure pairs (e.g., RADIATION).
+    - Placeholder random values for development/testing.
+    - Calculations based on sensor-derived features passed as arguments,
+      which act as proxies for the actual exposure intensity (e.g., using
+      acceleration energy for MSK load).
+    '''
     
-    print(f"Calculating exposure")
+    # TODO 
+    # Finne fleire "proxies" for hvilken sensordata/features som slår ut på hvilken faktor
+    # Eller finne tall på det 
 
-    default_value = 0.0
+    df = pd.DataFrame(0.0, index=exposures, columns=activities) 
 
-    predicted_activities        = combined_df['Activity']
-    activity_counts             = predicted_activities.value_counts()
-    activity_length             = activity_counts * window_length_seconds / 3600
-    activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
-
-
-    activity_length_complete_dict = activity_length_complete.to_dict()
+    # If there is something common to all welding or grinding, use *WELD and *GRIND
+    WELD    = df.columns[df.columns.str.startswith('WELD')]
+    GRIND   = df.columns[df.columns.str.startswith('GRIND')]
     
-    time_vector = np.zeros(num_labels)
+    df.loc['CARCINOGEN',    ['WELDSTMAG', 'WELDSTTIG']] = round(random.uniform(10.0, 20.0), 1)
+    df.loc['RESPIRATORY',   ['SANDSIM', 'WELDALTIG']]   = round(random.uniform(10.0, 20.0), 1) 
+    df.loc['NEUROTOXIN',    ['WELDSTTIG']]              = round(random.uniform(10.0, 20.0), 1)
+    df.loc['RADIATION',     [*WELD]]                    = 99999.0
+    df.loc['NOISE',         [*GRIND]]                   = round(random.uniform(10.0, 20.0), 1)
+    df.loc['VIBRATION',     [*GRIND]]                   = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
+    df.loc['THERMAL',       [*WELD]]                    = temperature_energy
+    df.loc['MSK',           [*GRIND, 'IMPA']]           = gravityless_norm_accel_energy            
 
-    for i, key in enumerate(labels):
-        time_vector[i] = activity_length_complete_dict[key]
+    return df
 
-    print(time_vector)
+def exposure_summary(total_exposure_vector:     np.array,
+                     safe_limit_vector:         np.array,
+                     exposures:                 list[str],
+                     neutral_limit = 0.80
+                     ) -> pd.DataFrame:
 
+    '''
+    Creates a summary DataFrame comparing exposure levels to safe limits.
+
+    Generates a report showing the calculated exposure level, the predefined
+    safe limit, the ratio of exposure to the limit (as a percentage), and a
+    status indicator (smiley face) for each exposure type.
+    '''
+
+    data = {
+        'Exposure level':   total_exposure_vector,
+        'Safe limit':       safe_limit_vector
+    }
+
+    df = pd.DataFrame(data, index=exposures)
+
+    # df['Delta'] = df['Safe limit'] - df['Exposure level']
+
+    df['Ratio [%]'] = 100 * (df['Exposure level'] / df['Safe limit'])
     
-    exposure_matrix = np.ones((num_exposures, num_labels))
-    print(exposure_matrix.shape)
+    cases = [
+        # 1: Overexposed
+        df['Exposure level'] > df['Safe limit'],
+        
+        # 2: Neutral limit reached
+        df['Exposure level'] / df['Safe limit'] >= neutral_limit,
 
-    # exposure_matrix = 
+        # 3: Default: well under safe limit
+    ]
 
-    # print(time_dict)
-    # GRINDSMALL_time = activity_counts.get(['GRINDSMALL'], default_value)
-    # GRINDMED_time   = activity_counts.get(['GRINDSMED'], default_value)
-    # GRINDBIG_time   = activity_counts.get(['GRINDSBIG'], default_value)
+    smileys = [f"😟🔴  ", f"😐🟡  "]
+
+    df['Status'] = np.select(cases, smileys, default=f"😊🟢  ")
+
+    return df
     
-
-
-
-    # grinding _time = activity_length['GRINDSMALL'] + activity_length['GRINDMED'] #+ activity_length['GRINDBIG']
-
-    # # print(activity_counts)
-    # print(activity_length)
-
-    # print(f"You spent {round((grinding_time / 60), 1)} minutes grinding today. Grind big!")
-
-
-
-    return 0

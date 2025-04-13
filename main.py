@@ -25,13 +25,13 @@ from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeatur
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
 from plotting import plotBoundaryConditions, biplot, biplot3D, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
-from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcWorkload
+from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcExposure
 
 
 
-def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_calc_workload, model_selection, method_selection,
-         variance_explained ,random_seed ,window_length_seconds ,test_size , fs, ds_fs, cmap_name, test_file_path,
-         prediction_csv_path ):
+def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_offline_test, want_calc_exposure,
+         model_selection, method_selection, variance_explained, random_seed ,window_length_seconds, test_size, fs,
+         ds_fs, cmap, test_file_path, prediction_csv_path ):
 
     variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 
@@ -155,9 +155,11 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
     ]
 
+    safe_limit_vector           = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
+
     num_labels      = len(labels)
-    cmap            = plt.get_cmap(cmap_name, num_labels)
-    label_mapping   = {label: cmap(i) for i, label in enumerate(labels)}
+    cmap_name       = plt.get_cmap(cmap, num_labels)
+    label_mapping   = {label: cmap_name(i) for i, label in enumerate(labels)}
 
 
     path_names          = os.listdir(path)
@@ -257,7 +259,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
         biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
-        plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap)
+        plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
         plt.show()
 
@@ -267,11 +269,9 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     ''' OFFLINE TEST '''
     
-    combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
+    combined_df = offlineTest(want_offline_test, test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
 
-    calcWorkload(want_calc_workload, combined_df, window_length_seconds, labels, exposures)
-
-
+    summary_df = calcExposure(want_calc_exposure, combined_df, window_length_seconds, labels, exposures, safe_limit_vector)
 
 
 if __name__ == "__main__":
@@ -282,7 +282,8 @@ if __name__ == "__main__":
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
     want_plots              = 0
-    want_calc_workload      = 0
+    want_offline_test       = 1
+    want_calc_exposure      = 0
 
     model_selection         = ['SVM']
     method_selection        = ['GridSearchCV']
@@ -295,7 +296,7 @@ if __name__ == "__main__":
     test_size               = 0.25
     fs                      = 800
     ds_fs                   = 200
-    cmap_name               = 'tab10'
+    cmap                    = 'tab10'
 
     ''' LOAD PATH NAMES'''
     test_file_path = "testOnFile/testFiles"
@@ -303,8 +304,8 @@ if __name__ == "__main__":
 
 
     main(want_feature_extraction, want_pickle, 
-         separate_types, want_plots, want_calc_workload,
+         separate_types, want_plots, want_offline_test, want_calc_exposure,
          model_selection, method_selection, variance_explained,
          random_seed ,window_length_seconds, test_size, fs, ds_fs, 
-         cmap_name, test_file_path, prediction_csv_path)
+         cmap, test_file_path, prediction_csv_path)
 

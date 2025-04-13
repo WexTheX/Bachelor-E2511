@@ -28,6 +28,7 @@ real_time_window_sec = 50               # Time period the program will stream
 sample_queue = asyncio.Queue()
 shutdown_event = asyncio.Event()
 start_time = time.time()
+last_notification_time = time.time()
 
 data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT       # Data mode, what sensors is used
 DATA_SIZE = 6 * 5;                                              # Dimension of incomming packet (6 bytes * number of sensors)
@@ -37,6 +38,7 @@ notification_counter = 0    # Counter for total notifications
 sample_counter = 0          # Counter for number of samples, resets on new prediction
 prediction_counter = 0
 num_values = 14             # Number of values the sensors will give, (3 (axl, xyz) + 3 (gyo, xyz) + 3 (mag, xyz) + 2 (temp, press) + 3 (range, light, ir-light))
+
 
 # sample_list = np.zeros((fs*window_length_sec, num_values+1))    # Preloads list of samples as zeroes
 columns = ["Timestamp",                                         # Predefines columns names of dataframe
@@ -50,9 +52,6 @@ prediction_list = {}                                            # Prepares list 
 ''' PICKLE IMPORTS '''
 output_path = "OutputFiles/Separated/"                          # Define import path
 with open(output_path + "classifier.pkl", "rb") as CLF_file:    # Import classifier
-# with open(output_path + "classifiers/SVM_Grid_SearchCV_clf.pkl", "rb") as CLF_file:    # Import classifier
-# with open(output_path + "classifiers/LR_GridSearchCV_clf.pkl", "rb") as CLF_file:    # Import classifier
-# with open(output_path + "classifiers/KNN_GridSearchCV_clf.pkl", "rb") as CLF_file:    # Import classifier
     clf = pickle.load(CLF_file)
 CLF_file.close()
 
@@ -74,7 +73,11 @@ def cmd_notification_handler(sender, data):
 
 async def dataNotificationHandler(sender: int, data: bytearray):
     """Decode data"""
-    global notification_counter, sample_counter, start_time
+    global notification_counter, sample_counter, start_time, last_notification_time
+    # notification_delta = time.time() - last_notification_time
+    # print(f"Time between notifications: {notification_delta}")
+    # last_notification_time = time.time()
+    
     header_offset = 8   # Ignore part of notification that is header data (8 bytes)
 
     for k in range(DATA_BUFFER_SIZE):
@@ -101,10 +104,10 @@ async def dataNotificationHandler(sender: int, data: bytearray):
 
         await sample_queue.put(sample)
 
-        sample_counter += 1
-        if sample_counter % 1000 == 0:
-            elapsed = time.time() - start_time
-            print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
+        # sample_counter += 1
+        # if sample_counter % 1000 == 0:
+        #     elapsed = time.time() - start_time
+        #     print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
     return
 
 async def processSamples():

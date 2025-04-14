@@ -284,6 +284,7 @@ def plotBoundaryConditions(X:             pd.DataFrame,
         ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
         
         # fig.tight_layout()
+        
         return fig
 
   else:

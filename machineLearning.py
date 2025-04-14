@@ -11,7 +11,7 @@ from sklearn.model_selection import GridSearchCV, HalvingGridSearchCV, Randomize
 from sklearn.experimental import enable_halving_search_cv
 from sklearn import metrics, dummy
 from typing import List, Dict, Any, Tuple, Sequence
-
+import streamlit as st
 
 ''' PRE PROCESSING '''
 
@@ -307,7 +307,7 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
 
   print("Dummy Classifier accuracy:", round(dummy_score, 4))
   print()
-
+  
   for result_dict in results:
     
     model_name        = result_dict['model_name']
@@ -353,4 +353,4 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
   print(f"f1_score: \t {highest_score:.4f}")
   print(f"")
 
-  return best_result, accuracy_list
+  return best_result, accuracy_list, best_model, best_optimalizer, highest_score

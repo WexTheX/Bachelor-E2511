@@ -283,12 +283,12 @@ if __name__ == "__main__":
 
     ''' GLOBAL VARIABLES '''
 
-    want_feature_extraction = 0
+    want_feature_extraction = 1
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
     want_plots              = 0
     want_offline_test       = 1
-    want_calc_exposure      = 0
+    want_calc_exposure      = 1
 
     model_selection         = ['SVM']
     method_selection        = ['GridSearchCV']
@@ -300,7 +300,7 @@ if __name__ == "__main__":
     window_length_seconds   = 20
     test_size               = 0.25
     fs                      = 800
-    ds_fs                   = 200
+    ds_fs                   = 800
     cmap                    = 'tab10'
 
     ''' LOAD PATH NAMES'''

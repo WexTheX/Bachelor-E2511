@@ -1,53 +1,48 @@
 import time
 import numpy as np
 import pandas as pd
-
 import pickle
-
 from bleak import BleakScanner, BleakClient
 import asyncio
-
 from muse_api_main.Muse_Utils import *
 from muse_api_main.Muse_HW import *
-
 from extractFeatures import extractFeaturesFromDF
 
 ''' Command and data characteristics '''
 CMD_UUID = "d5913036-2d8a-41ee-85b9-4e361aa5c8a7" 
 DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 
+''' VARIABLES '''
 myDev = None
-device_list = ["Muse_E2511_GREY", "Muse_E2511_RED"]
-device_name = device_list[1]
+device_list = ["Muse_E2511_GREY", "Muse_E2511_RED"] # List of bluetooth devices 
+device_name = device_list[1]                        # Choose device to connect to from list
 
 window_length_sec = 20                  # Length of one window for prediction
 fs = 200                                # Frequency of sensor sampling
 window_size = window_length_sec * fs
-real_time_window_sec = 50               # Time period the program will stream
-
-sample_queue = asyncio.Queue()
-shutdown_event = asyncio.Event()
-start_time = time.time()
+real_time_window_sec = 30               # Time period the program will stream, deprecated after quitProgram function, still nice for debug
+start_time = time.time()  
 last_notification_time = time.time()
 
-data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES_LIGHT       # Data mode, what sensors is used
-DATA_SIZE = 6 * 5;                                              # Dimension of incomming packet (6 bytes * number of sensors)
+sample_queue = asyncio.Queue()          # Queue to store samples as they arrive
+shutdown_event = asyncio.Event()        # Event to listen for quitting of program
+
+data_mode = MH.DataMode.DATA_MODE_IMU_MAG_TEMP_PRES             # Data mode, what sensors is used
+DATA_SIZE = 6 * 4;                                              # Dimension of incomming packet (6 bytes * number of sensors)
 DATA_BUFFER_SIZE = int((128 - 8) / DATA_SIZE)                   # Number of packets for each 128-bytes notification
 
-notification_counter = 0    # Counter for total notifications              
-sample_counter = 0          # Counter for number of samples, resets on new prediction
+notification_counter = 0             
+sample_counter = 0
 prediction_counter = 0
 num_values = 14             # Number of values the sensors will give, (3 (axl, xyz) + 3 (gyo, xyz) + 3 (mag, xyz) + 2 (temp, press) + 3 (range, light, ir-light))
 
-
-# sample_list = np.zeros((fs*window_length_sec, num_values+1))    # Preloads list of samples as zeroes
-columns = ["Timestamp",                                         # Predefines columns names of dataframe
+df_columns = ["Timestamp",                                         # Predefines columns names of dataframe
            "Axl.X","Axl.Y","Axl.Z",
            "Gyr.X","Gyr.Y","Gyr.Z",
            "Mag.X","Mag.Y","Mag.Z",
            "Temp","Press",
            "Range","Lum","IRLum"]    
-prediction_list = {}                                            # Prepares list of predictions
+prediction_list = {}                                            # Prepares dict of predictions
 
 ''' PICKLE IMPORTS '''
 output_path = "OutputFiles/Separated/"                          # Define import path
@@ -72,28 +67,74 @@ def cmd_notification_handler(sender, data):
     return
 
 async def dataNotificationHandler(sender: int, data: bytearray):
-    """Decode data"""
-    global notification_counter, sample_counter, start_time, last_notification_time
-    # notification_delta = time.time() - last_notification_time
-    # print(f"Time between notifications: {notification_delta}")
-    # last_notification_time = time.time()
-    
-    header_offset = 8   # Ignore part of notification that is header data (8 bytes)
+    """ DECODE DATA FUNCTION 
+    This function runs every time the device sends a bluetooth notification.
+    The notification is 128 bytes, where the last 120 is the data needed.
+    Every DATA_SIZE amount of bytes contains samples from that 1/fs interval.
+    For each DATA_SIZE segment in the 120 bytes data, it runds thorugh 221e's DecodePacket function
+    which converts the data using the senosor calibration data and stores it in a MuseData object
 
-    for k in range(DATA_BUFFER_SIZE):
-        current_packet = bytearray(DATA_SIZE)
+    The MuseData Object is then stored in a sample queue, 
+    so it can be ready to recieve the next packet as soon as possible. 
+    """
+    global notification_counter, sample_counter, start_time, last_notification_time
+    ''' DEBUG AND PRINTS TO MEASURE NOTIFICATION DELTA '''
+    # notification_delta = time.time() - last_notification_time
+    # print(f"Notifcation delta: {notification_delta}")
+    # print(notification_delta)
+    # last_notification_time = time.time()
+    # print(f"Size of data: {len(data)}")
         
-        start_idx   = k * DATA_SIZE + header_offset
-        end_idx     = start_idx + DATA_SIZE + 1
+    header_offset = 8                                   # Ignore part of notification that is header data (8 bytes)
+
+    ''' RUN THOUGH EACH SEGMENT OF THE DATA '''
+    for k in range(DATA_BUFFER_SIZE):
+        current_packet = bytearray(DATA_SIZE)           # Define size of the segment (packet)
+        
+        start_idx   = k * DATA_SIZE + header_offset     # Define where current segment begins
+        end_idx     = start_idx + DATA_SIZE + 1         # Define where current segment ends
 
         # Define size of first packet in notification
-        current_packet[:] = data[start_idx : end_idx] # Get packet data
-        temp_data = Muse_Utils.DecodePacket(                                    # Decode packet to covert values and store them in MuseData Object
+        current_packet[:] = data[start_idx : end_idx]   # Extract packet data
+        temp_data = Muse_Utils.DecodePacket(            # Decode packet to convert values and store them in MuseData Object
             current_packet, 0, stream_mode.value, 
             gyrConfig.Sensitivity, axlConfig.Sensitivity, magConfig.Sensitivity, hdrConfig.Sensitivity
         )   
 
-        sample = [
+        await sample_queue.put(temp_data)               # Put segment as MuseData object in queue
+
+        ''' DEBUG AND PRINT TO MEASURE SAMPLES PER SECOND'''
+        # sample_counter += 1
+        # if sample_counter % 1000 == 0:
+        #     elapsed = time.time() - start_time
+        #     print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
+    return
+
+
+async def processSamples():
+    ''' PROCESS SAMPLES FUNCTION
+    This function is run as a task that constantly listens to the sample queue.
+    Once a new element is added, it takes it in and converts it from a MuseData Object to an array.
+    This array is then appended to a list of samples which contains all samples from the current window.
+
+    Once the samples list is is large enough to contain window_length number of samples
+    it will run the processing part.
+    This consists of:
+        Convert samples list to dataframe, combining it with the df_columns to give the values a column name
+        Extract features from the dataframe
+        Scale the data using the training datas scaler
+        Transform the data using the training datas PCA component
+        Predict the class using the classifier.
+    The prediction is then stored in a dict containing the class and the time the prediction occured.
+    The sample list is then cleared to prepare for the next segment.
+    '''
+    global prediction_counter, prediction_list
+    sample_list = []
+
+    
+    while True:                                 # Run allways
+        temp_data = await sample_queue.get()    # Get sample from queue
+        sample = [                              # Convert from MuseData object to array
             time.time(),
             temp_data.axl[0], temp_data.axl[1], temp_data.axl[2],
             temp_data.gyr[0], temp_data.gyr[1], temp_data.gyr[2],
@@ -101,31 +142,14 @@ async def dataNotificationHandler(sender: int, data: bytearray):
             temp_data.tp[0], temp_data.tp[1],
             temp_data.light.range, temp_data.light.lum_vis, temp_data.light.lum_ir            
         ]
-
-        await sample_queue.put(sample)
-
-        # sample_counter += 1
-        # if sample_counter % 1000 == 0:
-        #     elapsed = time.time() - start_time
-        #     print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
-    return
-
-async def processSamples():
-    global prediction_counter, prediction_list
-    sample_list = []
-
-    
-    while True:
-        sample = await sample_queue.get()
-        sample_list.append(sample)
+        sample_list.append(sample)              # Add sample to list
 
         if len(sample_list) >= window_size:
-            
-            start_time = time.time()
-            
+            ''' DEBUG TO MEASURE PROCESS TIME '''
+            # start_time = time.time()
             try:
                 ''' CONVERT TO DF, FEATURE EXTRACT AND SCALE '''
-                feature_df = pd.DataFrame(data=sample_list, columns=columns)                                    # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
+                feature_df = pd.DataFrame(data=sample_list, columns=df_columns)                                 # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
                 feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
                 feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))                       # Scale data with scaled from training data
             
@@ -139,22 +163,24 @@ async def processSamples():
 
             except Exception as e:
                 print(f"Error when predicting: {e}.")
-
             
             sample_list.clear()
 
-            end_time = time.time()  # End timer
-            elapsed_time = end_time - start_time
-            print(f"Process sampling completed in {elapsed_time} seconds.")
+            ''' CONT. DEBUG TO MEASURE PROCESS TIME'''
+            # end_time = time.time()  # End timer
+            # elapsed_time = end_time - start_time
+            # print(f"Process sampling completed in {elapsed_time} seconds.")
 
 async def waitForQuit():
-
+    ''' QUITTING FUNCTION
+    Simple function to wait for input from terminal before quitting the program
+    '''
     loop = asyncio.get_event_loop()
     print("Type q for to end streaming.")
     while True:
         user_input = await loop.run_in_executor(None, input)
-        if user_input.strip().lower() in ("q", "exit"):
-            shutdown_event.set()
+        if user_input.strip().lower() in ("q"):                 # Choose what input to wait for
+            shutdown_event.set()                                # Set flag so main() can continue
             break
 
 
@@ -217,18 +243,17 @@ async def main():
 
             # Start notify on data characteristic
             start_time = time.time()
-            await client.start_notify(DATA_UUID, dataNotificationHandler)
+            await client.start_notify(DATA_UUID, dataNotificationHandler)       # Start notification handler
 
             start_time_local = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
             print(f"Start streaming, {start_time_local}")
-            # Start Streaming using the above configuration (direct streaming, IMU mode and Sampling Frequency = 200 Hz)
-            await client.write_gatt_char(CMD_UUID, cmd_stream, True)
-            processing_task = asyncio.create_task(processSamples())
-            wait_for_quit_task = asyncio.create_task(waitForQuit())
+            await client.write_gatt_char(CMD_UUID, cmd_stream, True)            # Tell device to start streaming
+            processing_task = asyncio.create_task(processSamples())             # Start processing task
+            wait_for_quit_task = asyncio.create_task(waitForQuit())             # Start listen for quit signal task
 
-            # Set streaming duration to real_time_window_sec seconds, then stop
-            # await asyncio.sleep(real_time_window_sec) 
-            await shutdown_event.wait()   
+            ''' WAITING FUNCTIONS '''
+            # await asyncio.sleep(real_time_window_sec)       # Wait real_time_window_sec time before moving on
+            await shutdown_event.wait()                     # Wait until shutdown_event flag is set before moving on
            
             await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
             end_time_local = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())

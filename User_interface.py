@@ -52,7 +52,7 @@ with tab2:
 
 
     if st.button("Run main function"):
-        plots, best_model, f1Score = main(
+        plots, best_model,best_optimalizer ,f1Score = main(
             want_feature_extraction, want_pickle, 
             separate_types, want_plots, want_offline_test, want_calc_exposure,
             model_selection, method_selection, variance_explained,
@@ -66,7 +66,7 @@ with tab2:
 ## TAB NUMBER THREE ##
 with tab3:
     if want_plots and plots != []:
-        st.write(f"The best result given hyperparams from ML model tab: {best_model}")
+        st.write(f"The best result given hyperparams from ML model tab: {best_model}: {best_optimalizer}")
         st.write(f"Classifier F1 score accuracy: {round(f1Score,4)}")
 
         st.pyplot(plots[0][0])

@@ -345,4 +345,4 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
   print(f"f1_score: \t {highest_score:.4f}")
   print(f"")
 
-  return best_result, accuracy_list, best_model, highest_score
+  return best_result, accuracy_list, best_model, best_optimalizer, highest_score

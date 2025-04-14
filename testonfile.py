@@ -250,6 +250,7 @@ def calcExposure(combined_df:           pd.DataFrame,
                  labels:                list[str], 
                  exposures:             list[str],
                  safe_limit_vector:     list[float],
+                 csv_path:              str,
                  filter_on:             bool
                 ) -> pd.DataFrame:
     
@@ -294,6 +295,9 @@ def calcExposure(combined_df:           pd.DataFrame,
     total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
 
     summary_df = exposure_summary(total_exposure_vector, safe_limit_vector, exposures)
+
+    filename_out = os.path.join(csv_path, "summary.csv")
+    summary_df.to_csv(filename_out, index=False)
 
     print()
     print(f"Predicted hours: \n {activity_length_complete.round(decimals=2)}")

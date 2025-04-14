@@ -288,7 +288,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     if want_calc_exposure:
 
-        summary_df  = calcExposure(combined_df, window_length_seconds, labels, exposures, safe_limit_vector, filter_on=True)
+        summary_df  = calcExposure(combined_df, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
 
     return [fig_list_1, fig_1, fig_2, fig_3]
 

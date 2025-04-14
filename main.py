@@ -256,15 +256,15 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_PCA_table_plot = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
+        fig_list_1 = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
 
         ''' 2D PLOTS OF PCA '''
 
-        fig_biplot              = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
-        fig_bigplot_3D          = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
-        fig_boundary_condition  = plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        fig_3 = plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
         
         if __name__ == "__main__":
             plt.show() 
@@ -279,7 +279,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     summary_df = calcExposure(want_calc_exposure, combined_df, window_length_seconds, labels, exposures, safe_limit_vector)
 
-    return [fig1, fig2, fig3, fig4]
+    return [fig_list_1, fig_1, fig_2, fig_3]
 
 
 if __name__ == "__main__":

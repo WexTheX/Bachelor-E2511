@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+import streamlit as st
 
 from sklearn.inspection import permutation_importance
 from sklearn import svm
@@ -265,7 +266,8 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         
         fig_boundary_condition  = plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
         
-        plt.show()
+        if __name__ == "__main__":
+            plt.show() 
 
     ''' PICKLING CLASSIFIER '''
 
@@ -276,6 +278,8 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     combined_df = offlineTest(want_offline_test, test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
 
     summary_df = calcExposure(want_calc_exposure, combined_df, window_length_seconds, labels, exposures, safe_limit_vector)
+
+    return [fig1, fig2, fig3, fig4]
 
 
 if __name__ == "__main__":
@@ -294,7 +298,7 @@ if __name__ == "__main__":
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 2
+    variance_explained      = 0.8
     random_seed             = 1231
     window_length_seconds   = 20
     test_size               = 0.25

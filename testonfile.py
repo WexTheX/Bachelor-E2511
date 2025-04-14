@@ -240,6 +240,12 @@ def offlineTest(want_offline_test:      bool,
         return combined_df
 
 def labelFilter():
+
+    clf     = joblib.load("OutputFiles/Separated/classifier.pkl")
+    pca     = joblib.load("OutputFiles/Separated/PCA.pkl")
+    scaler  = joblib.load("OutputFiles/Separated/scaler.pkl")
+
+    
     # TODO 
     # Plan: Midlingsfilter til output av combined_df['Activity']
     # for å smoothe over typ WELD-WELD-WELD-SANDSIM-WELD-WELD-WELD til kun WELD
@@ -343,7 +349,7 @@ def initialize_exposure_intensity_matrix(exposures:                     list[str
     df.loc['NOISE',         [*GRIND]]                   = round(random.uniform(10.0, 20.0), 1)
     df.loc['VIBRATION',     [*GRIND]]                   = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
     df.loc['THERMAL',       [*WELD]]                    = temperature_energy
-    df.loc['MSK',           [*GRIND, 'IMPA']]           = gravityless_norm_accel_energy            
+    df.loc['MSK',           [*GRIND, 'IMPA']]           = gravityless_norm_accel_energy
 
     return df
 
@@ -387,4 +393,3 @@ def exposure_summary(total_exposure_vector:     np.array,
     df['Status'] = np.select(cases, smileys, default=f"😊🟢  ")
 
     return df
-    

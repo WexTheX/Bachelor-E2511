@@ -219,7 +219,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
 
     ''' SPLITTING TEST/TRAIN + SCALING'''
-
+    print(window_labels)
     train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=random_seed, stratify=window_labels)
 
     scaler = StandardScaler()
@@ -239,6 +239,10 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     PCA_train_df        = pd.DataFrame(PCA_final.transform(train_data_scaled))
     PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
+
+    print(train_data, test_data, train_labels)
+    print(test_labels)
+
     ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
     n_results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
@@ -251,16 +255,16 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         
         ''' FEATURE IMPORTANCE '''
         
-        PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
+        fig_list_PCA_table_plot = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
 
         ''' 2D PLOTS OF PCA '''
 
-        biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_biplot              = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
-        biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_bigplot_3D          = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
-        plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
-
+        fig_boundary_condition  = plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        
         plt.show()
 
     ''' PICKLING CLASSIFIER '''
@@ -278,10 +282,10 @@ if __name__ == "__main__":
 
     ''' GLOBAL VARIABLES '''
 
-    want_feature_extraction = 1
+    want_feature_extraction = 0
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
-    want_plots              = 0
+    want_plots              = 1
     want_offline_test       = 1
     want_calc_exposure      = 1
 

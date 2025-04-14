@@ -250,16 +250,16 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     ''' EVALUATION '''
 
-    result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
+    result, accuracy_list, best_model, f1Score = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
 
     if want_plots:
         
         ''' FEATURE IMPORTANCE '''
         
         fig_list_1 = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
-
+        
         ''' 2D PLOTS OF PCA '''
-
+        
         fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
         fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
@@ -279,7 +279,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     summary_df = calcExposure(want_calc_exposure, combined_df, window_length_seconds, labels, exposures, safe_limit_vector)
 
-    return [fig_list_1, fig_1, fig_2, fig_3]
+    return [fig_list_1, fig_1, fig_2, fig_3], best_model, f1Score
 
 
 if __name__ == "__main__":

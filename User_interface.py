@@ -88,163 +88,36 @@ with tab2:
 
 ## TAB NUMBER THREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ##
 
+
 with tab3:
-    c1,c2,c3 = st.columns(3)
-    
+    category_dirs = {
+        "GrindBig": "Preprocessing/DatafilesSeparated/GrindBig",
+        "GrindMed": "Preprocessing/DatafilesSeparated/GrindMed",
+        "GrindSmall": "Preprocessing/DatafilesSeparated/GrindSmall",
+        "Idle": "Preprocessing/DatafilesSeparated/Idle",
+        "Impa": "Preprocessing/DatafilesSeparated/Impa",  
+        "SandSim": "Preprocessing/DatafilesSeparated/SandSim",
+        "WeldAlTIG": "Preprocessing/DatafilesSeparated/WeldAlTIG",
+        "WeldStMAG": "Preprocessing/DatafilesSeparated/WeldStMAG",
+        "WeldStTIG": "Preprocessing/DatafilesSeparated/WeldStTIG"
+    }
 
-    with c1:
-        uploaded_file = st.file_uploader("GrindBig", type=["txt"])
+    #Dropdown menu for category selection
+    selected_category = st.selectbox("Select Activity Type", category_dirs.keys())
 
-        if uploaded_file is not None:
-            target_dir = "Preprocessing/DatafilesSeparated/GrindBig"
-            
-            file_path = os.path.join(target_dir, uploaded_file.name)
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path}")
-    
+    #File uploader
+    uploaded_file = st.file_uploader(f"Upload file for {selected_category}", type=["txt"])
 
+    if uploaded_file is not None:
+        target_dir = category_dirs[selected_category]
 
+        file_path = os.path.join(target_dir, uploaded_file.name)
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-    with c2:
-        uploaded_file2 = st.file_uploader("GrindMed", type=["txt"])
-
-        if uploaded_file2 is not None:
-            target_dir2 = "Preprocessing/DatafilesSeparated/GrindMed"
-            
-            file_path2 = os.path.join(target_dir2, uploaded_file2.name)
-            with open(file_path2, "wb") as f:
-                f.write(uploaded_file2.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path2}")
-    
-
-
-
-    with c3:
-        uploaded_file3 = st.file_uploader("GrindSmal", type=["txt"])
-
-        if uploaded_file3 is not None:
-            target_dir3 = "Preprocessing/DatafilesSeparated/GrindSmall"
-            
-            file_path3 = os.path.join(target_dir3, uploaded_file3.name)
-            with open(file_path3, "wb") as f:
-                f.write(uploaded_file3.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path3}")
-
-
-    r2c1, r2c2, r2c3 = st.columns(3)
-
-    with r2c1:
-        uploaded_file4 = st.file_uploader("Idle", type=["txt"])
-
-        if uploaded_file4 is not None:
-            target_dir4 = "Preprocessing/DatafilesSeparated/Idle"
-            
-            file_path4 = os.path.join(target_dir4, uploaded_file4.name)
-            with open(file_path4, "wb") as f:
-                f.write(uploaded_file4.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path4}")
-
-
-    
-
-    with r2c2:
-        uploaded_file5 = st.file_uploader("Impa", type=["txt"])
-
-        if uploaded_file5 is not None:
-            target_dir5 = "Preprocessing/DatafilesSeparated/Idle"
-            
-            file_path5 = os.path.join(target_dir5, uploaded_file5.name)
-            with open(file_path5, "wb") as f:
-                f.write(uploaded_file5.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path5}")
-    
-    with r2c3:
-        uploaded_file6 = st.file_uploader("SandSim", type=["txt"])
-
-        if uploaded_file6 is not None:
-            target_dir6 = "Preprocessing/DatafilesSeparated/SandSim"
-            
-            file_path6 = os.path.join(target_dir6, uploaded_file6.name)
-            with open(file_path6, "wb") as f:
-                f.write(uploaded_file6.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path6}")
-
-
-
-    
-
-    r3c1, r3c2,r3c3 = st.columns(3)
-
-
-    with r3c1:
-        uploaded_file7 = st.file_uploader("WeldAlTIG", type=["txt"])
-
-        if uploaded_file7 is not None:
-            target_dir7 = "Preprocessing/DatafilesSeparated/WeldAlTIG"
-            
-            file_path7 = os.path.join(target_dir7, uploaded_file7.name)
-            with open(file_path7, "wb") as f:
-                f.write(uploaded_file7.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path7}")
-
-
-    
-    with r3c2:
-        uploaded_file8 = st.file_uploader("WeldStMAG", type=["txt"])
-
-        if uploaded_file8 is not None:
-            target_dir8 = "Preprocessing/DatafilesSeparated/WeldStMAG"
-            
-            file_path8 = os.path.join(target_dir8, uploaded_file8.name)
-            with open(file_path8, "wb") as f:
-                f.write(uploaded_file8.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path8}")
-    
-
-
-
-
-
-    with r3c3:
-        uploaded_file9 = st.file_uploader("WeldStTIG", type=["txt"])
-
-        if uploaded_file9 is not None:
-            target_dir9 = "Preprocessing/DatafilesSeparated/WeldStTIG"
-            
-            file_path9 = os.path.join(target_dir9, uploaded_file9.name)
-            with open(file_path9, "wb") as f:
-                f.write(uploaded_file9.getbuffer())       
-            
-                    
-                    
-            st.success(f"File uploaded and saved to {file_path9}")
-
-
+        f.close()
+        
+        st.success(f"File uploaded and saved to {file_path}")
 
 
     

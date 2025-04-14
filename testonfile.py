@@ -27,6 +27,8 @@ import numpy as np
 import os
 import pandas as pd
 import random
+from collections import Counter
+# from hmmlearn import hmm
 
 ### Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
@@ -89,11 +91,13 @@ def runInferenceOnFile(file_path:           str,
     features_pca    = pca.transform(features_scaled)
 
     # Can be used to help calculate exposure_intensity_matrix 
-    # xyz_accel = abs(np.sqrt(np.power(features_df['mean_accel_X'], 2) +
-    #                         np.power(features_df['mean_accel_Y'], 2) +
-    #                         np.power(features_df['mean_accel_Z'], 2) ))
-    
-    # g_constant = np.mean(xyz_accel)
+    xyz_accel = abs(np.sqrt(np.power(features_df['mean_accel_X'], 2) +
+                            np.power(features_df['mean_accel_Y'], 2) +
+                            np.power(features_df['mean_accel_Z'], 2) ))
+    # g_constant = xyz_accel.mean()
+    # features_df['g_constant_lpf'] = xyz_accel.ewm(alpha=1).mean()
+    # g_constant = 9.81
+    # gravless_norm = xyz_accel * g_constant / 1000
     # print(f"g constant: {g_constant}")
     # gravless_norm = np.subtract(xyz_accel, g_constant) 
     # print(gravless_norm)
@@ -152,15 +156,16 @@ def runInferenceOnFile(file_path:           str,
         
     df_result = pd.DataFrame(results, columns=["Time", "Activity", "Probability", "Top-3"])
 
+    df_result['Smoothed activity'] = moving_mode_filter(df_result['Activity'], window=3)
+
     if want_prints:
         print(df_result)
 
-    return df_result
+    return df_result, features_df
     
 
-def offlineTest(want_offline_test:      bool,
-                test_file_path:         str,
-                prediction_csv_path:    str,
+def offlineTest(test_file_path:        str,
+                prediction_csv_path:   str,
                 fs:                    int, 
                 ds_fs:                 int,
                 window_length_seconds: int,
@@ -184,79 +189,68 @@ def offlineTest(want_offline_test:      bool,
       files.
     - Saves the combined results to a specified CSV file in the output directory.
     '''
-    if want_offline_test:
-        print(f"Making predictions on data from {test_file_path}: ")
-
-        # Paths
-        test_files          = os.listdir(test_file_path)
-        df_result_all       = [] #Storing results
-
-        for filename in test_files:
-
-            file_to_test = os.path.join(test_file_path, filename)
-            file_to_test_no_ext = file_to_test.replace(".txt", "")
-            
-            if filename.endswith(".csv"):
-                continue  # Skipping .csv files
-
-            elif filename.endswith(".bin"): ##Converting .bin to .txt
-                convert_bin_to_txt(file_to_test_no_ext)
-
-
-            df_result = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints, file_to_test, norm_accel=False)
-        
-            header_lines = [
-                f"_______________________________________________________________________________",
-                f"Predictions from: {os.path.basename(file_to_test)}"
-            ]
-
-            # header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
-            #                         columns=["Time", "Activity", "Probability", "Top-3"])
-
-            ###Adding header above every prediction set
-            # column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
-            #                         columns=["Time", "Activity", "Probability", "Top-3"])
-
-            ### Adding the data together
-            # df_result_all.append(header_df)
-            # df_result_all.append(column_header)
-
-            df_result_all.append(df_result)
-
-            # TODO
-            # df.append() er på vei ut, må finne alternativ
-
-            ### Saving as csv
-
-        combined_df = pd.concat(df_result_all, ignore_index=True)
-        filename_out = os.path.join(prediction_csv_path, "predictions.csv")
-        combined_df.to_csv(filename_out, index=False)
-
-        ### Finished, printing file  for output file
-        print("Done running predictions on datasets")
-        print(f"Predictions saved in: {filename_out}")
-        print("-" * 50)
-
-        return combined_df
-
-def labelFilter():
-
-    clf     = joblib.load("OutputFiles/Separated/classifier.pkl")
-    pca     = joblib.load("OutputFiles/Separated/PCA.pkl")
-    scaler  = joblib.load("OutputFiles/Separated/scaler.pkl")
-
     
-    # TODO 
-    # Plan: Midlingsfilter til output av combined_df['Activity']
-    # for å smoothe over typ WELD-WELD-WELD-SANDSIM-WELD-WELD-WELD til kun WELD
-    return 0
+    # feature_df_all = pd.DataFrame()
 
-def calcExposure(want_calc_exposure:    bool,
-                 combined_df:           pd.DataFrame,
+    print(f"Making predictions on data from {test_file_path}: ")
+
+    # Paths
+    test_files          = os.listdir(test_file_path)
+    df_result_all       = [] #Storing results
+
+    for filename in test_files:
+
+        file_to_test = os.path.join(test_file_path, filename)
+        file_to_test_no_ext = file_to_test.replace(".txt", "")
+        
+        if filename.endswith(".csv"):
+            continue  # Skipping .csv files
+
+        elif filename.endswith(".bin"): ##Converting .bin to .txt
+            convert_bin_to_txt(file_to_test_no_ext)
+
+        df_result, features_df = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints, file_to_test, norm_accel=False)
+    
+        # header_lines = [
+        #     f"_______________________________________________________________________________",
+        #     f"Predictions from: {os.path.basename(file_to_test)}"
+        # ]
+
+        # header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
+        #                         columns=["Time", "Activity", "Probability", "Top-3"])
+
+        ###Adding header above every prediction set
+        # column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
+        #                         columns=["Time", "Activity", "Probability", "Top-3"])
+
+        ### Adding the data together
+        # df_result_all.append(header_df)
+        # df_result_all.append(column_header)
+
+        df_result_all.append(df_result)
+
+        # TODO
+        # df.append() er på vei ut, må finne alternativ
+
+        ### Saving as csv
+
+    combined_df = pd.concat(df_result_all, ignore_index=True)
+    filename_out = os.path.join(prediction_csv_path, "predictions.csv")
+    combined_df.to_csv(filename_out, index=False)
+
+    ### Finished, printing file  for output file
+    print("Done running predictions on datasets")
+    print(f"Predictions saved in: {filename_out}")
+    print("-" * 50)
+
+    return combined_df #,features_df_all
+
+def calcExposure(combined_df:           pd.DataFrame,
                  window_length_seconds: int,
                  labels:                list[str], 
                  exposures:             list[str],
-                 safe_limit_vector:     list[float]
+                 safe_limit_vector:     list[float],
+                 filter_on:             bool
                 ) -> pd.DataFrame:
     
     '''
@@ -268,47 +262,49 @@ def calcExposure(want_calc_exposure:    bool,
     scores to safe limits. Prints intermediate results and the final summary.
     '''
 
-    if want_calc_exposure:
-        
-        # labels = [
-        #             'GRINDBIG', 'GRINDSMALL',
-        #             'IDLE','IMPA','GRINDMED', 
-        #             'SANDSIM',
-        #             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
-        #     ]
-        
-        # exposure_list = ['CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK']
+    # labels = [
+    #             'GRINDBIG', 'GRINDSMALL',
+    #             'IDLE','IMPA','GRINDMED', 
+    #             'SANDSIM',
+    #             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
+    #     ]
+    
+    # exposure_list = ['CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK']
 
-        default_value = 0.0
-        
-        print(f"Calculating exposure... ")
+    default_value = 0.0
 
-        predicted_activities        = combined_df['Activity']
-        activity_counts             = predicted_activities.value_counts()
-        activity_length             = activity_counts * window_length_seconds / 3600
-        activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
+    if filter_on:
+        print(f"Calculating exposure... (filter on)")
+        predicted_activities    = combined_df['Smoothed activity']
+    else:
+        print(f"Calculating exposure... (filter off)")
+        predicted_activities    = combined_df['Activity']
 
-        # x
-        activity_duration_vector    = activity_length_complete.values
+    activity_counts             = predicted_activities.value_counts()
+    activity_length             = activity_counts * window_length_seconds / 3600
+    activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
 
-        # A
-        exposure_intensity_matrix   = initialize_exposure_intensity_matrix(exposures, labels)
+    # x
+    activity_duration_vector    = activity_length_complete.values
 
-        # b = Ax
-        total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
+    # A
+    exposure_intensity_matrix   = initialize_exposure_intensity_matrix(exposures, labels)
 
-        summary_df = exposure_summary(total_exposure_vector, safe_limit_vector, exposures)
+    # b = Ax
+    total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
 
-        print()
-        print(f"Predicted hours: \n {activity_length_complete.round(decimals=2)}")
-        print(f"Risk factors increased. Grind big!")
-        print("-" * 99)
-        print(f"Exposure intensity matrix: \n {exposure_intensity_matrix}")
-        print("-" * 99)
-        print(summary_df.round(decimals=1))
-        print("-" * 57)
+    summary_df = exposure_summary(total_exposure_vector, safe_limit_vector, exposures)
 
-        return summary_df
+    print()
+    print(f"Predicted hours: \n {activity_length_complete.round(decimals=2)}")
+    print(f"Risk factors increased. Grind big!")
+    print("-" * 99)
+    print(f"Exposure intensity matrix: \n {exposure_intensity_matrix}")
+    print("-" * 99)
+    print(summary_df.round(decimals=1))
+    print("-" * 57)
+
+    return summary_df
 
 def initialize_exposure_intensity_matrix(exposures:                     list[str], 
                                          activities:                    list[str],
@@ -393,3 +389,16 @@ def exposure_summary(total_exposure_vector:     np.array,
     df['Status'] = np.select(cases, smileys, default=f"😊🟢  ")
 
     return df
+
+def moving_mode_filter(series:  pd.Series, 
+                       window:  int
+                       ) -> pd.Series:
+    
+    return pd.Series(
+        [
+            Counter(series[max(0, i - window // 2): i + window // 2 + 1]).most_common(1)[0][0]
+            if not series[max(0, i - window // 2): i + window // 2 + 1].empty else None
+            for i in range(len(series))
+        ],
+        index=series.index
+    )

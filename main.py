@@ -12,7 +12,7 @@ from sklearn.inspection import permutation_importance
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.model_selection import TimeSeriesSplit, cross_val_score, train_test_split
+from sklearn.model_selection import TimeSeriesSplit, StratifiedKFold, RepeatedStratifiedKFold, cross_val_score, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -26,7 +26,7 @@ from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeatur
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
 from plotting import plotBoundaryConditions, biplot, biplot3D, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
-from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcExposure
+from testonfile import offlineTest, calcExposure
 
 
 
@@ -35,6 +35,11 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
          ds_fs, cmap, test_file_path, prediction_csv_path ):
 
     variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
+    
+    fig_list_1, n_results, accuracy_list = [], [], []
+    fig_1, fig_2, fig_3 = None, None, None
+    combined_df = pd.DataFrame()
+    result = {}
 
     ''' BASE ESTIMATORS '''
 
@@ -60,10 +65,10 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                # 1, 10, 100
+                                # 1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10, 100],
+        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
         # "coef0":                [0.0, 0.5, 1.0],
         # "degree":               [2, 3, 4, 5]
     }
@@ -91,12 +96,11 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     }
 
     GNB_param_grid = {
-        'priors':               [None], 
-        'var_smoothing':        [1e-09]
+        'var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5]
     }
 
     LR_param_grid = {
-        'C':                    [0.001, 0.01, 0.1, 1, 10, 100],             #
+        'C':                    [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],             #
         # 'dual':                 [False],                                    # Dual or Primal formulation
         # 'fit_intercept':        [True],                                     # Constant added to function (bias)             
         # 'intercept_scaling':    [1],                                        # Only useful when Solver = liblinear, fit_intercept = true
@@ -118,11 +122,16 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
             'LR':   (LR_base,   LR_param_grid)
             }
 
-    optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV', 'Base model']
+    optimization_methods = {'BS':   'BayesSearchCV',
+                            'RS':   'RandomizedSearchCV',
+                            'GS':   'GridSearchCV',
+                            'HGS':  'HalvingGridSearchCV',
+                            'BM':   'Base model'
+                            }
 
     search_kwargs = {'n_jobs':             -1, 
                     'verbose':             0,
-                    'cv':                  TimeSeriesSplit(n_splits=num_folds),
+                    'cv':                  StratifiedKFold(n_splits=num_folds),
                     'scoring':             'f1_weighted',
                     'return_train_score':  True
                     }
@@ -156,7 +165,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
     ]
 
-    safe_limit_vector           = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
+    safe_limit_vector = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
 
     num_labels      = len(labels)
     cmap_name       = plt.get_cmap(cmap, num_labels)
@@ -220,7 +229,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
 
     ''' SPLITTING TEST/TRAIN + SCALING'''
-    print(window_labels)
+    
     train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=random_seed, stratify=window_labels)
 
     scaler = StandardScaler()
@@ -239,10 +248,6 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     PCA_train_df        = pd.DataFrame(PCA_final.transform(train_data_scaled))
     PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
-
-
-    print(train_data, test_data, train_labels)
-    print(test_labels)
 
     ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
@@ -271,13 +276,19 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     ''' PICKLING CLASSIFIER '''
 
-    pickleFiles(want_pickle, n_results, result, output_path, PCA_final, scaler)
+    if want_pickle:
+
+        pickleFiles(n_results, result, output_path, PCA_final, scaler)
 
     ''' OFFLINE TEST '''
     
-    combined_df = offlineTest(want_offline_test, test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
+    if want_offline_test:
 
-    summary_df = calcExposure(want_calc_exposure, combined_df, window_length_seconds, labels, exposures, safe_limit_vector)
+        combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
+
+    if want_calc_exposure:
+
+        summary_df  = calcExposure(combined_df, window_length_seconds, labels, exposures, safe_limit_vector, filter_on=True)
 
     return [fig_list_1, fig_1, fig_2, fig_3]
 
@@ -288,13 +299,13 @@ if __name__ == "__main__":
 
     want_feature_extraction = 0
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
-    separate_types          = 1
+    separate_types          = 1 # Granular classification
     want_plots              = 1
     want_offline_test       = 1
     want_calc_exposure      = 1
 
-    model_selection         = ['SVM']
-    method_selection        = ['GridSearchCV']
+    model_selection         = ['svm']
+    method_selection        = ['tjaa']
 
     ''' DATASET VARIABLES '''
 

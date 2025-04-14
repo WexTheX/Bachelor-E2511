@@ -124,28 +124,36 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
   key results are printed to the console during execution.
   '''
 
-  selected_model_data = []
-  selected_model_names = []
-  results = [] 
+  selected_model_data   = []
+  selected_model_names  = []
+  results               = [] 
+  method_selection_list = []
+
+  optimization_methods_list = list(optimization_methods.values())
+
+  for key in method_selection:
+
+    method = optimization_methods.get(key.upper(), optimization_methods_list[-1])
+
+    if method:
+      method_selection_list.append(method)
+    else:
+      print(f"Warning: Method not recognized, selecting {key}.")
 
   # Create a list of (base model, param grid) pairs based on input models
   for name in model_selection:
-    if name in models:
-      estimator, grid = models[name]
+    name_upper = name.upper()
+    if name_upper in models:
+      estimator, grid = models[name_upper]
       selected_model_data.append((estimator, grid))
-      selected_model_names.append(name)
+      selected_model_names.append(name_upper)
+      
     else:
        print(f"Warning: Classifier {name} not recognized.")
 
   # make n classifiers = len(model_selection) * len(method_selection)
   for (base_estimator, param_grid), model_name_str in zip(selected_model_data, selected_model_names):
-    for selected_method in method_selection:
-      
-      # Choose model, or take base model
-      if selected_method in optimization_methods:
-        method = selected_method
-      else:
-        method = optimization_methods[-1] # Base model
+    for selected_method in method_selection_list:
 
       print()
       print(f"Classifier: \t {model_name_str}")

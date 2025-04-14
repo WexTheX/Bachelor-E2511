@@ -33,7 +33,7 @@ Hva forventer vi å bli ferdig med til påske?
 1) Skrive i metode-bit hvordan vi prosesserer data før vi sender inn i maskinlæring 
 
 2) Sette opp pipeline for å teste filer inne i testFiles 
-2.1) Logge resultatet, lagre resultatet i en fil
+2.1) Logge resultatet, lagre resultatet i en fil 
 
 3) Få til Real-Time
 3.2) Classifier og PCA må packages gjennom Pickle
@@ -55,7 +55,6 @@ def saveWindow():
 5) Bedre grunnlag på hvor gode classifiers er (ROC AUC, log loss for enkelte classifiers)
 
 6) Flere bilder / grafer til rapporten
-
 
     Endelig confusion matrix
     plots av markante features (feks magnometer for sveising, accel fra vinkelsliper)
@@ -83,7 +82,7 @@ Mål: Prøv å bli ferdig med hver vår del innen slutten av påske 22. April!
 
 Aleksander: Readme file/guide
 Odin: Feature extraction og importance
-Steinnes: Hyperparams optimilisering (+Kode stuff)
+Steinnes: Hyperparams optimalisering (+Kode stuff)
 Haldorsen: Testing og validering
 
 

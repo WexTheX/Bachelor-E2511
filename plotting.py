@@ -227,7 +227,7 @@ def biplot3D(
 
   return fig
 
-def plotBoundaryConditions(X:             pd.DataFrame, 
+def plotDecisionBoundaries(X:             pd.DataFrame, 
                            train_labels:  Sequence, 
                            label_mapping: Dict[str, Any],
                            results:       List[Dict[str, Any]],
@@ -281,11 +281,28 @@ def plotBoundaryConditions(X:             pd.DataFrame,
         
         # Foreground
         ax.scatter(xs, ys, c=point_colors, s=25, edgecolors="k", linewidths=0.35)
-        ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
+
+        # Text
+        ax.set_title(f"{model_name}: {optimalizer}", fontsize=10, fontweight='normal')
+        ax.text(
+          0.98, 0.02,  # X and Y position in axes coords (0=left/bottom, 1=right/top)
+          f"{accuracy:.3f}".lstrip("0"),
+          transform=ax.transAxes,
+          fontsize=8,
+          ha='right',
+          va='bottom',
+          bbox=None
+        )
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        # ax.set_aspect('equal', adjustable='box')
+
+      fig.suptitle("Classifier Decision Boundaries", fontsize=14)
+      fig.tight_layout()
         
-        # fig.tight_layout()
-        
-        return fig
+    return fig
 
   else:
     print(f"Warning: Cannot plot decision boundaries. Classifiers has {X.shape[1]} features, must be 2.")

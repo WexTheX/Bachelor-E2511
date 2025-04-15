@@ -13,18 +13,19 @@ from sklearn import svm
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import TimeSeriesSplit, StratifiedKFold, RepeatedStratifiedKFold, cross_val_score, train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.experimental import enable_halving_search_cv
+from sklearn.tree import DecisionTreeClassifier
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotBoundaryConditions, biplot, biplot3D, PCA_table_plot, plotKNNboundries
+from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotKNNboundries
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import offlineTest, calcExposure
 
@@ -57,6 +58,8 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     KNN_base    = KNeighborsClassifier()
     GNB_base    = GaussianNB()
     LR_base     = LogisticRegression(**base_params)
+    GB_base     = GradientBoostingClassifier(random_state=random_seed)
+    ADA_base    = AdaBoostClassifier(random_state=random_seed)
 
     ''' HYPER PARAMETER VARIABLES '''
 
@@ -114,19 +117,56 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         #'warm_start':           [False]                                      # Reuse previous calls solution
     }
 
+    GB_param_grid = {
+        'n_estimators': [100, 200, 300],
+        'learning_rate': [0.01, 0.05, 0.1],
+        'max_depth': [3, 5, 7],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4],
+        'subsample': [0.6, 0.8, 1.0],
+        'max_features': ['sqrt', 'log2', None],
+    }
+    
+    GB_param_grid = {
+        'n_estimators': [100],
+        'learning_rate': [0.05, 0.1],
+        'max_depth': [3, 5],
+    }
+    
+    ADA_param_grid = {
+        'n_estimators': [50, 100, 200],
+        'learning_rate': [0.01, 0.1, 1.0],
+        'estimator': [
+            DecisionTreeClassifier(max_depth=1),
+            DecisionTreeClassifier(max_depth=3),
+            DecisionTreeClassifier(max_depth=5)
+        ]
+    }
+
+    model_names = {
+        'SVM':  'Support Vector Machine', 
+        'RF':   'Random Forest',
+        'KNN':  'K-Nearest Neighbors',
+        'GNB':  'Gaussian Naive Bayes',
+        'LR':   'Linear Regression',
+        'GB':   'Gradient Boosting',
+        'ADA':  'AdaBoost'
+    }
+
     models = {
             'SVM':  (SVM_base,  SVM_param_grid), 
             'RF':   (RF_base,   RF_param_grid),
             'KNN':  (KNN_base,  KNN_param_grid),
             'GNB':  (GNB_base,  GNB_param_grid),
-            'LR':   (LR_base,   LR_param_grid)
+            'LR':   (LR_base,   LR_param_grid),
+            'GB':   (GB_base,   GB_param_grid),
+            'ADA':  (ADA_base,  ADA_param_grid)
             }
 
     optimization_methods = {'BS':   'BayesSearchCV',
                             'RS':   'RandomizedSearchCV',
                             'GS':   'GridSearchCV',
-                            'HGS':  'HalvingGridSearchCV',
-                            'BM':   'Base model'
+                            'HGS':  'HalvingGridSearchCV'
                             }
 
     search_kwargs = {'n_jobs':             -1, 
@@ -251,7 +291,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-    n_results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
+    n_results = makeNClassifiers(models, model_names, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
 
     ''' EVALUATION '''
 
@@ -261,15 +301,15 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_1 = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
+        # fig_list_1 = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
         
         ''' 2D PLOTS OF PCA '''
         
-        fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        # fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
-        fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        # fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
-        fig_3 = plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        fig_3 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
         
         if __name__ == "__main__":
             plt.show() 
@@ -290,7 +330,8 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
         summary_df  = calcExposure(combined_df, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
 
-    return [fig_list_1, fig_1, fig_2, fig_3], best_model,best_optimalizer , f1Score
+
+    return [fig_list_1, fig_1, fig_2, fig_3], best_model, best_optimalizer, f1Score
 
 
 if __name__ == "__main__":
@@ -301,16 +342,16 @@ if __name__ == "__main__":
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1 # Granular classification
     want_plots              = 1
-    want_offline_test       = 1
-    want_calc_exposure      = 1
+    want_offline_test       = 0
+    want_calc_exposure      = 0
 
-    model_selection         = ['svm']
-    method_selection        = ['tjaa']
+    model_selection         = ['ada', 'gb']
+    method_selection        = ['bs', 'rs']
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 0.8
-    random_seed             = 1231
+    variance_explained      = 2
+    random_seed             = 420
     window_length_seconds   = 20
     test_size               = 0.25
     fs                      = 800

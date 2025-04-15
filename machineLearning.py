@@ -100,6 +100,7 @@ def makeSmoothParamGrid(param_grid: Dict[str, Any]
   return smooth_param_grid
 
 def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
+                     model_names:           Dict[str, str],
                      optimization_methods:  List[str],
                      model_selection:       List[str],
                      method_selection:      List[str],    
@@ -129,31 +130,38 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
   results               = [] 
   method_selection_list = []
 
-  optimization_methods_list = list(optimization_methods.values())
+  print()
 
+  # Check selected models
+  for key in model_selection:
+
+    key_upper = key.upper()
+
+    estimator, grid = models.get(key_upper, models['SVM'])
+    model_name_full = model_names.get(key_upper, model_names['SVM'])
+
+    if key_upper not in models:
+      print(f"Warning: Classifier '{key}' not recognized, selecting {model_name_full}.")
+
+    # Create a list of (base model, param grid) pairs based on input models, default to SVM base and SVM param grid
+    selected_model_names.append(model_name_full)
+    selected_model_data.append((estimator, grid))
+
+  # Check selected methods
   for key in method_selection:
+    
+    key_upper = key.upper()
 
-    method = optimization_methods.get(key.upper(), optimization_methods_list[-1])
+    method = optimization_methods.get(key_upper, 'Base model')
 
-    if method:
-      method_selection_list.append(method)
-    else:
-      print(f"Warning: Method not recognized, selecting {key}.")
-
-  # Create a list of (base model, param grid) pairs based on input models
-  for name in model_selection:
-    name_upper = name.upper()
-    if name_upper in models:
-      estimator, grid = models[name_upper]
-      selected_model_data.append((estimator, grid))
-      selected_model_names.append(name_upper)
-      
-    else:
-       print(f"Warning: Classifier {name} not recognized.")
+    if key_upper not in optimization_methods:
+      print(f"Warning: Method '{key}' not recognized, selecting {method}.")
+    
+    method_selection_list.append(method)
 
   # make n classifiers = len(model_selection) * len(method_selection)
   for (base_estimator, param_grid), model_name_str in zip(selected_model_data, selected_model_names):
-    for selected_method in method_selection_list:
+    for method in method_selection_list:
 
       print()
       print(f"Classifier: \t {model_name_str}")
@@ -237,7 +245,7 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
         train_test_delta = 0.0000
         mean_test_score = 0.0000
         std_test_score = 0.0000
-        print(f"Warning: {selected_method} not recognized, fitting default {model_name_str}")
+        # print(f"Warning: {selected_method} not recognized, fitting default {model_name_str}")
 
       clf.fit(X, y)
 
@@ -258,7 +266,6 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
         mean_train_score  = clf.cv_results_['mean_train_score'][clf.best_index_]
 
         train_test_delta = mean_train_score - mean_test_score
-        
 
         print(f"{clf.cv_results_['params'][clf.best_index_]} gives the best worst-case test result: (mean - {k}*std): {pessimistic_test_score}")
         print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
@@ -273,7 +280,7 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
                         'best_params':      best_params,      
                         'train_test_delta': train_test_delta, # Higher value -> more overfitted
                         'mean_test_score':  mean_test_score,
-                        'std_test_score':   std_test_score
+                        'std_test_score':   std_test_score,
                       })
 
   return results
@@ -293,8 +300,9 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
   train-test delta) obtained during training/tuning.
 
   The function identifies the 'best' classifier based on the highest F1
-  score achieved on the test set during this evaluation. Optionally, it
-  generates and displays a confusion matrix plot for each classifier.
+  score achieved on the test set during this evaluation. This object is
+  returned as a dict. Optionally, it generates and displays a confusion
+  matrix plot for each classifier.
   '''
   
   accuracy_list = []
@@ -349,7 +357,7 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
 
     accuracy_list.append(round(accuracy_score, 4))
   
-  print(f"Best clf \t {best_model}: {best_optimalizer}")
+  print(f"Best clf: \t {best_model}: {best_optimalizer}")
   print(f"f1_score: \t {highest_score:.4f}")
   print(f"")
 

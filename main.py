@@ -282,7 +282,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     ''' EVALUATION '''
 
-    result, accuracy_list, best_model, best_optimalizer, f1Score = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
+    result, accuracy_list= evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
 
     if want_plots:
         
@@ -318,7 +318,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         summary_df  = calcExposure(combined_df, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
 
 
-    return [fig_list_1, fig_1, fig_2, fig_3], best_model, best_optimalizer, f1Score
+    return [fig_list_1, fig_1, fig_2, fig_3], result, accuracy_list
 
 
 if __name__ == "__main__":

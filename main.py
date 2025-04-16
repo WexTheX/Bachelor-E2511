@@ -47,19 +47,13 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     base_params =  {'class_weight': 'balanced', 
                     'random_state': random_seed}
 
-    # base_paramssvm = {
-    #     'class_weight': 'balanced',
-    #     'probability': True,
-    #     'random_state': randomness
-    # }
-
     SVM_base    = svm.SVC(**base_params, probability=True)
     RF_base     = RandomForestClassifier(**base_params)
     KNN_base    = KNeighborsClassifier()
     GNB_base    = GaussianNB()
     LR_base     = LogisticRegression(**base_params)
     GB_base     = GradientBoostingClassifier(random_state=random_seed)
-    ADA_base    = AdaBoostClassifier(random_state=random_seed)
+    ADA_base    = AdaBoostClassifier(estimator=DecisionTreeClassifier(), random_state=random_seed)
 
     ''' HYPER PARAMETER VARIABLES '''
 
@@ -118,29 +112,20 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     }
 
     GB_param_grid = {
-        'n_estimators': [100, 200, 300],
-        'learning_rate': [0.01, 0.05, 0.1],
-        'max_depth': [3, 5, 7],
-        'min_samples_split': [2, 5, 10],
-        'min_samples_leaf': [1, 2, 4],
-        'subsample': [0.6, 0.8, 1.0],
-        'max_features': ['sqrt', 'log2', None],
-    }
-    
-    GB_param_grid = {
-        'n_estimators': [100],
-        'learning_rate': [0.05, 0.1],
-        'max_depth': [3, 5],
+        'n_estimators':         [100, 200, 300],
+        'learning_rate':        [0.01, 0.05, 0.1],
+        'max_depth':            [3, 5, 7],
+        'min_samples_split':    [2, 5, 10],
+        'min_samples_leaf':     [1, 2, 4],
+        'subsample':            [0.6, 0.8, 1.0],
+        'max_features':         ['sqrt', 'log2', None],
     }
     
     ADA_param_grid = {
-        'n_estimators': [50, 100, 200],
-        'learning_rate': [0.01, 0.1, 1.0],
-        'estimator': [
-            DecisionTreeClassifier(max_depth=1),
-            DecisionTreeClassifier(max_depth=3),
-            DecisionTreeClassifier(max_depth=5)
-        ]
+        'n_estimators':                 [50, 100, 200],
+        'learning_rate':                [0.01, 0.1, 1.0],
+        'estimator__max_depth':         [1, 3, 5],
+        'estimator__min_samples_split': [2, 5]
     }
 
     model_names = {
@@ -154,27 +139,29 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     }
 
     models = {
-            'SVM':  (SVM_base,  SVM_param_grid), 
-            'RF':   (RF_base,   RF_param_grid),
-            'KNN':  (KNN_base,  KNN_param_grid),
-            'GNB':  (GNB_base,  GNB_param_grid),
-            'LR':   (LR_base,   LR_param_grid),
-            'GB':   (GB_base,   GB_param_grid),
-            'ADA':  (ADA_base,  ADA_param_grid)
-            }
+        'SVM':  (SVM_base,  SVM_param_grid), 
+        'RF':   (RF_base,   RF_param_grid),
+        'KNN':  (KNN_base,  KNN_param_grid),
+        'GNB':  (GNB_base,  GNB_param_grid),
+        'LR':   (LR_base,   LR_param_grid),
+        'GB':   (GB_base,   GB_param_grid),
+        'ADA':  (ADA_base,  ADA_param_grid)
+    }
 
-    optimization_methods = {'BS':   'BayesSearchCV',
-                            'RS':   'RandomizedSearchCV',
-                            'GS':   'GridSearchCV',
-                            'HGS':  'HalvingGridSearchCV'
-                            }
+    optimization_methods = {
+        'BS':   'BayesSearchCV',
+        'RS':   'RandomizedSearchCV',
+        'GS':   'GridSearchCV',
+        'HGS':  'HalvingGridSearchCV'
+    }
 
-    search_kwargs = {'n_jobs':             -1, 
-                    'verbose':             0,
-                    'cv':                  StratifiedKFold(n_splits=num_folds),
-                    'scoring':             'f1_weighted',
-                    'return_train_score':  True
-                    }
+    search_kwargs = {
+        'n_jobs':             -1, 
+        'verbose':             0,
+        'cv':                  StratifiedKFold(n_splits=num_folds),
+        'scoring':             'f1_weighted',
+        'return_train_score':  True
+    }
 
     ''' LOAD DATASET '''
 
@@ -301,13 +288,13 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         
         ''' FEATURE IMPORTANCE '''
         
-        # fig_list_1 = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
+        fig_list_1 = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
         
         ''' 2D PLOTS OF PCA '''
         
-        # fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
-        # fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
         fig_3 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
         
@@ -345,8 +332,8 @@ if __name__ == "__main__":
     want_offline_test       = 0
     want_calc_exposure      = 0
 
-    model_selection         = ['ada', 'gb']
-    method_selection        = ['bs', 'rs']
+    model_selection         = ['ada']
+    method_selection        = ['rs']
 
     ''' DATASET VARIABLES '''
 

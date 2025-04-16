@@ -173,6 +173,9 @@ def biplot(feature_df:        pd.DataFrame,
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 
+  plt.savefig("plots/biplot.png", dpi=300, bbox_inches='tight')
+
+
   return fig
 
 def biplot3D(
@@ -224,6 +227,9 @@ def biplot3D(
   plt.title("Complete dataset in 3 Principal Components")
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
+
+  plt.savefig("plots/biplot3D.png", dpi=300, bbox_inches='tight')
+
 
   return fig
 
@@ -301,6 +307,8 @@ def plotDecisionBoundaries(X:             pd.DataFrame,
 
       fig.suptitle("Classifier Decision Boundaries", fontsize=14)
       fig.tight_layout()
+
+    plt.savefig("plots/decision_boundaries.png", dpi=300, bbox_inches='tight')
         
     return fig
 

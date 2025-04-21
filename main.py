@@ -329,12 +329,13 @@ if __name__ == "__main__":
 
     ''' GLOBAL VARIABLES '''
 
+
     want_feature_extraction = 0
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1 # Granular classification
-    want_plots              = 1
-    want_offline_test       = 0
-    want_calc_exposure      = 0
+    want_plots              = 0
+    want_offline_test       = 1
+    want_calc_exposure      = 1
 
     model_selection         = ['svm']
     method_selection        = ['rs']

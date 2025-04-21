@@ -20,32 +20,13 @@ st.title("User interface")
 
 tab1, tab2, tab3, tab4 = st.tabs(["Real time streaming", "ML model", "Results", "New files/data" ])
 
-if "predictions" not in st.session_state:
-    st.session_state.predictions = {}
 
 
-def start_ble_loop():
-    asyncio.run(RT_main())
-
-
-
-def display_predictions():
-    prediction_placeholder = st.empty()
-    while True:
-        predictions = get_predictions()
-        if predictions != st.session_state.predictions:
-            st.session_state.predictions = predictions
-            prediction_text = "\n".join([f"{k}: {v}" for k, v in predictions.items()])
-            prediction_placeholder.text(prediction_text)
-        time.sleep(1)
 
 
 with tab1:
     if st.button("Start classifying in real time"):
-        ble_thread = threading.Thread(target=start_ble_loop, daemon=True)
-        ble_thread.start()
-
-        display_predictions()
+        asyncio.run(RT_main())
         
 
         

@@ -2,8 +2,7 @@ import streamlit as st
 from main import main
 import os
 
-
-ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
+ML_models = ["SVM", "RF", "KNN", "GNB", "ADA", "LR", "GB"]
 test_file_path = "testOnFile/testFiles"
 prediction_csv_path = "testOnFile"
 random_seed = 1231

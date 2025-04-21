@@ -288,3 +288,11 @@ def plotKNNboundries(df, clf, labels):
     ax=ax,
     )
     scatter = disp.ax_.scatter(df.iloc[:, 0], df.iloc[:, 1], c=labels, edgecolors="k")
+
+def confusionMatrix(labels, prediction, activities, model, optimalizer):
+      conf_matrix = metrics.confusion_matrix(labels, prediction, labels=activities)
+      plt.figure(figsize=(10, 8))
+      sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activities, yticklabels=activities)
+      plt.xlabel("Predicted")
+      plt.ylabel("Actual")
+      plt.title(f'Confusion matrix, {model}: {optimalizer}')

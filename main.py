@@ -23,7 +23,7 @@ from sklearn.experimental import enable_halving_search_cv
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotBoundaryConditions, biplot, biplot3D, PCA_table_plot, plotKNNboundries
+from plotting import plotBoundaryConditions, biplot, biplot3D, PCA_table_plot, plotKNNboundries, confusionMatrix
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcExposure
 
@@ -59,7 +59,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                # 1, 10, 100
+                                 1, 10, 100
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
         # "gamma":                [0.01, 0.1, 1, 10, 100],
@@ -246,8 +246,12 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     ''' EVALUATION '''
 
     result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
+    
 
     if want_plots:
+        ''' CONFUSION MATRIX '''
+        test_predict = result['classifier'].predict(PCA_test_df)
+        confusionMatrix(test_labels, test_predict, activity_name, result['model_name'], result['optimalizer'])
         
         ''' FEATURE IMPORTANCE '''
         
@@ -278,24 +282,24 @@ if __name__ == "__main__":
 
     ''' GLOBAL VARIABLES '''
 
-    want_feature_extraction = 1
+    want_feature_extraction = 0
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1
-    want_plots              = 0
-    want_offline_test       = 1
-    want_calc_exposure      = 1
+    want_plots              = 1
+    want_offline_test       = 0
+    want_calc_exposure      = 0
 
     model_selection         = ['SVM']
     method_selection        = ['GridSearchCV']
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 2
+    variance_explained      = 0.95
     random_seed             = 1231
     window_length_seconds   = 20
     test_size               = 0.25
     fs                      = 800
-    ds_fs                   = 800
+    ds_fs                   = 200
     cmap                    = 'tab10'
 
     ''' LOAD PATH NAMES'''

@@ -321,7 +321,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
         summary_df  = calcExposure(combined_df, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
 
-
+    
     return [fig_list_1, fig_1, fig_2, fig_3], result, accuracy_list
 
 
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     test_file_path = "testOnFile/testFiles"
     prediction_csv_path = "testOnFile"
 
-
+    
     main(want_feature_extraction, want_pickle, 
          separate_types, want_plots, want_offline_test, want_calc_exposure,
          model_selection, method_selection, variance_explained,

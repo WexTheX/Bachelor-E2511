@@ -14,8 +14,8 @@ DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 
 ''' VARIABLES '''
 myDev = None
-device_list = ["Muse_E2511_GREY", "Muse_E2511_RED", "muse_v3_3"] # List of bluetooth devices 
-device_name = device_list[2]                        # Choose device to connect to from list
+device_list = ["Muse_E2511_GREY", "Muse_E2511_RED", "muse_v3_3", "muse_v3"] # List of bluetooth devices 
+device_name = device_list[3]                        # Choose device to connect to from list
 
 window_length_sec = 20                  # Length of one window for prediction
 fs = 200                                # Frequency of sensor sampling

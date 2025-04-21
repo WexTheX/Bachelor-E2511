@@ -14,8 +14,8 @@ DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 
 ''' VARIABLES '''
 myDev = None
-device_list = ["Muse_E2511_GREY", "Muse_E2511_RED"] # List of bluetooth devices 
-device_name = device_list[1]                        # Choose device to connect to from list
+device_list = ["Muse_E2511_GREY", "Muse_E2511_RED", "muse_v3_3", "muse_v3"] # List of bluetooth devices 
+device_name = device_list[3]                        # Choose device to connect to from list
 
 window_length_sec = 20                  # Length of one window for prediction
 fs = 200                                # Frequency of sensor sampling
@@ -201,7 +201,7 @@ def list_services(client):
             for desc in descriptors:
                 print('    descriptor', desc)
 
-async def main():
+async def RT_main():
 
     global device_ID, stream_mode
     global gyrConfig, axlConfig, magConfig, hdrConfig
@@ -261,4 +261,6 @@ async def main():
 
             print(f"Prediction list: \n {prediction_list}")
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(RT_main())

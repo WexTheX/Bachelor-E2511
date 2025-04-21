@@ -285,9 +285,10 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
 
     if want_plots:
+        
         ''' CONFUSION MATRIX '''
         test_predict = result['classifier'].predict(PCA_test_df)
-        confusionMatrix(test_labels, test_predict, activity_name, result['model_name'], result['optimalizer'])
+        confusionMatrix(test_labels, test_predict, activity_name, result)
         
         ''' FEATURE IMPORTANCE '''
         

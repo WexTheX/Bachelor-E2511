@@ -333,29 +333,33 @@ def plotKNNboundries(df, clf, labels):
     )
     scatter = disp.ax_.scatter(df.iloc[:, 0], df.iloc[:, 1], c=labels, edgecolors="k")
 
-def confusionMatrix(labels, prediction, activities, model, optimalizer):
-      conf_matrix = metrics.confusion_matrix(labels, prediction, labels=activities)
-      plt.figure(figsize=(10, 8))
-      sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activities, yticklabels=activities)
-      plt.xlabel("Predicted")
-      plt.ylabel("Actual")
-      plt.title(f'Confusion matrix, {model}: {optimalizer}')
+def confusionMatrix(labels, prediction, activities, result):
       
+  model       = result['model_name']
+  optimalizer = result['optimalizer']
+  
+  conf_matrix = metrics.confusion_matrix(labels, prediction, labels=activities)
+  plt.figure(figsize=(10, 8))
+  sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activities, yticklabels=activities)
+  plt.xlabel("Predicted")
+  plt.ylabel("Actual")
+  plt.title(f'Confusion matrix, {model}: {optimalizer}')
+
 def evaluateFeatureImportance(pca,
                               threshold=0.035):
 
   original_feature_names  = []
   feature_dict            = {}
 
-  sensors               = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z', 'temp']
-  time_feature_suffixes = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entropy', 'iqr', 'kurtosis', 'skewness', 'correlation']
-  freq_sensors          = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z']
-  freq_feature_suffixes = ['psd_mean', 'psd_max', 'psd_min', 'psd_max_freq']
+  sensors                 = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z', 'temp']
+  time_feature_suffixes   = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entropy', 'iqr', 'kurtosis', 'skewness', 'correlation']
+  freq_sensors            = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z']
+  freq_feature_suffixes   = ['psd_mean', 'psd_max', 'psd_min', 'psd_max_freq']
 
   # Add time features
   for sensor in sensors:
       for suffix in time_feature_suffixes:
-          original_feature_names.append(f"{suffix}_{sensor}") # Or however your functions name them
+          original_feature_names.append(f"{suffix}_{sensor}")
 
   # Add frequency features
   for sensor in freq_sensors:
@@ -365,6 +369,7 @@ def evaluateFeatureImportance(pca,
   vector = (np.abs(pca.components_.T).dot(pca.explained_variance_ratio_))
   sorted_vector = np.sort(vector)[::-1]
 
+  # Make a dict with {suffix_sensor: feature importance value}
   feature_dict = {name: vector[i] for i, name in enumerate(original_feature_names)}
 
   low_value_feature_dict = {key: value for key, value in feature_dict.items() if value < threshold}

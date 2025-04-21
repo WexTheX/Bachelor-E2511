@@ -91,9 +91,9 @@ def runInferenceOnFile(file_path:           str,
     features_pca    = pca.transform(features_scaled)
 
     # Can be used to help calculate exposure_intensity_matrix 
-    xyz_accel = abs(np.sqrt(np.power(features_df['mean_accel_X'], 2) +
-                            np.power(features_df['mean_accel_Y'], 2) +
-                            np.power(features_df['mean_accel_Z'], 2) ))
+    # xyz_accel = abs(np.sqrt(np.power(features_df['mean_accel_X'], 2) +
+    #                         np.power(features_df['mean_accel_Y'], 2) +
+    #                         np.power(features_df['mean_accel_Z'], 2) ))
     # g_constant = xyz_accel.mean()
     # features_df['g_constant_lpf'] = xyz_accel.ewm(alpha=1).mean()
     # g_constant = 9.81

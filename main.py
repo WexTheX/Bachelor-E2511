@@ -174,7 +174,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
         labels = [
             'GRINDBIG', 'GRINDSMALL',
-            'IDLE', 'IMPA', 'GRINDMED', 
+            'IDLE', 'IMPA', 'GRINDMED', 'GRINDSMALLCORDED',
             'SANDSIM',
             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
@@ -246,13 +246,13 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         fp.close()        
 
     if "feature_df" not in globals():
-            window_labels   = []
-            feature_df      = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
-            f               = open(output_path+"window_labels.txt", "r") 
-            data            = f.read()
-            window_labels   = data.split("\n")
-            f.close()
-            window_labels.pop()
+        window_labels   = []
+        feature_df      = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
+        f               = open(output_path+"window_labels.txt", "r") 
+        data            = f.read()
+        window_labels   = data.split("\n")
+        f.close()
+        window_labels.pop()
 
 
     ''' SPLITTING TEST/TRAIN + SCALING'''
@@ -282,13 +282,13 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     ''' EVALUATION '''
 
-    result, accuracy_list= evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
+    result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
 
     if want_plots:
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_1 = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
+        fig_list_1 = PCA_table_plot(train_data_scaled, n_components=PCA_components, features_per_PCA=28)   
         
         ''' 2D PLOTS OF PCA '''
         
@@ -332,12 +332,12 @@ if __name__ == "__main__":
     want_offline_test       = 0
     want_calc_exposure      = 0
 
-    model_selection         = ['ada']
+    model_selection         = ['svm']
     method_selection        = ['rs']
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 2
+    variance_explained      = 3
     random_seed             = 420
     window_length_seconds   = 20
     test_size               = 0.25

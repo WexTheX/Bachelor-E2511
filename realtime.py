@@ -105,10 +105,10 @@ async def dataNotificationHandler(sender: int, data: bytearray):
         await sample_queue.put(temp_data)               # Put segment as MuseData object in queue
 
         ''' DEBUG AND PRINT TO MEASURE SAMPLES PER SECOND'''
-        sample_counter += 1
-        if sample_counter % 1000 == 0:
-            elapsed = time.time() - start_time
-            print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
+        # sample_counter += 1
+        # if sample_counter % 1000 == 0:
+        #     elapsed = time.time() - start_time
+        #     print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
     return
 
 
@@ -147,7 +147,7 @@ async def processSamples():
 
         if len(sample_log) >= window_size:
             ''' DEBUG TO MEASURE PROCESS TIME '''
-            start_time = time.time()
+            # start_time = time.time()
             try:
                 ''' CONVERT TO DF, FEATURE EXTRACT AND SCALE '''
                 feature_df = pd.DataFrame(data=sample_log, columns=df_columns)                                 # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
@@ -170,9 +170,9 @@ async def processSamples():
             sample_log.clear()
 
             ''' CONT. DEBUG TO MEASURE PROCESS TIME'''
-            end_time = time.time()  # End timer
-            elapsed_time = end_time - start_time
-            print(f"Process sampling completed in {elapsed_time} seconds.")
+            # end_time = time.time()  # End timer
+            # elapsed_time = end_time - start_time
+            # print(f"Process sampling completed in {elapsed_time} seconds.")
 
 async def waitForQuit():
     ''' QUITTING FUNCTION

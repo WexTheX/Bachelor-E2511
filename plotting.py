@@ -84,10 +84,12 @@ def PCA_table_plot(X:                 pd.DataFrame,
   
   figures_list: List[Figure] = []
 
-  if 3 <= n_components <= 10:
+  if 2 <= n_components <= 146:
 
     PCA_object = PCA(n_components = n_components)
     PCA_object.fit(X)
+    
+    evaluateFeatureImportance(PCA_object)
     
     loadings = PCA_object.components_.T * np.sqrt(PCA_object.explained_variance_)
     loadings_percantage = (loadings - np.min(loadings)) / (np.max(loadings) - np.min(loadings))
@@ -173,6 +175,8 @@ def biplot(feature_df:        pd.DataFrame,
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 
+  plt.savefig("plots/biplot.png", dpi=300, bbox_inches='tight')
+
   return fig
 
 def biplot3D(
@@ -182,6 +186,7 @@ def biplot3D(
     label_mapping:  Dict[str, Any],
     want_arrows: bool
     ) -> Figure:
+  
   '''
   '''
   # Fit scaler and PCA transform
@@ -224,6 +229,9 @@ def biplot3D(
   plt.title("Complete dataset in 3 Principal Components")
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
+
+  plt.savefig("plots/biplot3D.png", dpi=300, bbox_inches='tight')
+
 
   return fig
 
@@ -301,6 +309,8 @@ def plotDecisionBoundaries(X:             pd.DataFrame,
 
       fig.suptitle("Classifier Decision Boundaries", fontsize=14)
       fig.tight_layout()
+
+    plt.savefig("plots/decision_boundaries.png", dpi=300, bbox_inches='tight')
         
     return fig
 
@@ -322,3 +332,85 @@ def plotKNNboundries(df, clf, labels):
     ax=ax,
     )
     scatter = disp.ax_.scatter(df.iloc[:, 0], df.iloc[:, 1], c=labels, edgecolors="k")
+
+def confusionMatrix(labels, prediction, activities, model, optimalizer):
+      conf_matrix = metrics.confusion_matrix(labels, prediction, labels=activities)
+      plt.figure(figsize=(10, 8))
+      sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activities, yticklabels=activities)
+      plt.xlabel("Predicted")
+      plt.ylabel("Actual")
+      plt.title(f'Confusion matrix, {model}: {optimalizer}')
+      
+def evaluateFeatureImportance(pca,
+                              threshold=0.035):
+
+  original_feature_names  = []
+  feature_dict            = {}
+
+  sensors               = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z', 'temp']
+  time_feature_suffixes = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entropy', 'iqr', 'kurtosis', 'skewness', 'correlation']
+  freq_sensors          = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z']
+  freq_feature_suffixes = ['psd_mean', 'psd_max', 'psd_min', 'psd_max_freq']
+
+  # Add time features
+  for sensor in sensors:
+      for suffix in time_feature_suffixes:
+          original_feature_names.append(f"{suffix}_{sensor}") # Or however your functions name them
+
+  # Add frequency features
+  for sensor in freq_sensors:
+      for suffix in freq_feature_suffixes:
+          original_feature_names.append(f"{suffix}_{sensor}")
+
+  vector = (np.abs(pca.components_.T).dot(pca.explained_variance_ratio_))
+  sorted_vector = np.sort(vector)[::-1]
+
+  feature_dict = {name: vector[i] for i, name in enumerate(original_feature_names)}
+
+  low_value_feature_dict = {key: value for key, value in feature_dict.items() if value < threshold}
+  sorted_dict_items = sorted(low_value_feature_dict.items(), key=lambda item: item[1], reverse=True)
+  dict_string = "Least important features:\n\n" + "\n".join([f"{k}: {v:.3f}" for k, v in sorted_dict_items])
+
+  ranks = np.arange(1, len(sorted_vector) + 1)
+
+  fig, ax = plt.subplots(figsize=(8, 5)) # Create figure and axes
+
+  ax.plot(ranks, sorted_vector,
+        color='tab:blue',       # Use a Tableau color
+        linestyle='-',         # Dashed line
+        linewidth=1,            # Slightly thicker line
+        marker='o',             # Circle marker
+        markersize=5,           # Marker size
+        # markerfacecolor='lightcyan', # Fill color
+        # markeredgecolor='blue',  # Edge color
+        label='Sorted features')      # Label for legend
+  
+  ax.axhline(y=threshold,           # The y-value for the line
+           color='green',               # Choose a color (e.g., green, black, grey)
+           linestyle='--',              # Choose a style ('-', '--', '-.', ':')
+           linewidth=1.5,               # Choose thickness
+           label=f'Threshold ({threshold:.3f})') # Label for the  legend
+  
+  fig.text(0.75, # X position (e.g., 75% from the left edge)
+         0.85, # Y position (e.g., 85% from the bottom edge)
+         dict_string,
+         fontsize=9,
+         va='top', # Vertical alignment ('top', 'center', 'bottom')
+         ha='left', # Horizontal alignment ('left', 'center', 'right')
+         bbox=dict(boxstyle='round,pad=0.5', fc='wheat', alpha=0.5))
+
+  ax.set_title(f"Feature importance of {pca.n_components} PCs", fontsize=16)
+  ax.set_xlabel("Sorted features", fontsize=12)
+  ax.set_ylabel("Total importance", fontsize=12)
+
+  ax.grid(True, linestyle='--',  alpha=0.7)
+  ax.set_xticks(np.arange(0, len(sorted_vector), 10))
+
+  plt.subplots_adjust(right=0.73)
+  plt.savefig("plots/feature_importance.png", dpi=300, bbox_inches='tight')
+
+  # print(f"Smallest feature weight:\t{vector.min()}")
+  # print(f"Largest feature weight:\t{vector.max()}")
+  # print(f"Feature weight STD:\t{vector.std()}")
+  
+  return 0

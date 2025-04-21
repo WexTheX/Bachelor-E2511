@@ -42,7 +42,8 @@ df_columns = ["Timestamp",                                         # Predefines 
            "Mag.X","Mag.Y","Mag.Z",
            "Temp","Press",
            "Range","Lum","IRLum"]    
-prediction_list = {}                                            # Prepares dict of predictions
+prediction_list = {}   
+tot_sample_log = []                                      # Prepares dict of predictions
 
 ''' PICKLE IMPORTS '''
 output_path = "OutputFiles/Separated/"                          # Define import path
@@ -128,28 +129,28 @@ async def processSamples():
     The prediction is then stored in a dict containing the class and the time the prediction occured.
     The sample list is then cleared to prepare for the next segment.
     '''
-    global prediction_counter, prediction_list
-    sample_list = []
+    global prediction_counter, prediction_list, tot_sample_log
+    sample_log = []
 
     
     while True:                                 # Run allways
         temp_data = await sample_queue.get()    # Get sample from queue
-        sample = [                              # Convert from MuseData object to array
+        sample = np.array([                              # Convert from MuseData object to array
             time.time(),
             temp_data.axl[0], temp_data.axl[1], temp_data.axl[2],
             temp_data.gyr[0], temp_data.gyr[1], temp_data.gyr[2],
             temp_data.mag[0], temp_data.mag[1], temp_data.mag[2],
             temp_data.tp[0], temp_data.tp[1],
             temp_data.light.range, temp_data.light.lum_vis, temp_data.light.lum_ir            
-        ]
-        sample_list.append(sample)              # Add sample to list
+        ])
+        sample_log.append(sample)              # Add sample to list
 
-        if len(sample_list) >= window_size:
+        if len(sample_log) >= window_size:
             ''' DEBUG TO MEASURE PROCESS TIME '''
             # start_time = time.time()
             try:
                 ''' CONVERT TO DF, FEATURE EXTRACT AND SCALE '''
-                feature_df = pd.DataFrame(data=sample_list, columns=df_columns)                                 # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
+                feature_df = pd.DataFrame(data=sample_log, columns=df_columns)                                 # Convert samples_list into dataframe to make it usable in extractFeaturesFromDF
                 feature_df_extraction, label = extractFeaturesFromDF(feature_df, "Realtime", window_length_sec, fs, False)
                 feature_df_scaled = scaler.transform(pd.DataFrame(feature_df_extraction))                       # Scale data with scaled from training data
             
@@ -161,10 +162,12 @@ async def processSamples():
 
                 print(prediction)
 
+                tot_sample_log = tot_sample_log + sample_log
+
             except Exception as e:
                 print(f"Error when predicting: {e}.")
             
-            sample_list.clear()
+            sample_log.clear()
 
             ''' CONT. DEBUG TO MEASURE PROCESS TIME'''
             # end_time = time.time()  # End timer
@@ -245,7 +248,7 @@ async def RT_main():
             start_time = time.time()
             await client.start_notify(DATA_UUID, dataNotificationHandler)       # Start notification handler
 
-            start_time_local = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
+            start_time_local = time.strftime("%d%b%Y_%H%M%S", time.localtime())
             print(f"Start streaming, {start_time_local}")
             await client.write_gatt_char(CMD_UUID, cmd_stream, True)            # Tell device to start streaming
             processing_task = asyncio.create_task(processSamples())             # Start processing task
@@ -256,11 +259,15 @@ async def RT_main():
             await shutdown_event.wait()                     # Wait until shutdown_event flag is set before moving on
            
             await client.write_gatt_char(CMD_UUID, Muse_Utils.Cmd_StopAcquisition(), response=True)
-            end_time_local = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.localtime())
+            end_time_local = time.strftime("%d%b%Y_%H%M%S", time.localtime())
             print(f"Streaming stopped, {end_time_local}")
 
             print(f"Prediction list: \n {prediction_list}")
 
+            ''' STORE SAMPLE LOG FOR FUTURE ANALYSIS '''
+            sample_df = pd.DataFrame(data=tot_sample_log, columns=df_columns)
+            sample_df.to_csv(output_path+"/livedetection/"+str(start_time_local)+".csv", index=False)      
+            print(f"Stored log as file: {str(start_time_local)}.csv")
 
-if __name__ == "__main__":
-    asyncio.run(RT_main())
+
+asyncio.run(RT_main())

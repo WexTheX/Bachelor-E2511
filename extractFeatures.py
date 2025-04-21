@@ -153,7 +153,7 @@ def extractAllFeatures(datasets, datasetsLabel, window_length_sec, fs, Norm_Acce
                 window_features_temp_Time       = get_Time_Domain_features_of_signal(window_temp, "temp")
                 
                 # Get frequency features from Welch's method
-                # 10 columns, 4 Frequency domain features each = 40 elements
+                # 9 columns, 4 Frequency domain features each = 36 elements
                 window_features_accel_X_Freq    = get_Freq_Domain_features_of_signal(window_accel_X, "accel_X", fs)
                 window_features_accel_Y_Freq    = get_Freq_Domain_features_of_signal(window_accel_Y, "accel_Y", fs)
                 window_features_accel_Z_Freq    = get_Freq_Domain_features_of_signal(window_accel_Z, "accel_Z", fs)
@@ -254,7 +254,7 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
     num_windows = num_samples // window_length # Rounds down when deciding numbers
     window_sum += num_windows
     
-    
+
     # Iterate through each window
     for j in range(0, num_windows):
         
@@ -285,7 +285,7 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
             window_accel_Norm = gravless_norm[start_idx:end_idx]
 
             # Get temporal features (mean, std, MAD, etc as datatype dict)
-            # 10 columns, 10 Time domain features each = 100 elements
+            # 8 columns, 10 Time domain features each = 80 elements
             window_features_accel_Norm_Time = get_Time_Domain_features_of_signal(window_accel_Norm, "accel_Norm")
             window_features_gyro_X_Time     = get_Time_Domain_features_of_signal(window_gyro_X, "gyro_X")
             window_features_gyro_Y_Time     = get_Time_Domain_features_of_signal(window_gyro_Y, "gyro_Y")
@@ -296,7 +296,7 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
             window_features_temp_Time       = get_Time_Domain_features_of_signal(window_temp, "temp")
 
             # Get frequency features (Welch's method)
-            # 10 columns, 4 Frequency domain features each = 40 elements
+            # 7 columns, 4 Frequency domain features each = 28 elements
             window_features_accel_Norm_Freq = get_Freq_Domain_features_of_signal(window_accel_Norm, "accel_Norm", fs)
             window_features_gyro_X_Freq     = get_Freq_Domain_features_of_signal(window_gyro_X, "gyro_X", fs)
             window_features_gyro_Y_Freq     = get_Freq_Domain_features_of_signal(window_gyro_Y, "gyro_Y", fs)
@@ -309,24 +309,22 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
 
             ## merge all
             window_features = {
-                            **window_features_accel_Norm_Time, 
-                            **window_features_accel_Norm_Freq,
-
+                            **window_features_accel_Norm_Time,
                             **window_features_gyro_X_Time,
                             **window_features_gyro_Y_Time,
                             **window_features_gyro_Z_Time,
-                            **window_features_gyro_X_Freq,
-                            **window_features_gyro_Y_Freq,
-                            **window_features_gyro_Z_Freq,
-
                             **window_features_mag_X_Time,
                             **window_features_mag_Y_Time,
                             **window_features_mag_Z_Time,
+                            **window_features_temp_Time,
+
+                            **window_features_accel_Norm_Freq,
+                            **window_features_gyro_X_Freq,
+                            **window_features_gyro_Y_Freq,
+                            **window_features_gyro_Z_Freq,
                             **window_features_mag_X_Freq,
                             **window_features_mag_Y_Freq,
-                            **window_features_mag_Z_Freq,
-
-                            **window_features_temp_Time,
+                            **window_features_mag_Z_Freq
                             # **window_features_temp_Freq
                             }
                     
@@ -337,7 +335,7 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
             window_accel_Z = accel_Z[start_idx:end_idx]
 
             # Get temporal features (mean, std, MAD, etc as datatype dict)
-            # 10 columns, 10 Time domain features each = 100 elements
+            # 10 columns, 11 Time domain features each = 110 elements
             window_features_accel_X_Time    = get_Time_Domain_features_of_signal(window_accel_X, "accel_X")
             window_features_accel_Y_Time    = get_Time_Domain_features_of_signal(window_accel_Y, "accel_Y")
             window_features_accel_Z_Time    = get_Time_Domain_features_of_signal(window_accel_Z, "accel_Z")
@@ -350,7 +348,7 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
             window_features_temp_Time       = get_Time_Domain_features_of_signal(window_temp, "temp")
             
             # Get frequency features from Welch's method
-            # 10 columns, 4 Frequency domain features each = 40 elements
+            # 9 columns, 4 Frequency domain features each = 36 elements
             window_features_accel_X_Freq    = get_Freq_Domain_features_of_signal(window_accel_X, "accel_X", fs)
             window_features_accel_Y_Freq    = get_Freq_Domain_features_of_signal(window_accel_Y, "accel_Y", fs)
             window_features_accel_Z_Freq    = get_Freq_Domain_features_of_signal(window_accel_Z, "accel_Z", fs)
@@ -368,25 +366,25 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
                             **window_features_accel_X_Time, 
                             **window_features_accel_Y_Time,
                             **window_features_accel_Z_Time,
-                            **window_features_accel_X_Freq,
-                            **window_features_accel_Y_Freq,
-                            **window_features_accel_Z_Freq,
-
                             **window_features_gyro_X_Time,
                             **window_features_gyro_Y_Time,
                             **window_features_gyro_Z_Time,
-                            **window_features_gyro_X_Freq,
-                            **window_features_gyro_Y_Freq,
-                            **window_features_gyro_Z_Freq,
-                            
                             **window_features_mag_X_Time,
                             **window_features_mag_Y_Time,
                             **window_features_mag_Z_Time,
+                            **window_features_temp_Time,
+
+                            **window_features_accel_X_Freq,
+                            **window_features_accel_Y_Freq,
+                            **window_features_accel_Z_Freq,
+                            **window_features_gyro_X_Freq,
+                            **window_features_gyro_Y_Freq,
+                            **window_features_gyro_Z_Freq,
                             **window_features_mag_X_Freq,
                             **window_features_mag_Y_Freq,
                             **window_features_mag_Z_Freq,
 
-                            **window_features_temp_Time
+                            
                             # , **window_features_temp_Freq
                             }
 

@@ -11,6 +11,7 @@ from sklearn.model_selection import GridSearchCV, HalvingGridSearchCV, Randomize
 from sklearn.experimental import enable_halving_search_cv
 from sklearn import metrics, dummy
 from typing import List, Dict, Any, Tuple, Sequence
+from plotting import confusionMatrix
 import streamlit as st
 
 ''' PRE PROCESSING '''
@@ -348,12 +349,9 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
 
     # if want_plots:
     #   ''' CONFUSION MATRIX '''
-    #   conf_matrix = metrics.confusion_matrix(test_labels, test_predict, labels=activity_name)
-    #   plt.figure(figsize=(10, 8))
-    #   sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activity_name, yticklabels=activity_name)
-    #   plt.xlabel("Predicted")
-    #   plt.ylabel("Actual")
-    #   plt.title(f'Confusion matrix, {model_name}: {optimalizer}')
+    #   confusionMatrix(test_labels, test_predict, activity_name, model_name, optimalizer)
+
+
 
     accuracy_list.append(round(accuracy_score, 4))
   

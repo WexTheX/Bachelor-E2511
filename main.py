@@ -25,7 +25,7 @@ from sklearn.tree import DecisionTreeClassifier
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotKNNboundries
+from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotKNNboundries, confusionMatrix
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import offlineTest, calcExposure
 
@@ -285,6 +285,9 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
 
     if want_plots:
+        ''' CONFUSION MATRIX '''
+        test_predict = result['classifier'].predict(PCA_test_df)
+        confusionMatrix(test_labels, test_predict, activity_name, result['model_name'], result['optimalizer'])
         
         ''' FEATURE IMPORTANCE '''
         
@@ -342,7 +345,7 @@ if __name__ == "__main__":
     window_length_seconds   = 20
     test_size               = 0.25
     fs                      = 800
-    ds_fs                   = 800
+    ds_fs                   = 200
     cmap                    = 'tab10'
 
     ''' LOAD PATH NAMES'''

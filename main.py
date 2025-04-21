@@ -6,26 +6,28 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+import streamlit as st
 
 from sklearn.inspection import permutation_importance
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.model_selection import TimeSeriesSplit, cross_val_score, train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import TimeSeriesSplit, StratifiedKFold, RepeatedStratifiedKFold, cross_val_score, train_test_split
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.experimental import enable_halving_search_cv
+from sklearn.tree import DecisionTreeClassifier
 
 # Local imports
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotBoundaryConditions, biplot, biplot3D, PCA_table_plot, plotKNNboundries, confusionMatrix
+from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotKNNboundries, confusionMatrix
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
-from testonfile import runInferenceOnFile, offlineTest, labelFilter, calcExposure
+from testonfile import offlineTest, calcExposure
 
 
 
@@ -34,23 +36,24 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
          ds_fs, cmap, test_file_path, prediction_csv_path ):
 
     variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
+    
+    fig_list_1, n_results, accuracy_list = [], [], []
+    fig_1, fig_2, fig_3 = None, None, None
+    combined_df = pd.DataFrame()
+    result = {}
 
     ''' BASE ESTIMATORS '''
 
     base_params =  {'class_weight': 'balanced', 
                     'random_state': random_seed}
 
-    # base_paramssvm = {
-    #     'class_weight': 'balanced',
-    #     'probability': True,
-    #     'random_state': randomness
-    # }
-
     SVM_base    = svm.SVC(**base_params, probability=True)
     RF_base     = RandomForestClassifier(**base_params)
     KNN_base    = KNeighborsClassifier()
     GNB_base    = GaussianNB()
     LR_base     = LogisticRegression(**base_params)
+    GB_base     = GradientBoostingClassifier(random_state=random_seed)
+    ADA_base    = AdaBoostClassifier(estimator=DecisionTreeClassifier(), random_state=random_seed)
 
     ''' HYPER PARAMETER VARIABLES '''
 
@@ -59,10 +62,10 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                 1, 10, 100
+                                # 1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10, 100],
+        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
         # "coef0":                [0.0, 0.5, 1.0],
         # "degree":               [2, 3, 4, 5]
     }
@@ -90,12 +93,11 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     }
 
     GNB_param_grid = {
-        'priors':               [None], 
-        'var_smoothing':        [1e-09]
+        'var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5]
     }
 
     LR_param_grid = {
-        'C':                    [0.001, 0.01, 0.1, 1, 10, 100],             #
+        'C':                    [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],             #
         # 'dual':                 [False],                                    # Dual or Primal formulation
         # 'fit_intercept':        [True],                                     # Constant added to function (bias)             
         # 'intercept_scaling':    [1],                                        # Only useful when Solver = liblinear, fit_intercept = true
@@ -109,22 +111,57 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         #'warm_start':           [False]                                      # Reuse previous calls solution
     }
 
+    GB_param_grid = {
+        'n_estimators':         [100, 200, 300],
+        'learning_rate':        [0.01, 0.05, 0.1],
+        'max_depth':            [3, 5, 7],
+        'min_samples_split':    [2, 5, 10],
+        'min_samples_leaf':     [1, 2, 4],
+        'subsample':            [0.6, 0.8, 1.0],
+        'max_features':         ['sqrt', 'log2', None],
+    }
+    
+    ADA_param_grid = {
+        'n_estimators':                 [50, 100, 200],
+        'learning_rate':                [0.01, 0.1, 1.0],
+        'estimator__max_depth':         [1, 3, 5],
+        'estimator__min_samples_split': [2, 5]
+    }
+
+    model_names = {
+        'SVM':  'Support Vector Machine', 
+        'RF':   'Random Forest',
+        'KNN':  'K-Nearest Neighbors',
+        'GNB':  'Gaussian Naive Bayes',
+        'LR':   'Linear Regression',
+        'GB':   'Gradient Boosting',
+        'ADA':  'AdaBoost'
+    }
+
     models = {
-            'SVM':  (SVM_base,  SVM_param_grid), 
-            'RF':   (RF_base,   RF_param_grid),
-            'KNN':  (KNN_base,  KNN_param_grid),
-            'GNB':  (GNB_base,  GNB_param_grid),
-            'LR':   (LR_base,   LR_param_grid)
-            }
+        'SVM':  (SVM_base,  SVM_param_grid), 
+        'RF':   (RF_base,   RF_param_grid),
+        'KNN':  (KNN_base,  KNN_param_grid),
+        'GNB':  (GNB_base,  GNB_param_grid),
+        'LR':   (LR_base,   LR_param_grid),
+        'GB':   (GB_base,   GB_param_grid),
+        'ADA':  (ADA_base,  ADA_param_grid)
+    }
 
-    optimization_methods = ['BayesSearchCV', 'RandomizedSearchCV', 'GridSearchCV', 'HalvingGridSearchCV', 'Base model']
+    optimization_methods = {
+        'BS':   'BayesSearchCV',
+        'RS':   'RandomizedSearchCV',
+        'GS':   'GridSearchCV',
+        'HGS':  'HalvingGridSearchCV'
+    }
 
-    search_kwargs = {'n_jobs':             -1, 
-                    'verbose':             0,
-                    'cv':                  TimeSeriesSplit(n_splits=num_folds),
-                    'scoring':             'f1_weighted',
-                    'return_train_score':  True
-                    }
+    search_kwargs = {
+        'n_jobs':             -1, 
+        'verbose':             0,
+        'cv':                  StratifiedKFold(n_splits=num_folds),
+        'scoring':             'f1_weighted',
+        'return_train_score':  True
+    }
 
     ''' LOAD DATASET '''
 
@@ -155,7 +192,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
     ]
 
-    safe_limit_vector           = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
+    safe_limit_vector = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
 
     num_labels      = len(labels)
     cmap_name       = plt.get_cmap(cmap, num_labels)
@@ -219,7 +256,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
 
     ''' SPLITTING TEST/TRAIN + SCALING'''
-
+    
     train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=random_seed, stratify=window_labels)
 
     scaler = StandardScaler()
@@ -241,12 +278,11 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-    n_results = makeNClassifiers(models, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
+    n_results = makeNClassifiers(models, model_names, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
 
     ''' EVALUATION '''
 
-    result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
-    
+    result, accuracy_list= evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
 
     if want_plots:
         ''' CONFUSION MATRIX '''
@@ -255,27 +291,37 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         
         ''' FEATURE IMPORTANCE '''
         
-        PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
-
-        ''' 2D PLOTS OF PCA '''
-
-        biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
-
-        biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_list_1 = PCA_table_plot(train_data_scaled, n_components=5, features_per_PCA=73)   
         
-        plotBoundaryConditions(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        ''' 2D PLOTS OF PCA '''
+        
+        fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
-        plt.show()
+        fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        
+        fig_3 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        
+        if __name__ == "__main__":
+            plt.show() 
 
     ''' PICKLING CLASSIFIER '''
 
-    pickleFiles(want_pickle, n_results, result, output_path, PCA_final, scaler)
+    if want_pickle:
+
+        pickleFiles(n_results, result, output_path, PCA_final, scaler)
 
     ''' OFFLINE TEST '''
     
-    combined_df = offlineTest(want_offline_test, test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
+    if want_offline_test:
 
-    summary_df = calcExposure(want_calc_exposure, combined_df, window_length_seconds, labels, exposures, safe_limit_vector)
+        combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
+
+    if want_calc_exposure:
+
+        summary_df  = calcExposure(combined_df, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
+
+
+    return [fig_list_1, fig_1, fig_2, fig_3], result, accuracy_list
 
 
 if __name__ == "__main__":
@@ -284,18 +330,18 @@ if __name__ == "__main__":
 
     want_feature_extraction = 0
     want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
-    separate_types          = 1
+    separate_types          = 1 # Granular classification
     want_plots              = 1
     want_offline_test       = 0
     want_calc_exposure      = 0
 
-    model_selection         = ['SVM']
-    method_selection        = ['GridSearchCV']
+    model_selection         = ['ada']
+    method_selection        = ['rs']
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 0.95
-    random_seed             = 1231
+    variance_explained      = 2
+    random_seed             = 420
     window_length_seconds   = 20
     test_size               = 0.25
     fs                      = 800

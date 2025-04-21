@@ -9,7 +9,7 @@ antall .txt filer i hver Datafiles mappe blir telt, og navnet blir lagt inn i li
 # TODO 
 
 1) Separer typer uten å måtte ha en folder for hver (unngå dobbelt opp med filer) [Low pri]
-2) Implementer K-nearest og Naive-Bayers, Gradient boosting [2/3 ferdig]
+2) Implementer K-nearest og Naive-Bayers, Gradient boosting [ferdig]
 3) Skisser boundary conditions i SVM [Problem med 2d PCA] [ferdig]
 4) Legge RF inn i machineLearning.py [Ferdig]
 5) Kode som tar inn test som logger aktiviteter [Ferdig]?
@@ -32,11 +32,11 @@ Hva forventer vi å bli ferdig med til påske?
 
 1) Skrive i metode-bit hvordan vi prosesserer data før vi sender inn i maskinlæring 
 
-2) Sette opp pipeline for å teste filer inne i testFiles 
-2.1) Logge resultatet, lagre resultatet i en fil
+2) Sette opp pipeline for å teste filer inne i testFiles [ferdig]
+2.1) Logge resultatet, lagre resultatet i en fil [ferdig]
 
 3) Få til Real-Time
-3.2) Classifier og PCA må packages gjennom Pickle
+3.2) Classifier og PCA må packages gjennom Pickle [ferdig]
 3.3) Funksjon som appender hver IMU-linje til f.eks en liste eller df (Kan denne kjøre på egen kjerne? Og classifier på en annen?)
 
 % Pseudo
@@ -55,7 +55,6 @@ def saveWindow():
 5) Bedre grunnlag på hvor gode classifiers er (ROC AUC, log loss for enkelte classifiers)
 
 6) Flere bilder / grafer til rapporten
-
 
     Endelig confusion matrix
     plots av markante features (feks magnometer for sveising, accel fra vinkelsliper)
@@ -83,7 +82,7 @@ Mål: Prøv å bli ferdig med hver vår del innen slutten av påske 22. April!
 
 Aleksander: Readme file/guide
 Odin: Feature extraction og importance
-Steinnes: Hyperparams optimilisering (+Kode stuff)
+Steinnes: Hyperparams optimalisering (+Kode stuff)
 Haldorsen: Testing og validering
 
 

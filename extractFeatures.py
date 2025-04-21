@@ -394,8 +394,4 @@ def extractFeaturesFromDF(df, df_label, window_length_sec, fs, Norm_Accel):
         all_window_features.append(window_features)
         window_labels.append(df_label)
 
-    # print(f"Total number on IMU windows: {window_sum}") 
-
-    # print(f"Total number of windows: {activityWindowsCounter}")
-
     return all_window_features, window_labels

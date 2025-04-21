@@ -8,9 +8,10 @@ from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 from sklearn import svm, metrics, dummy
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.decomposition import PCA
-from typing import List, Dict, Any, Tuple, Sequence
+from typing import List, Dict, Any, Tuple, Sequence, Optional
 from matplotlib.lines import Line2D
 from matplotlib.colors import ListedColormap
+from matplotlib.figure import Figure
 
 
 def normDistPlot(dataset, size):
@@ -65,7 +66,7 @@ def testWelch(sets_n, variables_n, fs):
 def PCA_table_plot(X:                 pd.DataFrame, 
                    n_components:      int,
                    features_per_PCA:  int
-                   ) -> None:
+                   ) -> Optional[List[Figure]]:
   
   '''
   Generates heatmap(s) visualizing scaled PCA loadings.
@@ -81,6 +82,8 @@ def PCA_table_plot(X:                 pd.DataFrame,
   (inclusive), based on an assumption about visual clarity.
   '''
   
+  figures_list: List[Figure] = []
+
   if 3 <= n_components <= 10:
 
     PCA_object = PCA(n_components = n_components)
@@ -98,21 +101,26 @@ def PCA_table_plot(X:                 pd.DataFrame,
 
       loadings_percantage_part  = loadings_percantage[start_idx:end_idx]
       feature_names_part        = PCA_object.feature_names_in_[start_idx:end_idx]
+      
+      fig, ax = plt.subplots(figsize=(10, 8))
 
-      plt.figure(figsize=(10, 8))
-      sns.heatmap(loadings_percantage_part, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels = feature_names_part)
+      # plt.figure(figsize=(10, 8))
+      sns.heatmap(loadings_percantage_part, annot=True, cmap='coolwarm', xticklabels=['PC1', 'PC2'], yticklabels = feature_names_part, ax=ax)
       plt.title('Feature Importance in Principal Components')
 
+      figures_list.append(fig)
+  
   else:
     print(f"Too many principal components to plot in a meaningful way")
-    pass
+  
+  return figures_list
 
 def biplot(feature_df:        pd.DataFrame,
            scaler:            Any,
            train_labels:      Sequence,
            label_mapping:     Dict[str, Any],
            want_arrows:       bool
-           ) -> None:
+           ) -> Figure:
   
   '''
   Generates a 2D scatter plot of data projected onto its first two Principal Components (PCs).
@@ -143,8 +151,11 @@ def biplot(feature_df:        pd.DataFrame,
                       markersize=8, linestyle='None') # No line connecting markers
       legend_handles.append(handle)
 
-  plt.figure(figsize=(10, 8))
-  plt.scatter(xs, ys, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
+  fig, ax = plt.subplots(figsize=(10, 8))
+  ax.scatter(xs, ys, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
+
+  # plt.figure(figsize=(10, 8))
+  # plt.scatter(xs, ys, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
   
   if want_arrows:
 
@@ -162,13 +173,18 @@ def biplot(feature_df:        pd.DataFrame,
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 
+  plt.savefig("plots/biplot.png", dpi=300, bbox_inches='tight')
+
+
+  return fig
+
 def biplot3D(
     feature_df:     pd.DataFrame,
     scaler:         Any,
     train_labels:   Sequence,
     label_mapping:  Dict[str, Any],
     want_arrows: bool
-    ) -> None:
+    ) -> Figure:
   '''
   '''
   # Fit scaler and PCA transform
@@ -212,14 +228,18 @@ def biplot3D(
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 
+  plt.savefig("plots/biplot3D.png", dpi=300, bbox_inches='tight')
 
-def plotBoundaryConditions(X:             pd.DataFrame, 
+
+  return fig
+
+def plotDecisionBoundaries(X:             pd.DataFrame, 
                            train_labels:  Sequence, 
                            label_mapping: Dict[str, Any],
                            results:       List[Dict[str, Any]],
                            accuracy_list: List[float],
                            cmap:          str,
-                          ) -> None:
+                          ) -> Optional[Figure]:
   
   '''
   Plots decision boundaries for multiple classifiers on 2D data.
@@ -267,13 +287,35 @@ def plotBoundaryConditions(X:             pd.DataFrame,
         
         # Foreground
         ax.scatter(xs, ys, c=point_colors, s=25, edgecolors="k", linewidths=0.35)
-        ax.set_title(str(model_name) + ": " + str(optimalizer) + "\n" + "Accuracy: " + str(accuracy))
+
+        # Text
+        ax.set_title(f"{model_name}: {optimalizer}", fontsize=10, fontweight='normal')
+        ax.text(
+          0.98, 0.02,  # X and Y position in axes coords (0=left/bottom, 1=right/top)
+          f"{accuracy:.3f}".lstrip("0"),
+          transform=ax.transAxes,
+          fontsize=8,
+          ha='right',
+          va='bottom',
+          bbox=None
+        )
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        # ax.set_aspect('equal', adjustable='box')
+
+      fig.suptitle("Classifier Decision Boundaries", fontsize=14)
+      fig.tight_layout()
+
+    plt.savefig("plots/decision_boundaries.png", dpi=300, bbox_inches='tight')
         
-        # fig.tight_layout()
+    return fig
 
   else:
     print(f"Warning: Cannot plot decision boundaries. Classifiers has {X.shape[1]} features, must be 2.")
-
+    return None
+  
 def plotKNNboundries(df, clf, labels):
   
     _, ax = plt.subplots()

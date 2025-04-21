@@ -218,43 +218,41 @@ def delete_header(path):
     with open(file_path, "w") as f:
         f.writelines(lines_to_keep)
 
-def pickleFiles(want_pickle:    bool, 
-            n_results:      list[dict[str, Any]], 
-            result:        dict[str, Any],
-            output_path:    str, 
-            PCA_object:     Any,
-            scaler:         Any
-            ) -> None:
+def pickleFiles(n_results:      list[dict[str, Any]], 
+                result:        dict[str, Any],
+                output_path:    str, 
+                PCA_object:     Any,
+                scaler:         Any
+                ) -> None:
 
-    if want_pickle:
-        for r in n_results:
-            r_name          = r['model_name']
-            r_optimizer     = r['optimalizer']
-            r_clf           = r['classifier']
+    for r in n_results:
+        r_name          = r['model_name']
+        r_optimizer     = r['optimalizer']
+        r_clf           = r['classifier']
 
-            with open(output_path + str(r_name) + "_" +  str(r_optimizer) + "_" + "clf.pkl", "wb") as clf_file:
-                pickle.dump(r_clf, clf_file)
+        with open(output_path + str(r_name) + "_" +  str(r_optimizer) + "_" + "clf.pkl", "wb") as clf_file:
+            pickle.dump(r_clf, clf_file)
 
-            clf_file.close()
+        clf_file.close()
 
-        # Pickle best clf
-        pickle_clf = result['classifier']
+    # Pickle best clf
+    pickle_clf = result['classifier']
 
-        with open(output_path + "classifier.pkl", "wb") as best_clf_file: 
-            pickle.dump(pickle_clf, best_clf_file)
+    with open(output_path + "classifier.pkl", "wb") as best_clf_file: 
+        pickle.dump(pickle_clf, best_clf_file)
 
-        best_clf_file.close()
+    best_clf_file.close()
 
-        # print("Modell som lagres:", pickle_clf)
-        # print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
+    # print("Modell som lagres:", pickle_clf)
+    # print("predict_proba tilgjengelig:", hasattr(pickle_clf, "predict_proba")) 
 
-        # Pickle PCA and scaler
-        with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
-            pickle.dump(PCA_object, PCA_File)
+    # Pickle PCA and scaler
+    with open(output_path + "PCA.pkl", "wb" ) as PCA_File:
+        pickle.dump(PCA_object, PCA_File)
 
-        PCA_File.close()
+    PCA_File.close()
 
-        with open(output_path + "scaler.pkl", "wb") as scaler_file:
-            pickle.dump(scaler, scaler_file)
+    with open(output_path + "scaler.pkl", "wb") as scaler_file:
+        pickle.dump(scaler, scaler_file)
 
-        scaler_file.close()
+    scaler_file.close()

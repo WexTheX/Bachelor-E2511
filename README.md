@@ -1,3 +1,7 @@
+Requirements to run:
+
+
+
 How to add mroe datafiles for training:
 
 1. 

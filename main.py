@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 import streamlit as st
+import joblib
 
 from sklearn.inspection import permutation_importance
 from sklearn import svm
@@ -25,7 +26,7 @@ from sklearn.tree import DecisionTreeClassifier
 # from FOLDER import FILE as F
 from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
 from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotKNNboundries, confusionMatrix
+from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotFeatureImportance, confusionMatrix
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import offlineTest, calcExposure
 
@@ -33,7 +34,7 @@ from testonfile import offlineTest, calcExposure
 
 def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_offline_test, want_calc_exposure,
          model_selection, method_selection, variance_explained, random_seed ,window_length_seconds, test_size, fs,
-         ds_fs, cmap, test_file_path, prediction_csv_path ):
+         ds_fs, cmap, test_file_path, prediction_csv_path, clf_results_path):
 
     variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
     
@@ -276,25 +277,40 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
     PCA_train_df        = pd.DataFrame(PCA_final.transform(train_data_scaled))
     PCA_test_df         = pd.DataFrame(PCA_final.transform(test_data_scaled))
 
-    ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
+    if want_new_CLFs:
 
-    n_results = makeNClassifiers(models, model_names, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
+        ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-    ''' EVALUATION '''
+        n_results = makeNClassifiers(models, model_names, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
 
-    result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, want_plots, activity_name)
+        ''' EVALUATION '''
+
+        result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, clf_results_path)
+
+    else:
+
+        ''' LOAD LAST OPTIMIZED CLFs AND EVALUATION '''
+
+        loaded_results  = joblib.load(clf_results_path)
+
+        n_results       = loaded_results['n_results']
+        result          = loaded_results['result']
+        accuracy_list   = loaded_results['accuracy_list']
 
     if want_plots:
         
         ''' CONFUSION MATRIX '''
-        test_predict = result['classifier'].predict(PCA_test_df)
-        confusionMatrix(test_labels, test_predict, activity_name, result)
+
+        # test_predict = result['classifier'].predict(PCA_test_df)
+        confusionMatrix(test_labels, PCA_test_df, activity_name, result)
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_1 = PCA_table_plot(train_data_scaled, n_components=PCA_components, features_per_PCA=28)   
+        fig_list_1 = PCA_table_plot(PCA_final, features_per_PCA=28) #train_data_scaled, n_components=PCA_components, 
+
+        fig_0      = plotFeatureImportance(PCA_final) 
         
-        ''' 2D PLOTS OF PCA '''
+        ''' PLOTS OF PCA '''
         
         fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
@@ -319,7 +335,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     if want_calc_exposure:
 
-        summary_df  = calcExposure(combined_df, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
+        summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
 
     
     return [fig_list_1, fig_1, fig_2, fig_3], result, accuracy_list
@@ -331,10 +347,11 @@ if __name__ == "__main__":
 
 
     want_feature_extraction = 0
-    want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
     separate_types          = 1 # Granular classification
-    want_plots              = 0
-    want_offline_test       = 1
+    want_new_CLFs           = 0
+    want_plots              = 1
+    want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
+    want_offline_test       = 0
     want_calc_exposure      = 1
 
     model_selection         = ['svm']
@@ -353,11 +370,12 @@ if __name__ == "__main__":
     ''' LOAD PATH NAMES'''
     test_file_path = "testOnFile/testFiles"
     prediction_csv_path = "testOnFile"
+    clf_results_path = "CLF results/clf_results.joblib"
 
     
     main(want_feature_extraction, want_pickle, 
          separate_types, want_plots, want_offline_test, want_calc_exposure,
          model_selection, method_selection, variance_explained,
          random_seed ,window_length_seconds, test_size, fs, ds_fs, 
-         cmap, test_file_path, prediction_csv_path)
+         cmap, test_file_path, prediction_csv_path, clf_results_path)
 

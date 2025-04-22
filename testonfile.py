@@ -1,5 +1,3 @@
-
-
 #### Implement solution to test a large file of various activities 
 # 1) Check if bin, if bin convert to txt
 # 2) Convert date format
@@ -19,7 +17,6 @@ to be set the same as the model is trained for.
 
 Set the window length to the same window length used for training the model.
 '''
-
 
 import joblib
 import pandas as pd
@@ -246,6 +243,7 @@ def offlineTest(test_file_path:        str,
     return combined_df #,features_df_all
 
 def calcExposure(combined_df:           pd.DataFrame,
+                 path:                  str,
                  window_length_seconds: int,
                  labels:                list[str], 
                  exposures:             list[str],
@@ -265,14 +263,23 @@ def calcExposure(combined_df:           pd.DataFrame,
 
     # labels = [
     #             'GRINDBIG', 'GRINDSMALL',
-    #             'IDLE','IMPA','GRINDMED', 
+    #             'IDLE','IMPA','GRINDMED', 'GRINDSMALLCORDED', 
     #             'SANDSIM',
     #             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
     #     ]
     
     # exposure_list = ['CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK']
+    
 
-    default_value = 0.0
+    # --- 1. Setup from combined DataFrame ---
+    if combined_df.empty:
+
+        try:
+            full_path   = os.path.join(path, "predictions.csv")
+            combined_df = pd.read_csv(full_path)
+
+        except Exception as e:
+            print(f"Error: Unable to read predictions.csv")
 
     if filter_on:
         print(f"Calculating exposure... (filter on)")
@@ -281,10 +288,13 @@ def calcExposure(combined_df:           pd.DataFrame,
         print(f"Calculating exposure... (filter off)")
         predicted_activities    = combined_df['Activity']
 
+    default_value = 0.0
+
     activity_counts             = predicted_activities.value_counts()
     activity_length             = activity_counts * window_length_seconds / 3600
     activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
 
+    # --- 2. Create exposure intensity matrix and calculate exposure, make summary ---
     # x
     activity_duration_vector    = activity_length_complete.values
 
@@ -294,11 +304,12 @@ def calcExposure(combined_df:           pd.DataFrame,
     # b = Ax
     total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
 
-    summary_df = exposure_summary(total_exposure_vector, safe_limit_vector, exposures)
+    summary_df                  = exposure_summary(total_exposure_vector, safe_limit_vector, exposures)
 
     filename_out = os.path.join(csv_path, "summary.csv")
     summary_df.to_csv(filename_out, index=False)
 
+    # --- 3. Print in terminal ---
     print()
     print(f"Predicted hours: \n {activity_length_complete.round(decimals=2)}")
     print(f"Risk factors increased. Grind big!")
@@ -312,9 +323,9 @@ def calcExposure(combined_df:           pd.DataFrame,
 
 def initialize_exposure_intensity_matrix(exposures:                     list[str], 
                                          activities:                    list[str],
-                                         gravityless_norm_accel_mean    = round(random.uniform(10.0, 20.0), 1) - 9.81,
-                                         gravityless_norm_accel_energy  = round(random.uniform(10.0, 20.0), 1) - 9.81,
-                                         temperature_energy             = round(random.uniform(10.0, 20.0), 1)
+                                         gravityless_norm_accel_mean:   float = round(random.uniform(10.0, 20.0), 1) - 9.81,
+                                         gravityless_norm_accel_energy: float = round(random.uniform(10.0, 20.0), 1) - 9.81,
+                                         temperature_energy:            float = round(random.uniform(10.0, 20.0), 1)
                                          ) -> pd.DataFrame:
     
     '''
@@ -356,7 +367,7 @@ def initialize_exposure_intensity_matrix(exposures:                     list[str
 def exposure_summary(total_exposure_vector:     np.array,
                      safe_limit_vector:         np.array,
                      exposures:                 list[str],
-                     neutral_limit = 0.80
+                     neutral_limit:             float = 0.80
                      ) -> pd.DataFrame:
 
     '''
@@ -373,8 +384,6 @@ def exposure_summary(total_exposure_vector:     np.array,
     }
 
     df = pd.DataFrame(data, index=exposures)
-
-    # df['Delta'] = df['Safe limit'] - df['Exposure level']
 
     df['Ratio [%]'] = 100 * (df['Exposure level'] / df['Safe limit'])
     
@@ -398,6 +407,10 @@ def moving_mode_filter(series:  pd.Series,
                        window:  int
                        ) -> pd.Series:
     
+    '''
+    Applies a moving mode filter to a Pandas Series.
+    '''
+
     return pd.Series(
         [
             Counter(series[max(0, i - window // 2): i + window // 2 + 1]).most_common(1)[0][0]

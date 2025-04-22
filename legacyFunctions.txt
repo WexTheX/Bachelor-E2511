@@ -748,21 +748,22 @@ def old_biplot(X, trainLabels, PCATest, n_components, separate_types, models, op
     print(f"Too many principal components to plot in a meaningful way")
     pass
 
+def plotKNNboundries(df, clf, labels):
+  
+    _, ax = plt.subplots()
 
+    disp = DecisionBoundaryDisplay.from_estimator(
+    clf,
+    df,
+    response_method="predict",
+    plot_method="pcolormesh",
+    shading="auto",
+    alpha=0.5,
+    ax=ax,
+    )
+    scatter = disp.ax_.scatter(df.iloc[:, 0], df.iloc[:, 1], c=labels, edgecolors="k")
 
-####################### Random ################################
-
-
-# label_mapping   = {
-#                     'IDLE':         (0.0, 0.0, 0.0), 
-#                     'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
-#                     'IMPA':         (0.5, 0.5, 0.5), 
-#                     'SANDSIM':      (0.0, 1.0, 0.0), 
-#                     'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
-# }
-
-# label_mapping   = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}
-
+########################## from realtime.py ################################
 
 async def data_notification_handlerOLD(sender: int, data: bytearray):
     """Decode data"""
@@ -816,3 +817,15 @@ async def data_notification_handlerOLD(sender: int, data: bytearray):
 
     notification_counter += 1
     return
+
+####################### Random ################################
+
+# label_mapping   = {
+#                     'IDLE':         (0.0, 0.0, 0.0), 
+#                     'GRINDBIG':     (1.0, 0.0, 0.0), 'GRINDMED':    (1.0, 0.5, 0.0), 'GRINDSMALL':  (1.0, 0.0, 0.5),
+#                     'IMPA':         (0.5, 0.5, 0.5), 
+#                     'SANDSIM':      (0.0, 1.0, 0.0), 
+#                     'WELDALTIG':    (0.0, 0.0, 1.0), 'WELDSTMAG':   (0.5, 0.0, 1.0), 'WELDSTTIG':   (0.0, 0.5, 1.0)
+# }
+
+# label_mapping   = {'IDLE': (0.0, 0.0, 0.0), 'GRINDING': (1.0, 0.0, 0.0), 'IMPA': (0.5, 0.5, 0.5), 'SANDSIMULATED': (0.0, 1.0, 0.0), 'WELDING': (0.0, 0.0, 1.0)}

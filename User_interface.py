@@ -2,7 +2,10 @@ import streamlit as st
 from main import main
 import os
 import asyncio
-from realtime import RT_main
+from realtime import RT_main, get_predictions
+import time
+import threading
+
 
 ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
 Search_methods = ['GridSearchCV', 'BayesSearchCV0', 'RandomizedSearchCV', 'bs', 'rs']
@@ -16,11 +19,15 @@ prediction_list = {}
 st.title("User interface")
 
 tab1, tab2, tab3, tab4 = st.tabs(["Real time streaming", "ML model", "Results", "New files/data" ])
-st.container()
+
+
+
+
+
 with tab1:
     if st.button("Start classifying in real time"):
         asyncio.run(RT_main())
-        print(prediction_list)
+        
 
         
         

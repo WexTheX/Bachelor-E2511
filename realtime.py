@@ -270,4 +270,10 @@ async def RT_main():
             print(f"Stored log as file: {str(start_time_local)}.csv")
 
 
-asyncio.run(RT_main())
+def get_predictions():
+    return prediction_list
+
+if __name__ == "__main__":
+    asyncio.run(RT_main())
+
+

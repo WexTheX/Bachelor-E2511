@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 import seaborn as sns
+import joblib
 
 from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
@@ -40,16 +41,16 @@ def setNComponents(X_train:             pd.DataFrame,
       eig_sum = 0
       for i in range(len(eigenvalues)):
           
-          eig_sum += eigenvalues[i]
-          total_variance = eig_sum / eigenvalues.sum()
+        eig_sum += eigenvalues[i]
+        total_variance = eig_sum / eigenvalues.sum()
 
-          if total_variance >= variance_explained:
-              n_components = i + 1
-              print(f"Variance explained by {n_components} PCA components: {eig_sum / eigenvalues.sum()}")
-              break
+        if total_variance >= variance_explained:
+            n_components = i + 1
+            print(f"Variance explained by {n_components} PCA components: {eig_sum / eigenvalues.sum()}")
+            break
           
     else:
-       n_components = variance_explained
+      n_components = variance_explained
     
     return n_components
 
@@ -133,6 +134,8 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
 
   print()
 
+
+  # --- 1. Compare selected models and methods to full list ---
   # Check selected models
   for key in model_selection:
 
@@ -160,7 +163,8 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
     
     method_selection_list.append(method)
 
-  # make n classifiers = len(model_selection) * len(method_selection)
+
+  # --- 2. Make n classifiers = len(model_selection) * len(method_selection) ---
   for (base_estimator, param_grid), model_name_str in zip(selected_model_data, selected_model_names):
     for method in method_selection_list:
 
@@ -255,7 +259,7 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
 
       if clf != base_estimator: 
         
-        # Pack all objects from clf into 
+        # Pack all objects from clf into dict "results"
         best_params = clf.best_params_
         best_score = clf.best_score_
 
@@ -283,29 +287,35 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
                         'mean_test_score':  mean_test_score,
                         'std_test_score':   std_test_score,
                       })
-
+      
   return results
 
-def evaluateCLFs(results:       List[Dict[str, Any]],
-                 test_df:       pd.DataFrame,
-                 test_labels:   Sequence,
-                 want_plots:    bool,
-                 activity_name: List[str]
+def evaluateCLFs(results:           List[Dict[str, Any]],
+                 test_df:           pd.DataFrame,
+                 test_labels:       Sequence,
+                 clf_results_path:  str
                 ) -> Tuple[Dict[str, Any], List[float]]:
   
   '''
-  Compares a list of trained classifiers (provided in 'results') against
-  a dummy baseline on the provided test dataset. It calculates and prints
-  various performance metrics (Accuracy, F1, Precision, Recall) for each
-  classifier on the test set, alongside their validation scores (mean, std,
-  train-test delta) obtained during training/tuning.
+  Evaluates a list of trained classifiers on a test dataset.
 
-  The function identifies the 'best' classifier based on the highest F1
-  score achieved on the test set during this evaluation. This object is
-  returned as a dict. Optionally, it generates and displays a confusion
-  matrix plot for each classifier.
+  This function iterates through a list containing results for multiple
+  classifiers (typically generated from hyperparameter tuning like
+  GridSearchCV or RandomizedSearchCV). For each classifier, it calculates
+  performance metrics (Accuracy, F1-score) on the provided test data and
+  prints these along with validation metrics passed in the `results`.
+
+  It identifies the best classifier based on the highest F1-score achieved
+  on the test set. It also calculates and prints the accuracy of a baseline
+  DummyClassifier ('most_frequent' strategy).
+
+  Finally, it saves the input `results` list, the dictionary corresponding
+  to the best identified classifier (`best_result`), and a list of the
+  calculated test accuracies to a specified file using joblib.
   '''
-  
+
+
+  # --- 1. Show baseline accuracy ---
   accuracy_list = []
   highest_score = 0.0
 
@@ -317,6 +327,8 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
   print("Dummy Classifier accuracy:", round(dummy_score, 4))
   print()
   
+
+  # --- 2. Print metrics and find best result ---
   for result_dict in results:
     
     model_name        = result_dict['model_name']
@@ -347,16 +359,26 @@ def evaluateCLFs(results:       List[Dict[str, Any]],
       best_optimalizer  = optimalizer
       best_result       = result_dict
 
-    # if want_plots:
-    #   ''' CONFUSION MATRIX '''
-    #   confusionMatrix(test_labels, test_predict, activity_name, model_name, optimalizer)
+    accuracy_list.append(round(accuracy_score))
 
-
-
-    accuracy_list.append(round(accuracy_score, 4))
-  
   print(f"Best clf: \t {best_model}: {best_optimalizer}")
   print(f"f1_score: \t {highest_score:.4f}")
-  print(f"")
+  print("")
+
+
+  # --- 3. Save results in a file --- 
+  try:
+    # Bundle classifier-related results
+    results_to_save = {
+        'n_results': results,
+        'result': best_result,
+        'accuracy_list': accuracy_list
+    }
+    
+    joblib.dump(results_to_save, clf_results_path)
+    print(f"Saved classifier results to {clf_results_path}")
+
+  except Exception as e:
+    print(f"Error in saving classifier results: {e}") 
 
   return best_result, accuracy_list

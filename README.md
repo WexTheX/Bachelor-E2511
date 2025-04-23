@@ -61,7 +61,16 @@ if __name__ == "__main__":
 
 ```
  
- Global variables are `True` or `False`, i.e `1` or `0`. For example if you want plots for visualization set `want_plots = 1`
+ Global variables are `True` or `False`, i.e `1` or `0`. For example if you want plots for visualization set `want_plots = 1`.
+
+ #### Visualization
+ To better visualize options and paramters that you can change run the `User_interface.py` file like this:
+ ```bash
+ streamlit run User_interface.py
+ ```
+ 
+
+
 
 
 

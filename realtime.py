@@ -15,7 +15,7 @@ DATA_UUID = "09bf2c52-d1d9-c0b7-4145-475964544307"
 ''' VARIABLES '''
 myDev = None
 device_list = ["Muse_E2511_GREY", "Muse_E2511_RED", "muse_v3_3", "muse_v3"] # List of bluetooth devices 
-device_name = device_list[3]                        # Choose device to connect to from list
+device_name = device_list[1]                        # Choose device to connect to from list
 
 window_length_sec = 20                  # Length of one window for prediction
 fs = 200                                # Frequency of sensor sampling
@@ -105,10 +105,10 @@ async def dataNotificationHandler(sender: int, data: bytearray):
         await sample_queue.put(temp_data)               # Put segment as MuseData object in queue
 
         ''' DEBUG AND PRINT TO MEASURE SAMPLES PER SECOND'''
-        # sample_counter += 1
-        # if sample_counter % 1000 == 0:
-        #     elapsed = time.time() - start_time
-        #     print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
+        sample_counter += 1
+        if sample_counter % 1000 == 0:
+            elapsed = time.time() - start_time
+            print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
     return
 
 
@@ -265,9 +265,9 @@ async def RT_main():
             print(f"Prediction list: \n {prediction_list}")
 
             ''' STORE SAMPLE LOG FOR FUTURE ANALYSIS '''
-            sample_df = pd.DataFrame(data=tot_sample_log, columns=df_columns)
-            sample_df.to_csv(output_path+"/livedetection/"+str(start_time_local)+".csv", index=False)      
-            print(f"Stored log as file: {str(start_time_local)}.csv")
+            #sample_df = pd.DataFrame(data=tot_sample_log, columns=df_columns)
+            #sample_df.to_csv(output_path+"/livedetection/"+str(start_time_local)+".csv", index=False)      
+            #print(f"Stored log as file: {str(start_time_local)}.csv")
 
 
 def get_predictions():

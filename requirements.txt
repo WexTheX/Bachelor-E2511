@@ -6,3 +6,4 @@ scikit-learn
 scikit-optimize
 streamlit
 bleak
+streamlit-autorefresh

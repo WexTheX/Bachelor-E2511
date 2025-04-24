@@ -5,7 +5,8 @@ import asyncio
 from realtime import RT_main, get_predictions
 import time
 import threading
-
+from streamlit_autorefresh import st_autorefresh
+from realtime import shutdown_event
 
 ML_models = ["SVM", "RF", "KNN", "GNB", "COMPARE"]
 Search_methods = ['GridSearchCV', 'BayesSearchCV0', 'RandomizedSearchCV', 'bs', 'rs']
@@ -14,7 +15,8 @@ prediction_csv_path = "testOnFile"
 random_seed = 420
 plots = []
 prediction_list = {}
-
+frequencies = [25, 50, 100, 200, 400, 800, 1600]
+percentages = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1, 2]
 
 st.title("User interface")
 
@@ -22,18 +24,27 @@ tab1, tab2, tab3, tab4 = st.tabs(["Real time streaming", "ML model", "Results", 
 
 
 
-
-
+        
+        
 with tab1:
-    if st.button("Start classifying in real time"):
-        asyncio.run(RT_main())
-        
+    column1,column2 = st.columns(2)
+    with column1:
 
+    
+        if st.button("Start classifying in real time"):
+            asyncio.run(RT_main())
         
-        
+        if st.button("Stop classifying in real time"):
+            shutdown_event.set()
 
-frequencies = [25, 50, 100, 200, 400, 800, 1600]
-percentages = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1, 2]
+    
+    with column2:
+        if st.checkbox("Show classification"):
+            prediction_list = get_predictions()
+            st.write(prediction_list)       
+            st_autorefresh(interval= 10 * 1000, key="test")
+
+
 
 
 with tab2:

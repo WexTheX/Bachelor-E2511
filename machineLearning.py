@@ -359,7 +359,7 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
       best_optimalizer  = optimalizer
       best_result       = result_dict
 
-    accuracy_list.append(round(accuracy_score))
+    accuracy_list.append(accuracy_score)
 
   print(f"Best clf: \t {best_model}: {best_optimalizer}")
   print(f"f1_score: \t {highest_score:.4f}")

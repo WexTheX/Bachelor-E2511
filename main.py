@@ -291,7 +291,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
         ''' LOAD LAST OPTIMIZED CLFs AND EVALUATION '''
 
-        loaded_results  = joblib.load(clf_results_path)
+        loaded_results  = joblib.load(clf_results_path) 
 
         n_results       = loaded_results['n_results']
         result          = loaded_results['result']

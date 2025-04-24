@@ -175,7 +175,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
         labels = [
             'GRINDBIG', 'GRINDSMALL',
-            'IDLE', 'IMPA', 'GRINDMED', 'GRINDSMALLCORDED',
+            'IDLE', 'IMPA', 'GRINDMED',
             'SANDSIM',
             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
@@ -308,7 +308,7 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
         
         fig_list_1 = PCA_table_plot(PCA_final, features_per_PCA=28) #train_data_scaled, n_components=PCA_components, 
 
-        fig_0      = plotFeatureImportance(PCA_final) 
+        pfig_0      = plotFeatureImportance(PCA_final) 
         
         ''' PLOTS OF PCA '''
         
@@ -359,7 +359,7 @@ if __name__ == "__main__":
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 0.95
+    variance_explained      = 2
     random_seed             = 420
     window_length_seconds   = 20
     test_size               = 0.25

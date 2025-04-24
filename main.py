@@ -63,12 +63,12 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                # 1.0, 10.0, 100.0
+                                 1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-        # "coef0":                [0.0, 0.5, 1.0],
-        # "degree":               [2, 3, 4, 5]
+        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        "coef0":                [0.0, 0.5, 1.0],
+        "degree":               [2, 3, 4, 5]
     }
 
 
@@ -351,11 +351,11 @@ if __name__ == "__main__":
     want_new_CLFs           = 1
     want_plots              = 1
     want_pickle             = 1 # Pickle the classifier, scaler and PCA objects.
-    want_offline_test       = 1
-    want_calc_exposure      = 1
+    want_offline_test       = 0
+    want_calc_exposure      = 0
 
-    model_selection         = ['svm']
-    method_selection        = ['rs']
+    model_selection         = ['svm', 'lr']
+    method_selection        = ['gs','rs','bs']
 
     ''' DATASET VARIABLES '''
 

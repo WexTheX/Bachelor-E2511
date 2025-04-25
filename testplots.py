@@ -25,16 +25,20 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_1.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_2.txt")
+datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
+datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
 
 
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_6.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_2.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_3.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_2.txt")
@@ -50,19 +54,19 @@ variables = []
 
 
 ''' ADD VARIABLES '''
-variables.append("Axl.X")
-variables.append("Axl.Y")
-variables.append("Axl.Z")
+# variables.append("Axl.X")
+# variables.append("Axl.Y")
+# variables.append("Axl.Z")
 
 variables.append("Mag.X")
 variables.append("Mag.Y")
 variables.append("Mag.Z")
 
-variables.append("Gyr.X")
-variables.append("Gyr.Y")
-variables.append("Gyr.Z")
+# variables.append("Gyr.X")
+# variables.append("Gyr.Y")
+# variables.append("Gyr.Z")
 
-variables.append("Temp")
+# variables.append("Temp")
 # variables.append("Press")
 
 # variables.append("Range")
@@ -145,7 +149,7 @@ def plotWelch(sets, vars):
 
 plotTime(datasets, variables)
 # plotFFT(datasets, variables)
-# plotWelch(datasets, variables)  
+plotWelch(datasets, variables)  
 
 plt.show()
 

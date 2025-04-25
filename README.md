@@ -38,7 +38,7 @@ if __name__ == "__main__":
     want_feature_extraction = 0
     want_pickle             = 0 
     separate_types          = 1 
-    want_plots              = 0
+    want_plots              = 1
     want_offline_test       = 1
     want_calc_exposure      = 1
 

@@ -21,6 +21,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.tree import DecisionTreeClassifier
+from typing import List, Dict, Any, Tuple, Sequence
+
 
 # Local imports
 # from FOLDER import FILE as F
@@ -29,176 +31,61 @@ from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClas
 from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotFeatureImportance, confusionMatrix
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import offlineTest, calcExposure
+from config import setupML, loadDataset, main_config
 
 
+def main(
+    # Flags
+    want_feature_extraction: bool, 
+    want_pickle: bool, 
+    separate_types: bool,
+    want_new_CLFs: bool, 
+    want_plots: bool, 
+    want_offline_test: bool, 
+    want_calc_exposure: bool,
 
-def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_offline_test, want_calc_exposure,
-         model_selection, method_selection, variance_explained, random_seed ,window_length_seconds, test_size, fs,
-         ds_fs, cmap, test_file_path, prediction_csv_path, clf_results_path):
+    # Selection & Configuration
+    model_selection: list[str],
+    method_selection: list[str],
+    variance_explained: float,
+    random_seed: int,
+    window_length_seconds: int,
+    test_size: float,
+    fs: int,
+    ds_fs: int,
+    cmap: str,
 
-    variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
-    
+    # Paths
+    test_file_path: str,
+    prediction_csv_path: str,
+    clf_results_path: str,
+
+    # Specific Parameters
+    n_iter: int,
+    exposures: list[str],
+    safe_limit_vector: list[float],
+    variables: list[str]
+) -> Tuple[List, dict, list[float]]:
+
+
+    ''' SETUP '''
+
     fig_list_1, n_results, accuracy_list = [], [], []
     fig_1, fig_2, fig_3 = None, None, None
     combined_df = pd.DataFrame()
     result = {}
 
-    ''' BASE ESTIMATORS '''
+    ''' GET ML MODELS AND HPO METHODS '''
 
-    base_params =  {'class_weight': 'balanced', 
-                    'random_state': random_seed}
-
-    SVM_base    = svm.SVC(**base_params, probability=True)
-    RF_base     = RandomForestClassifier(**base_params)
-    KNN_base    = KNeighborsClassifier()
-    GNB_base    = GaussianNB()
-    LR_base     = LogisticRegression(**base_params)
-    GB_base     = GradientBoostingClassifier(random_state=random_seed)
-    ADA_base    = AdaBoostClassifier(estimator=DecisionTreeClassifier(), random_state=random_seed)
-
-    ''' HYPER PARAMETER VARIABLES '''
-
-    num_folds = 3
-    n_iter = 30
-
-    SVM_param_grid = {
-        "C":                    [0.01, 0.1,
-                                 1.0, 10.0, 100.0
-                                ],
-        "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-        "coef0":                [0.0, 0.5, 1.0],
-        "degree":               [2, 3, 4, 5]
-    }
-
-
-    RF_param_grid = {
-        'n_estimators':         [50, 100, 200],         # Number of trees in the forest
-        'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
-        'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
-        'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
-        'max_features':         ['sqrt', 'log2'],       # Number of features considered for splitting
-        # 'bootstrap':            [True, False],          # Whether to use bootstrapped samples
-        'criterion':            ['gini', 'entropy']     # Splitting criteria
-    }
-
-    KNN_param_grid = {
-        'algorithm':            ['ball_tree', 'kd_tree', 'brute'], 
-        # 'leaf_size':          [30], 
-        # 'metric':             ['minkowski'], 
-        # 'metric_params':      [None], 
-        # 'n_jobs':             [None], 
-        'n_neighbors':          [3, 4, 5], 
-        'p':                    [1, 2], 
-        'weights':              ['uniform', 'distance']
-    }
-
-    GNB_param_grid = {
-        'var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5]
-    }
-
-    LR_param_grid = {
-        'C':                    [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],             #
-        # 'dual':                 [False],                                    # Dual or Primal formulation
-        # 'fit_intercept':        [True],                                     # Constant added to function (bias)             
-        # 'intercept_scaling':    [1],                                        # Only useful when Solver = liblinear, fit_intercept = true
-        # 'l1_ratio':             [None],                                     # ???
-        'max_iter':             [100],                                      # Max iterations for solver to converge
-        # 'multi_class':          ['deprecated'],                             # Deprecated
-        # 'n_jobs':               [None],                                     # Amount of jobs that can run at the same time, (also set in CV, error if both)
-        # 'penalty':              ['l1', 'l2', 'elasticnet', None],           # Norm of the penalty 
-        # 'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],      # Algorithm for optimization problem
-        'tol':                  [0.0001],                                   # Tolerance for stopping criteria
-        #'warm_start':           [False]                                      # Reuse previous calls solution
-    }
-
-    GB_param_grid = {
-        'n_estimators':         [100, 200, 300],
-        'learning_rate':        [0.01, 0.05, 0.1],
-        'max_depth':            [3, 5, 7],
-        'min_samples_split':    [2, 5, 10],
-        'min_samples_leaf':     [1, 2, 4],
-        'subsample':            [0.6, 0.8, 1.0],
-        'max_features':         ['sqrt', 'log2', None],
-    }
-    
-    ADA_param_grid = {
-        'n_estimators':                 [50, 100, 200],
-        'learning_rate':                [0.01, 0.1, 1.0],
-        'estimator__max_depth':         [1, 3, 5],
-        'estimator__min_samples_split': [2, 5]
-    }
-
-    model_names = {
-        'SVM':  'Support Vector Machine', 
-        'RF':   'Random Forest',
-        'KNN':  'K-Nearest Neighbors',
-        'GNB':  'Gaussian Naive Bayes',
-        'LR':   'Linear Regression',
-        'GB':   'Gradient Boosting',
-        'ADA':  'AdaBoost'
-    }
-
-    models = {
-        'SVM':  (SVM_base,  SVM_param_grid), 
-        'RF':   (RF_base,   RF_param_grid),
-        'KNN':  (KNN_base,  KNN_param_grid),
-        'GNB':  (GNB_base,  GNB_param_grid),
-        'LR':   (LR_base,   LR_param_grid),
-        'GB':   (GB_base,   GB_param_grid),
-        'ADA':  (ADA_base,  ADA_param_grid)
-    }
-
-    optimization_methods = {
-        'BS':   'BayesSearchCV',
-        'RS':   'RandomizedSearchCV',
-        'GS':   'GridSearchCV',
-        'HGS':  'HalvingGridSearchCV'
-    }
-
-    search_kwargs = {
-        'n_jobs':             -1, 
-        'verbose':             0,
-        'cv':                  StratifiedKFold(n_splits=num_folds),
-        'scoring':             'f1_weighted',
-        'return_train_score':  True
-    }
+    model_names, models, optimization_methods, search_kwargs = setupML()
 
     ''' LOAD DATASET '''
 
-    # Different folder for separated and not separated
-    if separate_types:
-        
-        path            = "Preprocessing/DatafilesSeparated" 
-        output_path     = "OutputFiles/Separated/"
-        test_path       = "testFiles/"
-
-        labels = [
-            'GRINDBIG', 'GRINDSMALL',
-            'IDLE', 'IMPA', 'GRINDMED',
-            'SANDSIM',
-            'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
-        ]
-
-    else:
-        path            = "Preprocessing/Datafiles"
-        output_path     = "OutputFiles/"
-        test_path       = "testFiles/"
-
-        labels = [
-            'IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING'
-        ]
-
-    exposures = [
-        'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
-    ]
-
-    safe_limit_vector = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
+    path, output_path, labels = loadDataset(separate_types)
 
     num_labels      = len(labels)
     cmap_name       = plt.get_cmap(cmap, num_labels)
     label_mapping   = {label: cmap_name(i) for i, label in enumerate(labels)}
-
 
     path_names          = os.listdir(path)
     activity_name       = [name.upper() for name in path_names]
@@ -343,39 +230,4 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
 if __name__ == "__main__":
 
-    ''' GLOBAL VARIABLES '''
-
-
-    want_feature_extraction = 0
-    separate_types          = 1 # Granular classification
-    want_new_CLFs           = 1
-    want_plots              = 1
-    want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
-    want_offline_test       = 0
-    want_calc_exposure      = 0
-
-    model_selection         = ['svm', 'lr']
-    method_selection        = ['gs','rs','bs']
-
-    ''' DATASET VARIABLES '''
-
-    variance_explained      = 0.9
-    random_seed             = 420
-    window_length_seconds   = 20
-    test_size               = 0.25
-    fs                      = 800
-    ds_fs                   = 200
-    cmap                    = 'tab10'
-
-    ''' LOAD PATH NAMES'''
-    test_file_path = "testOnFile/testFiles"
-    prediction_csv_path = "testOnFile"
-    clf_results_path = "CLF results/clf_results.joblib"
-
-    
-    main(want_feature_extraction, want_pickle, 
-         separate_types, want_plots, want_offline_test, want_calc_exposure,
-         model_selection, method_selection, variance_explained,
-         random_seed ,window_length_seconds, test_size, fs, ds_fs, 
-         cmap, test_file_path, prediction_csv_path, clf_results_path)
-
+    main(**main_config)

@@ -402,7 +402,7 @@ def confusionMatrix(labels:     Sequence,
   return None
 
 def plotFeatureImportance(pca:          Any,
-                          threshold:    float = 0.72
+                          threshold:    float = 0.68
                           ) -> Figure:
 
   '''

@@ -350,16 +350,16 @@ if __name__ == "__main__":
     separate_types          = 1 # Granular classification
     want_new_CLFs           = 1
     want_plots              = 1
-    want_pickle             = 1 # Pickle the classifier, scaler and PCA objects.
-    want_offline_test       = 1
-    want_calc_exposure      = 1
+    want_pickle             = 0 # Pickle the classifier, scaler and PCA objects.
+    want_offline_test       = 0
+    want_calc_exposure      = 0
 
     model_selection         = ['svm']
     method_selection        = ['rs']
 
     ''' DATASET VARIABLES '''
 
-    variance_explained      = 2
+    variance_explained      = 0.9
     random_seed             = 420
     window_length_seconds   = 20
     test_size               = 0.25

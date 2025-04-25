@@ -63,12 +63,12 @@ def main(want_feature_extraction, want_pickle, separate_types, want_plots, want_
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                # 1.0, 10.0, 100.0
+                                 1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-        # "coef0":                [0.0, 0.5, 1.0],
-        # "degree":               [2, 3, 4, 5]
+        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        "coef0":                [0.0, 0.5, 1.0],
+        "degree":               [2, 3, 4, 5]
     }
 
 
@@ -354,8 +354,8 @@ if __name__ == "__main__":
     want_offline_test       = 0
     want_calc_exposure      = 0
 
-    model_selection         = ['svm']
-    method_selection        = ['rs']
+    model_selection         = ['svm', 'lr']
+    method_selection        = ['gs','rs','bs']
 
     ''' DATASET VARIABLES '''
 

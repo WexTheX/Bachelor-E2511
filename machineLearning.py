@@ -105,7 +105,8 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
                      search_kwargs:         Dict[str, Any],
                      n_iter:                int,
                      BASE_MODEL_KEY:        str = 'SVM',
-                     BASE_METHOD:           str = 'Base model'
+                     BASE_METHOD:           str = 'Base model',
+                     num_of_STD:            int = 1
                      ) -> Dict[str, Any]:
   
   '''
@@ -266,16 +267,15 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
         best_params = clf.best_params_
         best_score = clf.best_score_
 
-        k = 1 # Nr of STDs
         mean_test_score = clf.cv_results_['mean_test_score'][clf.best_index_]
         std_test_score  = clf.cv_results_['std_test_score'][clf.best_index_]
-        pessimistic_test_score = mean_test_score - k * std_test_score
+        pessimistic_test_score = mean_test_score - num_of_STD * std_test_score
 
         mean_train_score  = clf.cv_results_['mean_train_score'][clf.best_index_]
 
         train_test_delta = mean_train_score - mean_test_score
 
-        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the best worst-case test result: (mean - {k}*std): {pessimistic_test_score}")
+        print(f"{clf.cv_results_['params'][clf.best_index_]} gives the best worst-case test result: (mean - {num_of_STD}*std): {pessimistic_test_score}")
         print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
         print(f"\n") 
 

@@ -16,8 +16,8 @@ main_config = {
     'want_pickle':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
     'want_calc_exposure':       0,
-    'model_selection':          ['svm', 'lr'],
-    'method_selection':         ['gs','rs','bs'],
+    'model_selection':          [],
+    'method_selection':         [],
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.9,
@@ -48,7 +48,7 @@ def setupML():
     num_folds = 3
 
     base_params =  {'class_weight': 'balanced', 
-                'random_state': random_seed}
+                    'random_state': random_seed}
 
     SVM_base    = svm.SVC(**base_params, probability=True)
     RF_base     = RandomForestClassifier(**base_params)

@@ -4,15 +4,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import math
 
-from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
-from sklearn import svm, metrics, dummy
+from sklearn import metrics
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.decomposition import PCA
 from typing import List, Dict, Any, Tuple, Sequence, Optional
 from matplotlib.lines import Line2D
-from matplotlib.colors import ListedColormap
 from matplotlib.figure import Figure
 
+from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 
 def normDistPlot(dataset, size):
   # Plot of normal distribution, WIP

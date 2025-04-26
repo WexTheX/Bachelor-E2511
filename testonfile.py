@@ -25,7 +25,6 @@ import os
 import pandas as pd
 import random
 from collections import Counter
-# from hmmlearn import hmm
 
 ### Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
@@ -261,16 +260,6 @@ def calcExposure(combined_df:           pd.DataFrame,
     scores to safe limits. Prints intermediate results and the final summary.
     '''
 
-    # labels = [
-    #             'GRINDBIG', 'GRINDSMALL',
-    #             'IDLE','IMPA','GRINDMED', 'GRINDSMALLCORDED', 
-    #             'SANDSIM',
-    #             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
-    #     ]
-    
-    # exposure_list = ['CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK']
-    
-
     # --- 1. Setup from combined DataFrame ---
     if combined_df.empty:
 
@@ -344,8 +333,7 @@ def initialize_exposure_intensity_matrix(exposures:                     list[str
     '''
     
     # TODO 
-    # Finne fleire "proxies" for hvilken sensordata/features som slår ut på hvilken faktor
-    # Eller finne tall på det 
+    # Future work: find more proxies, set up sensor readings coming in
 
     df = pd.DataFrame(0.0, index=exposures, columns=activities) 
 

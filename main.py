@@ -1,33 +1,20 @@
 ''' IMPORTS '''
 import time
 import os
-import pickle
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from pathlib import Path
-import streamlit as st
 import joblib
 
-from sklearn.inspection import permutation_importance
-from sklearn import svm
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.model_selection import TimeSeriesSplit, StratifiedKFold, RepeatedStratifiedKFold, cross_val_score, train_test_split
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
 from sklearn.experimental import enable_halving_search_cv
-from sklearn.tree import DecisionTreeClassifier
 from typing import List, Dict, Any, Tuple, Sequence
 
-
 # Local imports
-# from FOLDER import FILE as F
-from extractFeatures import extractAllFeatures, extractDFfromFile, extractFeaturesFromDF
-from machineLearning import trainScaler, setNComponents, evaluateCLFs, makeNClassifiers
+from extractFeatures import extractDFfromFile, extractFeaturesFromDF
+from machineLearning import setNComponents, evaluateCLFs, makeNClassifiers
 from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotFeatureImportance, confusionMatrix
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import offlineTest, calcExposure
@@ -65,9 +52,22 @@ def main(
     exposures: list[str],
     safe_limit_vector: list[float],
     variables: list[str]
-) -> Tuple[List, dict, list[float]]:
 
+    ) -> Tuple[List, dict, list[float]]:
 
+    '''
+    Orchestrates the activity recognition ML pipeline.
+
+    Covers:
+    1. Data Loading & optional Feature Extraction/Loading.
+    2. Splitting, Scaling, PCA.
+    3. Optional Model Training/Loading.
+    4. Evaluation & optional Plotting.
+    5. Optional Saving of artifacts (models, scaler, PCA).
+    6. Optional Offline Testing & Exposure Calculation.
+    Pipeline steps are configurable via parameters.
+    '''
+    
     ''' SETUP '''
 
     fig_list_1, n_results, accuracy_list = [], [], []
@@ -193,9 +193,9 @@ def main(
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_1 = PCA_table_plot(PCA_final, features_per_PCA=28) #train_data_scaled, n_components=PCA_components, 
+        fig_list_1 = PCA_table_plot(PCA_final, features_per_PCA=28) 
 
-        pfig_0      = plotFeatureImportance(PCA_final) 
+        pfig_0     = plotFeatureImportance(PCA_final) 
         
         ''' PLOTS OF PCA '''
         

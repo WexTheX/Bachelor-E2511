@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import time
-import seaborn as sns
 import joblib
 
 from skopt import BayesSearchCV
@@ -12,12 +10,9 @@ from sklearn.model_selection import GridSearchCV, HalvingGridSearchCV, Randomize
 from sklearn.experimental import enable_halving_search_cv
 from sklearn import metrics, dummy
 from typing import List, Dict, Any, Tuple, Sequence
-from plotting import confusionMatrix
-import streamlit as st
-
-''' PRE PROCESSING '''
 
 def trainScaler(df):
+  ''' PRE PROCESSING '''
   scaler = StandardScaler()
   scaler.set_output(transform="pandas")
 
@@ -25,7 +20,6 @@ def trainScaler(df):
 
   return scaler
 
-''' PCA '''
 def setNComponents(X_train:             pd.DataFrame, 
                    variance_explained:  Any
                    ) -> int:
@@ -109,7 +103,9 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
                      X:                     pd.DataFrame,
                      y:                     List[str],
                      search_kwargs:         Dict[str, Any],
-                     n_iter:                int
+                     n_iter:                int,
+                     BASE_MODEL_KEY:        str = 'SVM',
+                     BASE_METHOD:           str = 'Base model'
                      ) -> Dict[str, Any]:
   
   '''
@@ -137,29 +133,36 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
 
   # --- 1. Compare selected models and methods to full list ---
   # Check selected models
+  if not model_selection:
+    model_selection.append(BASE_MODEL_KEY)
+    print(f"Warning: No model selected, defaulting to {BASE_MODEL_KEY}")
+
   for key in model_selection:
 
     key_upper = key.upper()
 
-    estimator, grid = models.get(key_upper, models['SVM'])
-    model_name_full = model_names.get(key_upper, model_names['SVM'])
+    estimator, grid = models.get(key_upper, models[BASE_MODEL_KEY])
+    model_name_full = model_names.get(key_upper, model_names[BASE_MODEL_KEY])
 
     if key_upper not in models:
-      print(f"Warning: Classifier '{key}' not recognized, selecting {model_name_full}.")
+      print(f"Warning: Classifier '{key}' not recognized, defaulting to {model_name_full}.")
 
     # Create a list of (base model, param grid) pairs based on input models, default to SVM base and SVM param grid
     selected_model_names.append(model_name_full)
     selected_model_data.append((estimator, grid))
 
   # Check selected methods
+  if not method_selection:
+    method_selection.append(BASE_METHOD)
+
   for key in method_selection:
     
     key_upper = key.upper()
 
-    method = optimization_methods.get(key_upper, 'Base model')
+    method = optimization_methods.get(key_upper, BASE_METHOD)
 
     if key_upper not in optimization_methods:
-      print(f"Warning: Method '{key}' not recognized, selecting {method}.")
+      print(f"Warning: Method '{key}' not recognized, defaulting to {method}.")
     
     method_selection_list.append(method)
 

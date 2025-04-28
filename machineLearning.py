@@ -266,6 +266,7 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
         # Pack all objects from clf into dict "results"
         best_params = clf.best_params_
         best_score = clf.best_score_
+        best_clf = clf.best_estimator_
 
         mean_test_score = clf.cv_results_['mean_test_score'][clf.best_index_]
         std_test_score  = clf.cv_results_['std_test_score'][clf.best_index_]
@@ -283,7 +284,7 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
                         'model_name':       model_name_str,
                         'optimalizer':      method,
 
-                        'classifier':       clf,
+                        'classifier':       best_clf,
                         'best_score':       best_score,
                         'best_params':      best_params,      
                         'train_test_delta': train_test_delta, # Higher value -> more overfitted

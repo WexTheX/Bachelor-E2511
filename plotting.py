@@ -10,6 +10,7 @@ from sklearn.decomposition import PCA
 from typing import List, Dict, Any, Tuple, Sequence, Optional
 from matplotlib.lines import Line2D
 from matplotlib.figure import Figure
+from collections import defaultdict
 
 from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 
@@ -62,7 +63,7 @@ def testWelch(sets_n, variables_n, fs):
 
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
 
-def PCA_table_plot(PCA_object:        Any,
+def plotPCATable(PCA_object:        Any,
                   #  X:                 pd.DataFrame, 
                   #  n_components:      int,
                    features_per_PCA:  int
@@ -425,9 +426,9 @@ def plotFeatureImportance(pca:          Any,
   feature_dict            = {}
 
   sensors                 = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z', 'temp']
-  time_feature_suffixes   = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entropy', 'iqr', 'kurtosis', 'skewness', 'correlation']
+  time_feature_suffixes   = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entr', 'iqr', 'kurt', 'skew', 'corr']
   freq_sensors            = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z']
-  freq_feature_suffixes   = ['psd_mean', 'psd_max', 'psd_min', 'psd_max_freq']
+  freq_feature_suffixes   = ['psdmean', 'psdmax', 'psdmin', 'psdpeakf']
 
   # Add time features
   for sensor in sensors:
@@ -457,6 +458,8 @@ def plotFeatureImportance(pca:          Any,
   # --- 3. Identify and Format Least Important Features ---
   # Make a dict with {feature_name: importance_value}
   feature_dict = {name: normalized_vector_percentage[i] for i, name in enumerate(original_feature_names)}
+
+  sensor_importance_df, suffix_importance_df = getSensorAndSuffixImportance(feature_dict)
 
   low_value_feature_dict = {key: value for key, value in feature_dict.items() if value < threshold}
   sorted_dict_items = sorted(low_value_feature_dict.items(), key=lambda item: item[1], reverse=True)
@@ -515,7 +518,7 @@ def plotFeatureImportance(pca:          Any,
          ha='left', 
          bbox=dict(boxstyle='round,pad=0.5', fc='wheat', alpha=0.6))
 
-  ax.set_title(f"Feature importance of {pca.n_components} PCs", fontsize=16)
+  ax.set_title(f"Importance of {len(original_feature_names)} original features to {pca.n_components} Principal Components", fontsize=16)
   ax.set_xlabel("Sorted features", fontsize=12)
   ax.set_ylabel("% Contribution to all PC's", fontsize=12)
 
@@ -534,3 +537,129 @@ def plotFeatureImportance(pca:          Any,
         print(f"Error saving plot to {output_filename}: {e}")
   
   return Figure
+
+def getSensorAndSuffixImportance(feature_dict):
+
+  sensor_importance = defaultdict(float)
+  suffix_importance = defaultdict(float)
+
+  for feature_name, importance in feature_dict.items():
+    parts = feature_name.split('_', 1)
+    suffix, sensor = parts
+
+    sensor_importance[sensor] += importance
+    suffix_importance[suffix] += importance
+
+  sensor_df = pd.DataFrame(sensor_importance.values(), index=sensor_importance.keys(), columns=['Importance']).sort_values(by='Importance', ascending=False)
+  suffix_df = pd.DataFrame(suffix_importance.values(), index=suffix_importance.keys(), columns=['Importance']).sort_values(by='Importance', ascending=False)
+
+  # --- Plotting ---
+  fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(14, 6))
+
+  # Plot Sensor Importance
+  sensor_df.plot(kind='bar', ax=axes[0], legend=False, color='skyblue')
+  axes[0].set_title('Feature Importance by Sensor')
+  axes[0].set_ylabel('Total Importance [%]')
+  axes[0].set_xlabel('Sensor Name')
+  axes[0].tick_params(axis='x', rotation=45)
+
+  # Plot Suffix Importance
+  suffix_df.plot(kind='bar', ax=axes[1], legend=False, color='lightcoral')
+  axes[1].set_title('Feature Importance by Suffix (Statistic Type)')
+  axes[1].set_ylabel('Total Importance [%]')
+  axes[1].set_xlabel('Statistical feature')
+  axes[1].tick_params(axis='x', rotation=45)
+
+  plt.tight_layout()
+
+    # --- 5. Save plot ---
+  output_filename = "plots/sensor_and_suffix_importance.png"
+  
+  try:
+    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+  except Exception as e:
+        print(f"Error saving plot to {output_filename}: {e}")
+
+  return sensor_df, suffix_df
+
+def screePlot(pca):
+
+  n_components = pca.n_components_
+  explained_variance_ratio = pca.explained_variance_ratio_
+  # explained_variance = pca.explained_variance_ 
+
+    # --- Create the Scree Plot ---
+  plt.figure(figsize=(8, 5))
+  component_numbers = np.arange(n_components) + 1
+
+  # Plot individual component variance
+  plt.plot(component_numbers, explained_variance_ratio, 'o-', linewidth=2, label='Individual Variance')
+
+  # Optional: Plot cumulative variance
+  # cumulative_variance_ratio = np.cumsum(explained_variance_ratio)
+  # plt.plot(component_numbers, cumulative_variance_ratio, 's-', linewidth=2, label='Cumulative Variance')
+
+  # Add labels and title
+  plt.title('Scree Plot')
+  plt.xlabel('Principal Component Number')
+  plt.ylabel('Proportion of Variance Explained')
+  plt.xticks(component_numbers) # Ensure ticks for each component number
+  plt.legend()
+  plt.grid(True)
+  # plt.ylim(0, 0.27) # Set y-axis limits appropriately
+  # plt.show()
+
+  output_filename = "plots/PCA_scree_plot.png"
+
+  try:
+    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+  except Exception as e:
+        print(f"Error saving plot to {output_filename}: {e}")
+
+def plotLearningCurve(results, X, y):
+  
+  from sklearn.model_selection import LearningCurveDisplay, ShuffleSplit, StratifiedKFold
+  from sklearn import svm
+  models = []
+
+  for result in results:
+    models.append(result['classifier'])
+
+  print(models)
+
+  n_models = len(models)
+  n_cols = 3  # or 4, depending how you want to layout
+  n_rows = (n_models + n_cols - 1) // n_cols  # automatic rows based on number of models
+
+  fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(5 * n_cols, 4 * n_rows), sharey=True)
+  axes = axes.flatten()  # Flatten in case it's 2D array of axes
+
+  # fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 6), sharey=True)
+
+  common_params = {
+      "X": X,
+      "y": y,
+      "train_sizes": np.linspace(0.1, 1.0, 15),
+      "cv": StratifiedKFold(n_splits=10),
+      # "cv": ShuffleSplit(n_splits=50, test_size=0.2, random_state=0),
+      "score_type": "both",
+      "n_jobs": -1,
+      "line_kw": {"marker": "o"},
+      "std_display_style": "fill_between",
+      "score_name": "Accuracy",
+  }
+
+  for ax_idx, estimator in enumerate(models):
+      LearningCurveDisplay.from_estimator(estimator, **common_params, ax=axes[ax_idx])
+      handles, label = axes[ax_idx].get_legend_handles_labels()
+      axes[ax_idx].legend(handles[:2], ["Training Score", "Test Score"])
+      axes[ax_idx].set_title(f"Learning Curve for {estimator.__class__.__name__}")
+
+  plt.tight_layout()
+
+
+  output_filename = "plots/Learning_curve.png"
+  try:
+    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+  except Exception as e:
+        print(f"Error saving plot to {output_filename}: {e}")

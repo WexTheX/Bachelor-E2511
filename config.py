@@ -60,9 +60,9 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                  1.0, 10.0, 100.0
+                                 1.0, 10.0, 100.0
                                 ],
-        "kernel":               ["linear", "poly", "rbf"],# "sigmoid"],
+        "kernel":               ["linear", "poly", "rbf", "sigmoid"],
         "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
         "coef0":                [0.0, 0.5, 1.0],
         "degree":               [2, 3, 4, 5]
@@ -71,10 +71,10 @@ def setupML():
     RF_param_grid = {
         'n_estimators':         [50, 100, 200],         # Number of trees in the forest
         'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
-        # 'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
-        # 'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
-        # 'max_features':         ['sqrt', 'log2'],       # Number of features considered for splitting
-        # # 'bootstrap':            [True, False],          # Whether to use bootstrapped samples
+        'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
+        'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
+        'max_features':         ['sqrt', 'log2'],       # Number of features considered for splitting
+        # 'bootstrap':            [True, False],          # Whether to use bootstrapped samples
         'criterion':            ['gini', 'entropy']     # Splitting criteria
     }
 

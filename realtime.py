@@ -47,6 +47,7 @@ tot_sample_log = []                                      # Prepares dict of pred
 
 ''' PICKLE IMPORTS '''
 output_path = "OutputFiles/Separated/"                          # Define import path
+
 with open(output_path + "classifier.pkl", "rb") as CLF_file:    # Import classifier
     clf = pickle.load(CLF_file)
 CLF_file.close()

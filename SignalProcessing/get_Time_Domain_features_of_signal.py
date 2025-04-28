@@ -31,7 +31,7 @@ def get_Time_Domain_features_of_signal(signal,signal_name):
     features[f'correlation{suffix}']    = autocorrelation(signal) # https://realpython.com/numpy-scipy-pandas-correlation-python/#example-numpy-correlation-calculation
     # features['angular_velocity']              = 1 #TODO angular velocity | how to get? 
     # features['linear_acceleration']           = 1 # for Norm data this is already there
-
+    
     return features
 
 def median_filter(array):

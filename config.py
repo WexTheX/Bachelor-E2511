@@ -12,15 +12,15 @@ main_config = {
     'want_feature_extraction':  0,
     'separate_types':           1, 
     'want_new_CLFs':            0,
-    'want_plots':               0,
+    'want_plots':               1,
     'want_pickle':              0, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        1,
-    'want_calc_exposure':       1,
-    'model_selection':          ['svm', 'rf'],
+    'want_offline_test':        0,
+    'want_calc_exposure':       0,
+    'model_selection':          ['svm', 'rf', 'lr'],
     'method_selection':         ['rs', 'gs'],
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       2,
+    'variance_explained':       0.95,
     'random_seed':              420,
     'window_length_seconds':    20,
     'test_size':                0.25,
@@ -60,12 +60,12 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                #  1.0, 10.0, 100.0
+                                  1.0, 10.0, 100.0
                                 ],
-        "kernel":               ["linear", "poly", "rbf"]# "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-        # "coef0":                [0.0, 0.5, 1.0],
-        # "degree":               [2, 3, 4, 5]
+        "kernel":               ["linear", "poly", "rbf"],# "sigmoid"],
+        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        "coef0":                [0.0, 0.5, 1.0],
+        "degree":               [2, 3, 4, 5]
     }
 
     RF_param_grid = {

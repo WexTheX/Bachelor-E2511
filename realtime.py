@@ -106,11 +106,12 @@ async def dataNotificationHandler(sender: int, data: bytearray):
         await sample_queue.put(temp_data)               # Put segment as MuseData object in queue
 
         ''' DEBUG AND PRINT TO MEASURE SAMPLES PER SECOND'''
-        sample_counter += 1
-        if sample_counter % 1000 == 0:
-            elapsed = time.time() - start_time
-            print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
+        # sample_counter += 1
+        # if sample_counter % 1000 == 0:
+        #     elapsed = time.time() - start_time
+        #     print(f"Sample rate: {sample_counter / elapsed:.2f} sample/sec")
     return
+
 
 
 async def processSamples():

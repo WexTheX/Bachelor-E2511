@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import scipy as sp
+import math as math
 
 from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 
@@ -12,6 +14,7 @@ filtering = False
 omega_n = 15
 order = 3
 
+column_names = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 datasets = []
 variables = []
 
@@ -22,23 +25,26 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
-datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
-datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
 
 
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_6.txt")
-datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
-datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_3.txt")
-datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_4.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_2.txt")
@@ -51,16 +57,14 @@ datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_2.txt")
 
-
-
 ''' ADD VARIABLES '''
-# variables.append("Axl.X")
-# variables.append("Axl.Y")
-# variables.append("Axl.Z")
+variables.append("Axl.X")
+variables.append("Axl.Y")
+variables.append("Axl.Z")
 
-variables.append("Mag.X")
-variables.append("Mag.Y")
-variables.append("Mag.Z")
+# variables.append("Mag.X")
+# variables.append("Mag.Y")
+# variables.append("Mag.Z")
 
 # variables.append("Gyr.X")
 # variables.append("Gyr.Y")
@@ -73,8 +77,40 @@ variables.append("Mag.Z")
 # variables.append("Lum")
 # variables.append("IRLum")
 
+def butter_lowpass_filter(data, fs, omega_n, order):
+
+    b, a = sp.signal.butter(order, Wn=omega_n, fs=fs, btype='low', analog=False)
+    result = sp.signal.lfilter(b, a, data)
+
+    return result
+
+''' DOWNSAMPELING '''
+def downsample(df: pd.DataFrame, old_fs, new_fs):
+    '''
+    dropped_rows = []
+
+    if((old_fs / new_fs).is_integer() == False):
+        print(f"Old fs: {old_fs} / New fs: {new_fs} is not whole number")
+        quit()
+    elif((old_fs < new_fs)):
+        print(f"Old fs: {old_fs} is smaller than New fs: {new_fs}")
+        quit()
+    else:
+        for i in range(len(df['Timestamp'])):
+            if((i % (old_fs / new_fs)) != 0):
+                dropped_rows.append(i)
+
+    new_df = df.drop(dropped_rows)
+    '''
+    new_df = pd.DataFrame(columns=column_names)
+    for column in df:
+      new_df[column] = sp.signal.decimate(df[column], math.floor(fs/ds_fs), ftype="fir")
+    
+    return new_df
+
+
 ''' TIME PLOTTING '''
-def plotTime(sets, vars):
+def plotTime(sets, vars, fs, ds_fs):
   # for i in sets:
   #   df = pd.read_csv(i, delimiter="\t")
 
@@ -86,11 +122,24 @@ def plotTime(sets, vars):
     legendNames = []
 
     for j in sets:
-      df = pd.read_csv(j, delimiter="\t")
-      df[i].plot()
+      og_df = pd.read_csv(j, delimiter="\t")
+      # og_x = og_df[i]
+      if(ds_fs == fs):
+        df = og_df
+        # x = og_x
+      else:
+        # x = sp.signal.decimate(og_x, math.floor(fs/ds_fs), ftype="fir")
+        
+        # x_length = math.floor(len(og_x)/ds_fs)
+        # x = sp.signal.resample(og_x, x_length) 
+        df = downsample(og_df, fs, ds_fs)
+      x = df[i]
+
+      plt.plot(x)
+      # x.plot()
       legendNames.append(j + ", " + i)
 
-    plt.xlabel('Time')
+    plt.xlabel(f'Time, {ds_fs}')
     plt.ylabel('Value')
     plt.title('Time, %s' % i)
     plt.legend(legendNames)
@@ -99,27 +148,41 @@ def plotTime(sets, vars):
 
 
 ''' FFT PLOTTING '''
-def plotFFT(sets, vars):
+def plotFFT(sets, vars, fs, ds_fs):
   for i in sets:
     plt.figure()
 
     df = pd.read_csv(i, delimiter="\t")
+    
     for j in vars:
-      x = df[j]
+      og_df = pd.read_csv(j, delimiter="\t")
+      # og_x = og_df[i]
+      if(ds_fs == fs):
+        df = og_df
+        # x = og_x
+      else:
+        # x = sp.signal.decimate(og_x, math.floor(fs/ds_fs), ftype="fir")
+        
+        # x_length = math.floor(len(og_x)/ds_fs)
+        # x = sp.signal.resample(og_x, x_length) 
+        df = downsample(og_df, fs, ds_fs)
+      x = df[i]
+
       x_yf, x_xf, x_size = getFFT(x)
       plt.plot(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
 
-    plt.xlabel('Frequency (Hz)')
+    plt.xlabel(f'Frequency (Hz), {fs/ds_fs}')
     plt.ylabel('Amplitude')
     plt.title('FFT, %s' % j)
     plt.grid()
       
 
 ''' WELCH PLOTTING '''
-def plotWelch(sets, vars):
+def plotWelch(sets, vars, fs, ds_fs):
   # for i in sets:
   #   legendNames = []
-  #   df = pd.read_csv(i, delimiter="\t")
+  #   og_df = pd.read_csv(i, delimiter="\t")
+  #   df = sp.signal.decimate(og_df, ds_fs)
   #   for j in vars:
   #     plt.figure()
   #     x = df[j]
@@ -133,23 +196,39 @@ def plotWelch(sets, vars):
     legendNames = []
 
     for j in sets:
-      df = pd.read_csv(j, delimiter="\t")
+      og_df = pd.read_csv(j, delimiter="\t")
+      # og_x = og_df[i]
+      if(ds_fs == fs):
+        df = og_df
+        # x = og_x
+      else:
+        # x = sp.signal.decimate(og_x, math.floor(fs/ds_fs), ftype="fir")
+        
+        # x_length = math.floor(len(og_x)/ds_fs)
+        # x = sp.signal.resample(og_x, x_length) 
+        df = downsample(og_df, fs, ds_fs)
       x = df[i]
 
-      freq, psd = getWelch(x, fs, filtering, omega_n, order)
+      freq, psd = getWelch(x, ds_fs, filtering, omega_n, order)
       plt.semilogy(freq, psd)  # Log scale for better visibility
       legendNames.append(j + ", " + i)
     
     plt.grid()
-    plt.xlabel('Frequency (Hz)')
+    plt.xlabel(f'Frequency (Hz), {ds_fs}')
     plt.ylabel('Power Spectral Density')
     plt.title('Welch PSD')
     plt.legend(legendNames)
     # plt.show()
 
-plotTime(datasets, variables)
-# plotFFT(datasets, variables)
-plotWelch(datasets, variables)  
+ds_fs = 800
+plotTime(datasets, variables, fs, ds_fs)
+# plotFFT(datasets, variables, fs, ds_fs)
+plotWelch(datasets, variables, fs, ds_fs)  
+
+ds_fs = 200
+plotTime(datasets, variables, fs, ds_fs)
+# plotFFT(datasets, variables, fs, ds_fs)
+plotWelch(datasets, variables, fs, ds_fs)  
 
 plt.show()
 

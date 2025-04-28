@@ -15,7 +15,7 @@ from typing import List, Dict, Any, Tuple, Sequence
 # Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
 from machineLearning import setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotDecisionBoundaries, biplot, biplot3D, PCA_table_plot, plotFeatureImportance, confusionMatrix
+from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve
 from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
 from testonfile import offlineTest, calcExposure
 from config import setupML, loadDataset, main_config
@@ -169,7 +169,7 @@ def main(
         ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
         n_results = makeNClassifiers(models, model_names, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
-
+        
         ''' EVALUATION '''
 
         result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, clf_results_path)
@@ -188,22 +188,25 @@ def main(
         
         ''' CONFUSION MATRIX '''
 
-        # test_predict = result['classifier'].predict(PCA_test_df)
+        # plotLearningCurve(n_results, PCA_train_df, train_labels)
+
         confusionMatrix(test_labels, PCA_test_df, activity_name, result)
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_1 = PCA_table_plot(PCA_final, features_per_PCA=28) 
+        # fig_list_1 = PCA_table_plot(PCA_final, features_per_PCA=28) 
 
         pfig_0     = plotFeatureImportance(PCA_final) 
+
+        # screePlot(PCA_final)
         
         ''' PLOTS OF PCA '''
         
         fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
-        fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        # fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
-        fig_3 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        # fig_3 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
         
         if __name__ == "__main__":
             plt.show() 

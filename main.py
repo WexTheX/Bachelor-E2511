@@ -188,7 +188,7 @@ def main(
         
         ''' CONFUSION MATRIX '''
 
-        # plotLearningCurve(n_results, PCA_train_df, train_labels)
+        plotLearningCurve(n_results, PCA_train_df, train_labels)
 
         confusionMatrix(test_labels, PCA_test_df, activity_name, result)
         

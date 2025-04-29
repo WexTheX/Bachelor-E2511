@@ -7,6 +7,7 @@ import math
 from sklearn import metrics
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.decomposition import PCA
+from sklearn.model_selection import LearningCurveDisplay, ShuffleSplit, StratifiedKFold
 from typing import List, Dict, Any, Tuple, Sequence, Optional
 from matplotlib.lines import Line2D
 from matplotlib.figure import Figure
@@ -616,10 +617,11 @@ def screePlot(pca):
   except Exception as e:
         print(f"Error saving plot to {output_filename}: {e}")
 
-def plotLearningCurve(results, X, y):
+def plotLearningCurve(results:    List[Dict[str, Any]],
+                      X:          pd.DataFrame,
+                      y:          Sequence
+                      ) -> None:
   
-  from sklearn.model_selection import LearningCurveDisplay, ShuffleSplit, StratifiedKFold
-  from sklearn import svm
   models = []
 
   for result in results:
@@ -640,8 +642,8 @@ def plotLearningCurve(results, X, y):
       "X": X,
       "y": y,
       "train_sizes": np.linspace(0.1, 1.0, 15),
-      "cv": StratifiedKFold(n_splits=10),
-      # "cv": ShuffleSplit(n_splits=50, test_size=0.2, random_state=0),
+      "cv": StratifiedKFold(n_splits=10), # Fast
+      # "cv": ShuffleSplit(n_splits=50, test_size=0.2, random_state=0), # Slower but prob more realistic
       "score_type": "both",
       "n_jobs": -1,
       "line_kw": {"marker": "o"},
@@ -657,9 +659,10 @@ def plotLearningCurve(results, X, y):
 
   plt.tight_layout()
 
-
   output_filename = "plots/Learning_curve.png"
   try:
     plt.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
         print(f"Error saving plot to {output_filename}: {e}")
+
+  return None

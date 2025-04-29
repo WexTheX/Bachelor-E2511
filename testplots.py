@@ -222,6 +222,13 @@ def plotWelch(sets, vars, fs, ds_fs):
     plt.legend(legendNames)
     # plt.show()
 
+info_df = pd.read_csv(datasets[0], delimiter="\t")
+print(info_df.describe)
+ds_fs = 200
+new_info_df = downsample(info_df, fs, ds_fs)
+print(new_info_df.describe)
+
+
 ds_fs = 800
 plotTime(datasets, variables, fs, ds_fs)
 # plotFFT(datasets, variables, fs, ds_fs)

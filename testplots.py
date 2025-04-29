@@ -26,11 +26,11 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
 datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
@@ -59,8 +59,8 @@ datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
 
 ''' ADD VARIABLES '''
 variables.append("Axl.X")
-variables.append("Axl.Y")
-variables.append("Axl.Z")
+# variables.append("Axl.Y")
+# variables.append("Axl.Z")
 
 # variables.append("Mag.X")
 # variables.append("Mag.Y")
@@ -102,10 +102,12 @@ def downsample(df: pd.DataFrame, old_fs, new_fs):
 
     new_df = df.drop(dropped_rows)
     '''
+    print(df.describe())
     new_df = pd.DataFrame(columns=column_names)
     for column in df:
       new_df[column] = sp.signal.decimate(df[column], math.floor(fs/ds_fs), ftype="fir")
     
+    print(new_df.describe())
     return new_df
 
 

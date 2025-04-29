@@ -11,17 +11,17 @@ main_config = {
     # --- GLOBAL VARIABLES / FLAGS ---
     'want_feature_extraction':  0,
     'separate_types':           1, 
-    'want_new_CLFs':            0,
+    'want_new_CLFs':            1,
     'want_plots':               1,
-    'want_pickle':              0, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        0,
+    'want_pickle':              1, # Pickle the classifier, scaler and PCA objects.
+    'want_offline_test':        1,
     'want_calc_exposure':       0,
     'model_selection':          ['svm', 'rf', 'lr'],
     'method_selection':         ['rs', 'gs'],
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       0.9,
-    'random_seed':              42069,
+    'variance_explained':       0.90,
+    'random_seed':              420,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,

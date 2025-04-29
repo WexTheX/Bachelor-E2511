@@ -1,4 +1,6 @@
 import pandas as pd
+import scipy as sp
+import math as math
 import re
 import os
 from typing import List, Dict, Any, Tuple, Sequence
@@ -7,13 +9,14 @@ import pickle
 
 # We should have an option to downsample to see how diff sampling frequencies affect ML accuracy
 # This is a hyperparemeter ???
-def downsample(df: pd.DataFrame, old_fs, new_fs):
+def downsample(df: pd.DataFrame, fs, ds_fs, variables):
+    ''' OLD
     dropped_rows = []
 
     if((old_fs / new_fs).is_integer() == False):
         print(f"Old fs: {old_fs} / New fs: {new_fs} is not whole number")
         quit()
-    elif((old_fs < new_fs)):
+    elif((fs < ds_fs)):
         print(f"Old fs: {old_fs} is smaller than New fs: {new_fs}")
         quit()
     else:
@@ -22,6 +25,16 @@ def downsample(df: pd.DataFrame, old_fs, new_fs):
                 dropped_rows.append(i)
 
     new_df = df.drop(dropped_rows)
+    '''
+    try:
+        new_df = pd.DataFrame(columns=variables)
+        for column in df:
+            new_df[column] = sp.signal.decimate(df[column], math.floor(fs/ds_fs), ftype="fir")
+
+    except Exception as ds_error:
+        print(f"Error in downsampling: {ds_error}")
+        quit()
+
     return new_df
 
 def convert_date_format(filename):

@@ -107,7 +107,7 @@ def main(
             fe_df = extractDFfromFile(file, fs)
 
             if (ds_fs != fs):
-                fe_df = downsample(fe_df, fs, ds_fs)
+                fe_df = downsample(fe_df, fs, ds_fs, variables)
             
             window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
 
@@ -221,7 +221,7 @@ def main(
     
     if want_offline_test:
 
-        combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, want_prints=True)
+        combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, variables, want_prints=True)
 
     if want_calc_exposure:
 

@@ -36,6 +36,7 @@ def runInferenceOnFile(file_path:           str,
                         window_length_sec:  int,
                         want_prints:        bool,
                         file_to_test:       str,
+                        variables:          list[str],
                         norm_accel:         bool
                         ) -> pd.DataFrame:
     
@@ -76,7 +77,7 @@ def runInferenceOnFile(file_path:           str,
     
     df = extractDFfromFile(file_path, fs)
     ### Downsample
-    df = downsample(df, fs, ds_fs)
+    df = downsample(df, fs, ds_fs, variables)
     
     ### Feature extraction
     features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_accel)
@@ -165,6 +166,7 @@ def offlineTest(test_file_path:        str,
                 fs:                    int, 
                 ds_fs:                 int,
                 window_length_seconds: int,
+                variables:             list[str],
                 want_prints:           bool
                 ) -> pd.DataFrame:
     
@@ -205,7 +207,7 @@ def offlineTest(test_file_path:        str,
         elif filename.endswith(".bin"): ##Converting .bin to .txt
             convert_bin_to_txt(file_to_test_no_ext)
 
-        df_result, features_df = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints, file_to_test, norm_accel=False)
+        df_result, features_df = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints, file_to_test, variables, norm_accel=False)
     
         # header_lines = [
         #     f"_______________________________________________________________________________",

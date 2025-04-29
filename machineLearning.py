@@ -297,7 +297,8 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
 def evaluateCLFs(results:           List[Dict[str, Any]],
                  test_df:           pd.DataFrame,
                  test_labels:       Sequence,
-                 clf_results_path:  str
+                 clf_results_path:  str,
+                 output_path:       str = "OutputFiles/metrics_results.csv"
                 ) -> Tuple[Dict[str, Any], List[float]]:
   
   '''
@@ -320,6 +321,7 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
 
 
   # --- 1. Show baseline accuracy ---
+  rows = []
   accuracy_list = []
   highest_score = 0.0
 
@@ -336,26 +338,35 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
   for result_dict in results:
     
     model_name        = result_dict['model_name']
+    optimalizer       = result_dict['optimalizer']
     clf               = result_dict['classifier']
     mean_test_score   = result_dict['mean_test_score']
     std_test_score    = result_dict['std_test_score']
     train_test_delta  = result_dict['train_test_delta']
-    optimalizer       = result_dict['optimalizer']
 
     test_predict      = clf.predict(test_df)
 
     accuracy_score    = metrics.accuracy_score(test_labels, test_predict)
     f1_score          = metrics.f1_score(test_labels, test_predict, average="weighted")
-    # recall_score      = metrics.recall_score(test_labels, test_predict, average="weighted")
-    # precision_score   = metrics.precision_score(test_labels, test_predict, average="weighted")
 
-    print(f"{model_name}: {optimalizer}")
-    print(f"Accuracy: \t {accuracy_score:.4f}")
-    print(f"f1_score: \t {f1_score:.4f}")
-    print(f"Valid. mean: \t {mean_test_score:.4f}")
-    print(f"Valid. std: \t {std_test_score:.4f}")
-    print(f"Valid. delta: \t {train_test_delta:.4f}")
-    print("-" * 23)
+    rows.append({
+        'model_name':       model_name,
+        'optimalizer':      optimalizer,
+        'accuracy':         accuracy_score,
+        'f1_score':         f1_score,
+        'valid_mean':       mean_test_score,
+        'valid_std':        std_test_score,
+        'train_test_delta': train_test_delta
+    })
+
+    
+    # print(f"{model_name}: {optimalizer}")
+    # print(f"Accuracy: \t {accuracy_score:.4f}")
+    # print(f"f1_score: \t {f1_score:.4f}")
+    # print(f"Valid. mean: \t {mean_test_score:.4f}")
+    # print(f"Valid. std: \t {std_test_score:.4f}")
+    # print(f"Valid. delta: \t {train_test_delta:.4f}")
+    # print("-" * 23)
 
     if f1_score > highest_score:
       highest_score     = f1_score
@@ -365,6 +376,11 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
 
     accuracy_list.append(accuracy_score)
 
+  metrics_df = pd.DataFrame(rows).sort_values(by='f1_score', ascending=False)
+  metrics_df.to_csv(output_path, index=False)
+
+  print(metrics_df)
+  print("")
   print(f"Best clf: \t {best_model}: {best_optimalizer}")
   print(f"f1_score: \t {highest_score:.4f}")
   print("")

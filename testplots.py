@@ -108,6 +108,13 @@ def downsample(df: pd.DataFrame, old_fs, new_fs):
       new_df[column] = sp.signal.decimate(df[column], math.floor(fs/ds_fs), ftype="fir")
     
     print(new_df.describe())
+
+    # df = df.set_index(pd.timedelta_range(start='0us', periods=len(df['Timestamp']), freq="1250us"))
+    # print(info_df)
+    # print(info_df.describe())
+
+    # new_df = df.resample('5ms').interpolate()
+    # print(new_info_df.describe())
     return new_df
 
 
@@ -222,11 +229,15 @@ def plotWelch(sets, vars, fs, ds_fs):
     plt.legend(legendNames)
     # plt.show()
 
-info_df = pd.read_csv(datasets[0], delimiter="\t")
-print(info_df.describe)
-ds_fs = 200
-new_info_df = downsample(info_df, fs, ds_fs)
-print(new_info_df.describe)
+# info_df = pd.read_csv(datasets[0], delimiter="\t")
+# info_df = info_df.set_index(pd.timedelta_range(start='0us', periods=len(info_df['Timestamp']), freq="1250us"))
+# print(info_df)
+# print(info_df.describe())
+# new_info_df = info_df.resample('5ms').interpolate()
+# print(new_info_df.describe())
+# ds_fs = 200
+# new_info_df = downsample(info_df, fs, ds_fs)
+# print(new_info_df.describe)
 
 
 ds_fs = 800

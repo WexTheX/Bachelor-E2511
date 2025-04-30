@@ -460,7 +460,7 @@ def plotFeatureImportance(pca:          Any,
   # Make a dict with {feature_name: importance_value}
   feature_dict = {name: normalized_vector_percentage[i] for i, name in enumerate(original_feature_names)}
 
-  sensor_importance_df, suffix_importance_df = getSensorAndSuffixImportance(feature_dict)
+  sensor_importance_df, suffix_importance_df, fig_x = getSensorAndSuffixImportance(feature_dict)
 
   low_value_feature_dict = {key: value for key, value in feature_dict.items() if value < threshold}
   sorted_dict_items = sorted(low_value_feature_dict.items(), key=lambda item: item[1], reverse=True)
@@ -539,8 +539,24 @@ def plotFeatureImportance(pca:          Any,
   
   return Figure
 
-def getSensorAndSuffixImportance(feature_dict):
+def getSensorAndSuffixImportance(feature_dict:    dict[Any, Any],
+                                 output_filename: str = "plots/sensor_and_suffix_importance.png"
+                                 ) -> Tuple[pd.DataFrame, pd.DataFrame, Figure]:
 
+  '''
+  Calculates and plots aggregated feature importance grouped by sensor and suffix.
+
+  This function takes a dictionary or Pandas Series mapping feature names to
+  their importance scores. It assumes feature names follow the format
+  "suffix_sensor" (e.g., "mean_AccX", "std_GyroY"). It aggregates the
+  importance scores separately for each unique sensor identifier and each
+  unique suffix (statistical feature type). Finally, it generates and saves
+  a bar plot visualizing these aggregated importances and returns the
+  aggregated data as Pandas DataFrames.
+  '''
+
+
+  # --- 1. Calculate importance ---
   sensor_importance = defaultdict(float)
   suffix_importance = defaultdict(float)
 
@@ -554,7 +570,8 @@ def getSensorAndSuffixImportance(feature_dict):
   sensor_df = pd.DataFrame(sensor_importance.values(), index=sensor_importance.keys(), columns=['Importance']).sort_values(by='Importance', ascending=False)
   suffix_df = pd.DataFrame(suffix_importance.values(), index=suffix_importance.keys(), columns=['Importance']).sort_values(by='Importance', ascending=False)
 
-  # --- Plotting ---
+
+  # --- 2. Plotting ---
   fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(14, 6))
 
   # Plot Sensor Importance
@@ -573,75 +590,95 @@ def getSensorAndSuffixImportance(feature_dict):
 
   plt.tight_layout()
 
-    # --- 5. Save plot ---
-  output_filename = "plots/sensor_and_suffix_importance.png"
-  
+
+  # --- 3. Save plot ---
   try:
-    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
-        print(f"Error saving plot to {output_filename}: {e}")
+    print(f"Error saving plot to {output_filename}: {e}")
 
-  return sensor_df, suffix_df
+  return sensor_df, suffix_df, fig
 
-def screePlot(pca):
+def screePlot(pca:  Any,
+              
+              output_filename: str = "plots/PCA_scree_plot.png"
+              ) -> Figure:
+
+  '''
+  Generates and saves a scree plot from a fitted PCA object.
+
+  This function takes a fitted PCA result and creates a scree plot, which
+  visualizes the proportion of variance explained by each principal component.
+  The plot helps in determining the 'elbow point' to select the optimal
+  number of components. The generated plot is also saved to a file.
+  '''
+
 
   n_components = pca.n_components_
   explained_variance_ratio = pca.explained_variance_ratio_
-  # explained_variance = pca.explained_variance_ 
 
-    # --- Create the Scree Plot ---
-  plt.figure(figsize=(8, 5))
+  # --- 1. Create the Scree Plot ---
+  fig = plt.figure(figsize=(8, 5))
   component_numbers = np.arange(n_components) + 1
 
   # Plot individual component variance
   plt.plot(component_numbers, explained_variance_ratio, 'o-', linewidth=2, label='Individual Variance')
 
-  # Optional: Plot cumulative variance
-  # cumulative_variance_ratio = np.cumsum(explained_variance_ratio)
-  # plt.plot(component_numbers, cumulative_variance_ratio, 's-', linewidth=2, label='Cumulative Variance')
-
   # Add labels and title
   plt.title('Scree Plot')
   plt.xlabel('Principal Component Number')
   plt.ylabel('Proportion of Variance Explained')
-  plt.xticks(component_numbers) # Ensure ticks for each component number
+  plt.xticks(component_numbers, rotation=90)
   plt.legend()
   plt.grid(True)
-  # plt.ylim(0, 0.27) # Set y-axis limits appropriately
-  # plt.show()
 
-  output_filename = "plots/PCA_scree_plot.png"
 
+  # --- 2. Save file ---
   try:
-    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
         print(f"Error saving plot to {output_filename}: {e}")
 
-def plotLearningCurve(results:    List[Dict[str, Any]],
-                      X:          pd.DataFrame,
-                      y:          Sequence
-                      ) -> None:
+  return fig
+
+def plotLearningCurve(results:          List[Dict[str, Any]],
+                      X:                pd.DataFrame,
+                      y:                Sequence,
+
+                      n_cols:           int = 3,
+                      train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 10),
+                      output_filename:  str = "plots/Learning_curve.png",
+
+                      ) -> Figure:
   
+  '''
+  Generates and saves learning curve plots for multiple classifiers.
+
+  Takes a list of dictionaries, each containing a scikit-learn classifier,
+  and plots their learning curves on a grid using LearningCurveDisplay.
+  The plots show training and cross-validation (test) scores against
+  varying training set sizes.
+  '''
+
+
+  # --- 1. Plotting Setup ---
   models = []
 
   for result in results:
     models.append(result['classifier'])
 
-  print(models)
-
   n_models = len(models)
-  n_cols = 3  # or 4, depending how you want to layout
-  n_rows = (n_models + n_cols - 1) // n_cols  # automatic rows based on number of models
+  n_rows = (n_models + n_cols - 1) // n_cols
 
   fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(5 * n_cols, 4 * n_rows), sharey=True)
   axes = axes.flatten()  # Flatten in case it's 2D array of axes
 
-  # fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 6), sharey=True)
 
+  # --- 2. CV  ---
   common_params = {
       "X": X,
       "y": y,
-      "train_sizes": np.linspace(0.1, 1.0, 15),
+      "train_sizes": train_sizes,
       "cv": StratifiedKFold(n_splits=10), # Fast
       # "cv": ShuffleSplit(n_splits=50, test_size=0.2, random_state=0), # Slower but prob more realistic
       "score_type": "both",
@@ -651,18 +688,28 @@ def plotLearningCurve(results:    List[Dict[str, Any]],
       "score_name": "Accuracy",
   }
 
+
+  # --- 3. Generate Plots ---
   for ax_idx, estimator in enumerate(models):
+
+    try:
       LearningCurveDisplay.from_estimator(estimator, **common_params, ax=axes[ax_idx])
-      handles, label = axes[ax_idx].get_legend_handles_labels()
+      handles, _ = axes[ax_idx].get_legend_handles_labels()
       axes[ax_idx].legend(handles[:2], ["Training Score", "Test Score"])
       axes[ax_idx].set_title(f"Learning Curve for {estimator.__class__.__name__}")
 
+    except Exception as e:
+        print(f"Error plotting learning curve: {e}")
+        axes[ax_idx].set_title(f"Error plotting {estimator.__class__.__name__}")
+        axes[ax_idx].text(0.5, 0.5, "Plotting failed", ha='center', va='center', color='red')
+
   plt.tight_layout()
 
-  output_filename = "plots/Learning_curve.png"
+
+  # --- 4. Save file ---
   try:
-    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
         print(f"Error saving plot to {output_filename}: {e}")
 
-  return None
+  return fig

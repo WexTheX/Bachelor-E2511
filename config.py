@@ -14,17 +14,20 @@ main_config = {
     'want_new_CLFs':            1,
     'want_plots':               1,
     'want_pickle':              1, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        0,
-    'want_calc_exposure':       0,
-    'model_selection':          ['svm', 'rf', 'lr'],
-    'method_selection':         ['rs', 'gs'],
+    'want_offline_test':        1,
+    'want_calc_exposure':       1,
+    'model_selection':          ['svm', 'rf', 'lr', 'ada', 'gnb'],
+    'method_selection':         ['rs'],
 
     # --- DATASET & MODELING VARIABLES ---
+    'variance_explained':       0.95,
+    'random_seed':              4201,
     'variance_explained':       0.95,
     'random_seed':              420,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
+    'ds_fs':                    800,  # Downsampled frequency
     'ds_fs':                    800,  # Downsampled frequency
     'cmap':                     'tab10', # Colormap for plotting
     'n_iter':                   30,   # Iterations for RandomizedSearch
@@ -34,7 +37,7 @@ main_config = {
         'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
     ],
     'safe_limit_vector': [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400.0], 
-    'variables': ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"], # Unused
+    'variables': ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"],
 
     # --- FILE PATHS ---
     'test_file_path':           "testOnFile/testFiles",
@@ -168,7 +171,6 @@ def loadDataset(separate_types):
         
         path            = "Preprocessing/DatafilesSeparated" 
         output_path     = "OutputFiles/Separated/"
-        test_path       = "testFiles/"
 
         labels = [
             'GRINDBIG', 'GRINDSMALL',
@@ -179,8 +181,7 @@ def loadDataset(separate_types):
 
     else:
         path            = "Preprocessing/Datafiles"
-        output_path     = "OutputFiles/"
-        test_path       = "testFiles/"
+        output_path     = "OutputFiles/NotSeparated"
 
         labels = [
             'IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING'

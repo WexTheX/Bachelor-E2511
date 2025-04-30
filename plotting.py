@@ -367,11 +367,12 @@ def plotDecisionBoundaries(X:             pd.DataFrame,
     print(f"Warning: Cannot plot decision boundaries. Classifiers has {X.shape[1]} features, must be 2.")
     return None
 
-def confusionMatrix(labels:     Sequence,
-                    X_test:     pd.DataFrame, 
-                    activities: Sequence, 
-                    result:     Dict[str, Any]
-                    ) -> None:
+def confusionMatrix(labels:           Sequence,
+                    X_test:           pd.DataFrame, 
+                    activities:       Sequence, 
+                    result:           Dict[str, Any],
+                    output_filename:  str = "plots/Confusion_matrix"
+                    ) -> Figure:
   
   '''
   Generates and displays a confusion matrix heatmap for classifier predictions.
@@ -388,6 +389,8 @@ def confusionMatrix(labels:     Sequence,
   optimalizer = result['optimalizer']
 
   try:
+    fig = plt.figure(figsize=(10, 8))
+
     test_predict = clf.predict(X_test)
     
     conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities)
@@ -400,10 +403,17 @@ def confusionMatrix(labels:     Sequence,
   except Exception as e:
     print(f"Unable to plot confusion matrix: {e}")
 
-  return None
+  # --- 3. Save plot ---
+  try:
+    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
+  except Exception as e:
+    print(f"Error saving plot to {output_filename}: {e}")
 
-def plotFeatureImportance(pca:          Any,
-                          threshold:    float = 0.68
+  return fig
+
+def plotFeatureImportance(pca:              Any,
+                          threshold:        float = 3,
+                          output_filename:  str = "plots/feature_importance.png"
                           ) -> Figure:
 
   '''
@@ -426,9 +436,10 @@ def plotFeatureImportance(pca:          Any,
   original_feature_names  = []
   feature_dict            = {}
 
-  sensors                 = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z', 'temp']
+  # sensors                 = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z', 'temp']
+  sensors                 = ['accel_norm', 'gyro_norm', 'mag_norm', 'temp']
   time_feature_suffixes   = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entr', 'iqr', 'kurt', 'skew', 'corr']
-  freq_sensors            = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z']
+  freq_sensors            = ['accel_norm', 'gyro_norm', 'mag_norm']
   freq_feature_suffixes   = ['psdmean', 'psdmax', 'psdmin', 'psdpeakf']
 
   # Add time features
@@ -460,7 +471,8 @@ def plotFeatureImportance(pca:          Any,
   # Make a dict with {feature_name: importance_value}
   feature_dict = {name: normalized_vector_percentage[i] for i, name in enumerate(original_feature_names)}
 
-  sensor_importance_df, suffix_importance_df, fig_x = getSensorAndSuffixImportance(feature_dict)
+
+  sensor_importance_df, suffix_importance_df, fig_1 = getSensorAndSuffixImportance(feature_dict)
 
   low_value_feature_dict = {key: value for key, value in feature_dict.items() if value < threshold}
   sorted_dict_items = sorted(low_value_feature_dict.items(), key=lambda item: item[1], reverse=True)
@@ -531,13 +543,14 @@ def plotFeatureImportance(pca:          Any,
 
 
   # --- 5. Save plot ---
-  output_filename = "plots/feature_importance.png"
   try:
-    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
         print(f"Error saving plot to {output_filename}: {e}")
+
+  fig_list = [fig, fig_1]
   
-  return Figure
+  return fig_list
 
 def getSensorAndSuffixImportance(feature_dict:    dict[Any, Any],
                                  output_filename: str = "plots/sensor_and_suffix_importance.png"
@@ -637,7 +650,7 @@ def screePlot(pca:  Any,
   try:
     fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
-        print(f"Error saving plot to {output_filename}: {e}")
+    print(f"Error saving plot to {output_filename}: {e}")
 
   return fig
 

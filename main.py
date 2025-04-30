@@ -109,7 +109,7 @@ def main(
             if (ds_fs != fs):
                 fe_df = downsample(fe_df, fs, ds_fs, variables)
             
-            window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, False)
+            window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, Norm_Accel=False)
 
             all_window_features = all_window_features + window_df
 
@@ -184,29 +184,42 @@ def main(
         result          = loaded_results['result']
         accuracy_list   = loaded_results['accuracy_list']
 
+        print(f"Loading classifier {result['classifier']}.")
+
     if want_plots:
         
         ''' CONFUSION MATRIX '''
 
-        plotLearningCurve(n_results, PCA_train_df, train_labels)
+        fig_0 = plotLearningCurve(n_results, PCA_train_df, train_labels)
 
-        confusionMatrix(test_labels, PCA_test_df, activity_name, result)
+        fig_1 = confusionMatrix(test_labels, PCA_test_df, activity_name, result)
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_1 = plotPCATable(PCA_final, features_per_PCA=28) 
+        fig_list_0  = plotPCATable(PCA_final, features_per_PCA=28) 
 
-        pfig_0     = plotFeatureImportance(PCA_final) 
+        fig_list_1  = plotFeatureImportance(PCA_final) 
 
-        screePlot(PCA_final)
+        fig_2       = screePlot(PCA_final)
         
         ''' PLOTS OF PCA '''
         
-        fig_1 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
 
-        fig_2 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
         
-        fig_3 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+
+        plots = {
+                     'Learning curve': fig_0,
+                     'Confusion matrix': fig_1,
+                     'PCA table': fig_list_0,
+                     'Feature importance': fig_list_1,
+                     'Scree plot': fig_2,
+                     'Biplot': fig_3,
+                     'Biplot 3D': fig_4,
+                     'Decision boundaries': fig_5
+                     }
         
         if __name__ == "__main__":
             plt.show() 
@@ -228,7 +241,7 @@ def main(
         summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
 
     
-    return [fig_list_1, fig_1, fig_2, fig_3], result, accuracy_list
+    return plots, result, accuracy_list
 
 
 if __name__ == "__main__":

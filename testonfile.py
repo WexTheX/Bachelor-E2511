@@ -76,8 +76,10 @@ def runInferenceOnFile(file_path:           str,
     ### Load file and preprocess
     
     df = extractDFfromFile(file_path, fs)
+
     ### Downsample
-    df = downsample(df, fs, ds_fs, variables)
+    if ds_fs < fs:
+        df = downsample(df, fs, ds_fs, variables)
     
     ### Feature extraction
     features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_accel)
@@ -116,13 +118,15 @@ def runInferenceOnFile(file_path:           str,
     if hasattr(clf, "predict_proba"):
 
         probabilities = clf.predict_proba(features_pca)
+        print(probabilities)
 
         class_labels = clf.classes_
 
         for i, probs in enumerate(probabilities):
-            start = (10 + (i * window_length_sec))
-            end = start + window_length_sec
-            time_range = f"{start}–{end}"
+
+            start_idx   = (10 + (i * window_length_sec))
+            end_idx     = start_idx + window_length_sec
+            time_range  = f"{start_idx}–{end_idx}"
 
             # Get top 3 predictions
             top_3 = sorted(zip(class_labels, probs), key=lambda x: x[1], reverse=True)[:3]
@@ -139,9 +143,10 @@ def runInferenceOnFile(file_path:           str,
     else:
 
         for i, pred in enumerate(preds):
-            (10 + (i * window_length_sec))
-            end = start + window_length_sec
-            time_range = f"{start}–{end}"
+
+            start_idx   = (10 + (i * window_length_sec))
+            end_idx     = start_idx + window_length_sec
+            time_range  = f"{start_idx}–{end_idx}"
 
             if want_prints == True:
                 print(f"{time_range:<10}{pred:<15}{'-':<12}-")

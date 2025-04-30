@@ -26,8 +26,9 @@ exposures = [
 safe_limit_vector = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"] #Unused
 
-plots = []
+plots = {}
 prediction_list = {}
+result = {}
 
 
 st.title("User interface")
@@ -39,8 +40,6 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(["Real time streaming", "ML model", "Resu
 with tab1:
     column1,column2 = st.columns(2)
     with column1:
-
-    
         if st.button("Start classifying in real time"):
             asyncio.run(RT_main())
         
@@ -116,7 +115,7 @@ with tab2:
             'variables': variables
         }
 
-        plots, result, accuracy_list = main(**config)
+        plots, result = main(**config)
         #st.write(result)
     
     
@@ -124,22 +123,31 @@ with tab2:
 
 ## TAB NUMBER THREE ##
 with tab3:
-    if want_plots and plots != []:
+    if want_plots and plots != {}:
         st.write(f"Best clf and hyperparam search method: {result['model_name']}, {result['optimalizer']}")
-        st.write(f"Accuracy: {round(max(accuracy_list), 3)}")
+        st.write(f"Accuracy: {result['test_accuracy']}")
 
-        st.pyplot(plots[0][0])
-        st.pyplot(plots[0][1])
-        st.pyplot(plots[1])
-        st.pyplot(plots[2])
+        selected_plots = st.multiselect("Select plot", plots.keys())
+        
+        for plot in selected_plots:
+            st.pyplot(plot)
 
-        if variance_explained == 2:
-            st.pyplot(plots[3])
+        # if variance_explained == 2:
+        #     st.pyplot(plots[3])
       
     else:
         st.info("Plots will be displayed here after training if 'Want plots' is checked.")
 
-
+#  plots = {
+#                      'Learning curve': fig_0,
+#                      'Confusion matrix': fig_1,
+#                      'PCA table': fig_list_0,
+#                      'Feature importance': fig_list_1,
+#                      'Scree plot': fig_2,
+#                      'Biplot': fig_3,
+#                      'Biplot 3D': fig_4,
+#                      'Decision boundaries': fig_5
+#                      }
 
 with tab4:
     column1, column2,column3 = st.columns(3)

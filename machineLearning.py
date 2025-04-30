@@ -290,6 +290,9 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
                         'train_test_delta': train_test_delta, # Higher value -> more overfitted
                         'mean_test_score':  mean_test_score,
                         'std_test_score':   std_test_score,
+                        'test_accuracy':    0.0,
+                        'test_f1_score':    0.0
+                        
                       })
       
   return results
@@ -349,6 +352,17 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
     accuracy_score    = metrics.accuracy_score(test_labels, test_predict)
     f1_score          = metrics.f1_score(test_labels, test_predict, average="weighted")
 
+    result_dict['test_accuracy'] = accuracy_score
+    result_dict['test_f1_score'] = f1_score
+
+    if f1_score > highest_score:
+      highest_score     = f1_score
+      best_model        = model_name
+      best_optimalizer  = optimalizer
+      best_result       = result_dict
+
+    accuracy_list.append(accuracy_score)
+    
     rows.append({
         'model_name':       model_name,
         'optimalizer':      optimalizer,
@@ -358,23 +372,6 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
         'valid_std':        std_test_score,
         'train_test_delta': train_test_delta
     })
-
-    
-    # print(f"{model_name}: {optimalizer}")
-    # print(f"Accuracy: \t {accuracy_score:.4f}")
-    # print(f"f1_score: \t {f1_score:.4f}")
-    # print(f"Valid. mean: \t {mean_test_score:.4f}")
-    # print(f"Valid. std: \t {std_test_score:.4f}")
-    # print(f"Valid. delta: \t {train_test_delta:.4f}")
-    # print("-" * 23)
-
-    if f1_score > highest_score:
-      highest_score     = f1_score
-      best_model        = model_name
-      best_optimalizer  = optimalizer
-      best_result       = result_dict
-
-    accuracy_list.append(accuracy_score)
 
   metrics_df = pd.DataFrame(rows).sort_values(by='f1_score', ascending=False)
   metrics_df.to_csv(output_path, index=False)

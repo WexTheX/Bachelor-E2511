@@ -118,7 +118,6 @@ def runInferenceOnFile(file_path:           str,
     if hasattr(clf, "predict_proba"):
 
         probabilities = clf.predict_proba(features_pca)
-        print(probabilities)
 
         class_labels = clf.classes_
 

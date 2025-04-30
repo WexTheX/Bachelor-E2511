@@ -53,7 +53,7 @@ def main(
     safe_limit_vector: list[float],
     variables: list[str]
 
-    ) -> Tuple[List, dict, list[float]]:
+    ) -> Tuple[dict, dict, list[float]]:
 
     '''
     Orchestrates the activity recognition ML pipeline.
@@ -74,6 +74,7 @@ def main(
     fig_1, fig_2, fig_3 = None, None, None
     combined_df = pd.DataFrame()
     result = {}
+    plots = {}
 
     ''' GET ML MODELS AND HPO METHODS '''
 
@@ -239,9 +240,8 @@ def main(
     if want_calc_exposure:
 
         summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
-
     
-    return plots, result, accuracy_list
+    return plots, result
 
 
 if __name__ == "__main__":

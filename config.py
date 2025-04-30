@@ -10,12 +10,12 @@ main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
     'want_feature_extraction':  0,
-    'separate_types':           1, 
+    'separate_types':           0, 
     'want_new_CLFs':            1,
     'want_plots':               1,
-    'want_pickle':              0, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        0,
-    'want_calc_exposure':       0,
+    'want_pickle':              1, # Pickle the classifier, scaler and PCA objects.
+    'want_offline_test':        1,
+    'want_calc_exposure':       1,
     'model_selection':          ['svm', 'rf', 'lr', 'ada', 'gnb'],
     'method_selection':         ['rs'],
 
@@ -168,7 +168,6 @@ def loadDataset(separate_types):
         
         path            = "Preprocessing/DatafilesSeparated" 
         output_path     = "OutputFiles/Separated/"
-        test_path       = "testFiles/"
 
         labels = [
             'GRINDBIG', 'GRINDSMALL',
@@ -179,8 +178,7 @@ def loadDataset(separate_types):
 
     else:
         path            = "Preprocessing/Datafiles"
-        output_path     = "OutputFiles/"
-        test_path       = "testFiles/"
+        output_path     = "OutputFiles/NotSeparated"
 
         labels = [
             'IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING'

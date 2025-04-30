@@ -21,17 +21,17 @@ variables = []
 
 ''' ADD DATASETS '''
 # datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_0.txt")
-# datasets.append("Preprocessing/DatafilesSaperated/GrindBig/GRINDBIG_1.txt")
-# datasets.append("Preprocessing/DatafilesSaperated/GrindBig/GRINDBIG_2.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_2.txt")
 
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
 
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
 
@@ -68,8 +68,8 @@ datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 
 ''' ADD VARIABLES '''
 variables.append("Axl.X")
-# variables.append("Axl.Y")
-# variables.append("Axl.Z")
+variables.append("Axl.Y")
+variables.append("Axl.Z")
 
 # variables.append("Mag.X")
 # variables.append("Mag.Y")
@@ -143,7 +143,7 @@ def downsample(df: pd.DataFrame, old_fs, new_fs, f_type):
 
     new_df = pd.DataFrame(columns=column_names)
     for column in df:
-      new_df[column] = sp.signal.resample_poly(df[column], up=1, down=4, window=sp.signal.windows.kaiser(15, 8.6), axis=0)
+      new_df[column] = sp.signal.resample_poly(df[column], up=1, down=4, window=sp.signal.windows.kaiser(15, 14), axis=0)
     # print(new_df.describe())
 
 
@@ -155,6 +155,79 @@ def downsample(df: pd.DataFrame, old_fs, new_fs, f_type):
     # print(new_info_df.describe())
     return new_df
 
+def normalizeSets(datasets):
+  for sets in datasets:
+    tname = sets.split("/")
+    name = tname[2]
+    df = pd.read_csv(sets, delimiter="\t")
+    axlx = df['Axl.X']
+    axly = df['Axl.Y']
+    axlz = df['Axl.Z']
+
+    gyrx = df['Gyr.X']
+    gyry = df['Gyr.Y']
+    gyrz = df['Gyr.Z']
+
+    magx = df['Mag.X']
+    magy = df['Mag.Y']
+    magz = df['Mag.Z']
+
+    axl = np.sqrt( np.power(axlx, 2) + np.power(axly, 2) + np.power(axlz, 2))
+    gyr = np.sqrt( np.power(gyrx, 2) + np.power(gyry, 2) + np.power(gyrz, 2))
+    mag = np.sqrt( np.power(magx, 2) + np.power(magy, 2) + np.power(magz, 2))
+
+    plt.figure()
+    plt.plot(axl)
+    plt.xlabel(f'Time')
+    plt.ylabel('Value')
+    plt.title(f'Time, axl, {name}')
+    plt.grid()
+    
+    plt.figure()
+    plt.plot(gyr)
+    plt.xlabel(f'Time')
+    plt.ylabel('Value')
+    plt.title(f'Time, gyr, {name}')
+    plt.grid()
+
+    plt.figure()
+    plt.plot(mag)
+    plt.xlabel(f'Time')
+    plt.ylabel('Value')
+    plt.title(f'Time, gyr, {name}')
+    plt.grid()
+
+    plt.figure()
+    freq, psd = getWelch(axl, 800, filtering, omega_n, order)
+    plt.semilogy(freq, psd)  # Log scale for better visibility
+    plt.grid()
+    plt.xlabel(f'Frequency (Hz)')
+    plt.ylabel('Power Spectral Density')
+    plt.title(f'Welch PSD, axl, {name}')
+
+    plt.figure()
+    freq, psd = getWelch(gyr, 800, filtering, omega_n, order)
+    plt.semilogy(freq, psd)  # Log scale for better visibility
+    plt.grid()
+    plt.xlabel(f'Frequency (Hz)')
+    plt.ylabel('Power Spectral Density')
+    plt.title(f'Welch PSD, gyr, {name}')
+
+    plt.figure()
+    freq, psd = getWelch(mag, 800, filtering, omega_n, order)
+    plt.semilogy(freq, psd)  # Log scale for better visibility
+    plt.grid()
+    plt.xlabel(f'Frequency (Hz)')
+    plt.ylabel('Power Spectral Density')
+    plt.title(f'Welch PSD, mag, {name}')
+
+    plt.show()
+
+    
+
+  return
+
+    
 
 ''' TIME PLOTTING '''
 def plotTime(sets, vars, fs, ds_fs, f_type="fir", size=20):
@@ -286,21 +359,25 @@ def plotWelch(sets, vars, fs, ds_fs, f_type="fir", size=20):
 # print(new_info_df.describe)
 
 f_type = "fir"
+
+# normalizeSets(datasets)
+
 ds_fs = 800
 plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
 plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
 ds_fs = 200
-plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-plotWelch(datasets, variables, fs, ds_fs, size=size)
+# plotWelch(datasets, variables, fs, ds_fs, size=size)
 
 f_type = "iir"
 ds_fs = 200
 # plotTime(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
 # plotFFT(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
 # plotWelch(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
+
 
 plt.show()
 

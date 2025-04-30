@@ -22,30 +22,31 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSaperated/GrindBig/GRINDBIG_1.txt")
 # datasets.append("Preprocessing/DatafilesSaperated/GrindBig/GRINDBIG_2.txt")
+
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
+
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
 
 
-# datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_6.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
+
+datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_3.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_4.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_0.txt")
+
+datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_3.txt")
@@ -53,16 +54,23 @@ datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_5.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_7.txt")
+
+
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_2.txt")
 
+
+datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
+
 ''' ADD VARIABLES '''
 variables.append("Axl.X")
-variables.append("Axl.Y")
-variables.append("Axl.Z")
+# variables.append("Axl.Y")
+# variables.append("Axl.Z")
 
-# variables.append("Mag.X")
+variables.append("Mag.X")
 # variables.append("Mag.Y")
 # variables.append("Mag.Z")
 
@@ -102,10 +110,19 @@ def downsample(df: pd.DataFrame, old_fs, new_fs):
 
     new_df = df.drop(dropped_rows)
     '''
+    # print(df.describe())
     new_df = pd.DataFrame(columns=column_names)
     for column in df:
       new_df[column] = sp.signal.decimate(df[column], math.floor(fs/ds_fs), ftype="fir")
     
+    # print(new_df.describe())
+
+    # df = df.set_index(pd.timedelta_range(start='0us', periods=len(df['Timestamp']), freq="1250us"))
+    # print(info_df)
+    # print(info_df.describe())
+
+    # new_df = df.resample('5ms').interpolate()
+    # print(new_info_df.describe())
     return new_df
 
 
@@ -139,10 +156,12 @@ def plotTime(sets, vars, fs, ds_fs):
       # x.plot()
       legendNames.append(j + ", " + i)
 
-    plt.xlabel(f'Time, {ds_fs}')
-    plt.ylabel('Value')
-    plt.title('Time, %s' % i)
-    plt.legend(legendNames)
+    plt.xlabel(f'Time, {ds_fs}', size=20)
+    plt.ylabel('Value', size=20)
+    plt.xticks(fontsize = 20)
+    plt.yticks(fontsize = 20)
+    plt.title('Time, %s' % i, size=20)
+    plt.legend(legendNames, prop={'size': 20})
     plt.grid()
     # plt.show()
 
@@ -171,9 +190,11 @@ def plotFFT(sets, vars, fs, ds_fs):
       x_yf, x_xf, x_size = getFFT(x)
       plt.plot(x_xf, 2.0/x_size*np.abs(x_yf[0:x_size//2]))
 
-    plt.xlabel(f'Frequency (Hz), {fs/ds_fs}')
-    plt.ylabel('Amplitude')
-    plt.title('FFT, %s' % j)
+    plt.xlabel(f'Frequency (Hz), {fs/ds_fs}', size=20)
+    plt.ylabel('Amplitude', size=20)
+    plt.xticks(fontsize = 20)
+    plt.yticks(fontsize = 20)
+    plt.title('FFT, %s' % j, size=20)
     plt.grid()
       
 
@@ -211,24 +232,39 @@ def plotWelch(sets, vars, fs, ds_fs):
 
       freq, psd = getWelch(x, ds_fs, filtering, omega_n, order)
       plt.semilogy(freq, psd)  # Log scale for better visibility
-      legendNames.append(j + ", " + i)
+      tname = j.split("/")
+      name = tname[2]
+      legendNames.append(name + ", " + i)
     
     plt.grid()
-    plt.xlabel(f'Frequency (Hz), {ds_fs}')
-    plt.ylabel('Power Spectral Density')
-    plt.title('Welch PSD')
-    plt.legend(legendNames)
+    plt.xlabel(f'Frequency (Hz), {ds_fs} Hz signal', size=20)
+    plt.ylabel('Power Spectral Density', size=20)
+    plt.xticks(fontsize = 20)
+    plt.yticks(fontsize = 20)
+    plt.title('Welch PSD', size=20)
+    plt.legend(legendNames, loc='upper right', prop={'size': 20})
     # plt.show()
+
+# info_df = pd.read_csv(datasets[0], delimiter="\t")
+# info_df = info_df.set_index(pd.timedelta_range(start='0us', periods=len(info_df['Timestamp']), freq="1250us"))
+# print(info_df)
+# print(info_df.describe())
+# new_info_df = info_df.resample('5ms').interpolate()
+# print(new_info_df.describe())
+# ds_fs = 200
+# new_info_df = downsample(info_df, fs, ds_fs)
+# print(new_info_df.describe)
+
 
 ds_fs = 800
 plotTime(datasets, variables, fs, ds_fs)
 # plotFFT(datasets, variables, fs, ds_fs)
 plotWelch(datasets, variables, fs, ds_fs)  
 
-ds_fs = 200
-plotTime(datasets, variables, fs, ds_fs)
+# ds_fs = 200
+# plotTime(datasets, variables, fs, ds_fs)
 # plotFFT(datasets, variables, fs, ds_fs)
-plotWelch(datasets, variables, fs, ds_fs)  
+# plotWelch(datasets, variables, fs, ds_fs)  
 
 plt.show()
 

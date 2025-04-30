@@ -9,8 +9,8 @@ from sklearn.tree import DecisionTreeClassifier
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  0,
-    'separate_types':           0, 
+    'want_feature_extraction':  1,
+    'separate_types':           1, 
     'want_new_CLFs':            1,
     'want_plots':               1,
     'want_pickle':              1, # Pickle the classifier, scaler and PCA objects.
@@ -22,9 +22,12 @@ main_config = {
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
     'random_seed':              4201,
+    'variance_explained':       0.95,
+    'random_seed':              420,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
+    'ds_fs':                    800,  # Downsampled frequency
     'ds_fs':                    800,  # Downsampled frequency
     'cmap':                     'tab10', # Colormap for plotting
     'n_iter':                   30,   # Iterations for RandomizedSearch

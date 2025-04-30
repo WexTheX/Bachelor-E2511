@@ -21,17 +21,17 @@ variables = []
 
 ''' ADD DATASETS '''
 # datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_0.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_2.txt")
 
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
 
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
 
@@ -66,10 +66,12 @@ datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
 
+datasets.append("800v200hz/800hz.txt")
+
 ''' ADD VARIABLES '''
-variables.append("Axl.X")
-variables.append("Axl.Y")
-variables.append("Axl.Z")
+# variables.append("Axl.X")
+# variables.append("Axl.Y")
+# variables.append("Axl.Z")
 
 # variables.append("Mag.X")
 # variables.append("Mag.Y")
@@ -133,17 +135,17 @@ def downsample(df: pd.DataFrame, old_fs, new_fs, f_type):
     # new_df = df.drop(dropped_rows)
 
     # print(df.describe())
-    # new_df = pd.DataFrame(columns=column_names)
-    # for column in df:
-    #   new_df[column] = sp.signal.decimate(df[column], math.floor(fs/ds_fs), ftype=f_type, zero_phase=True)
+    new_df = pd.DataFrame(columns=column_names)
+    for column in df:
+      new_df[column] = sp.signal.decimate(df[column], math.floor(fs/ds_fs), ftype=f_type, zero_phase=True)
     
     # new_df = pd.DataFrame(columns=column_names)
     # for column in df:
     #   new_df[column] = myDecimate(x=df[column], fs=fs, ds_fs=ds_fs, omega_n=90, numtaps=13)
 
-    new_df = pd.DataFrame(columns=column_names)
-    for column in df:
-      new_df[column] = sp.signal.resample_poly(df[column], up=1, down=4, window=sp.signal.windows.kaiser(15, 14), axis=0)
+    # new_df = pd.DataFrame(columns=column_names)
+    # for column in df:
+    #   new_df[column] = sp.signal.resample_poly(df[column], up=1, down=4, window=sp.signal.windows.kaiser(15, 14), axis=0)
     # print(new_df.describe())
 
 
@@ -256,8 +258,11 @@ def plotTime(sets, vars, fs, ds_fs, f_type="fir", size=20):
       x = df[i]
 
       plt.plot(x)
+
+      tname = j.split("/")
+      name = tname[1]
       # x.plot()
-      legendNames.append(j + ", " + i)
+      legendNames.append(name + ", " + i)
 
     plt.xlabel(f'Time, {ds_fs}', size=size)
     plt.ylabel('Value', size=size)
@@ -365,18 +370,28 @@ f_type = "fir"
 ds_fs = 800
 plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-plotWelch(datasets, variables, fs, ds_fs, size=size)  
+# plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
 ds_fs = 200
-# plotTime(datasets, variables, fs, ds_fs, size=size)
+plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
 # plotWelch(datasets, variables, fs, ds_fs, size=size)
 
-f_type = "iir"
-ds_fs = 200
+# f_type = "iir"
+# ds_fs = 200
 # plotTime(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
 # plotFFT(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
 # plotWelch(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
+
+datasets = []
+datasets.append("800v200hz/200hz.txt")
+
+fs = 200
+ds_fs = 200
+plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotFFT(datasets, variables, fs, ds_fs, size=size)
+# plotWelch(datasets, variables, fs, ds_fs, size=size)  
+
 
 
 plt.show()

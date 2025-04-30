@@ -7,6 +7,7 @@ import time
 import threading
 from streamlit_autorefresh import st_autorefresh
 from realtime import shutdown_event
+import pandas as pd
 
 # args for main()
 ML_models = ["SVM", "RF", "KNN", "GNB", "LR", "GB", "ADA"]
@@ -31,7 +32,7 @@ prediction_list = {}
 
 st.title("User interface")
 
-tab1, tab2, tab3, tab4 = st.tabs(["Real time streaming", "ML model", "Results", "New files/data" ])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Real time streaming", "ML model", "Results", "Test classifier on a file" , "New files/data" ])
         
 
 ## TAB NUMBER ONE ##
@@ -77,7 +78,7 @@ with tab2:
     with col2:
         with st.expander("Preprocessing Parameters"):
             fs = st.selectbox("Sampling frequency:", frequencies, index=5)
-            ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=3)
+            ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=5)
             window_length_seconds = st.selectbox("Window length (seconds):", [20, 40])
             test_size = st.selectbox("Amount of test data (%)", [0.25, 0.3])
             variance_explained = st.selectbox("PCA variance (%) to retain:", percentages)
@@ -129,6 +130,7 @@ with tab3:
 
         st.pyplot(plots[0][0])
         st.pyplot(plots[0][1])
+        st.pyplot(plots[1])
         st.pyplot(plots[2])
 
         if variance_explained == 2:
@@ -139,8 +141,46 @@ with tab3:
 
 
 
-## TAB NUMBER FOUR ##
 with tab4:
+    column1, column2,column3 = st.columns(3)
+
+    with column1:
+        if want_offline_test:
+            predictions_path = 'testOnFile/predictions.csv' 
+            df_predictions = pd.read_csv(predictions_path)
+            st.write("Displaying the content of predictions.csv")
+            st.dataframe(df_predictions)  
+
+        else:
+            st.info("If want_offline_test is checked and main function ran the test results of the uploaded files will be displayed here")
+    
+
+    with column2:
+        st.write("YO")
+        if want_calc_exposure:
+            summary_path = 'testOnFile/summary.csv' 
+            df_summary = pd.read_csv(summary_path)
+            st.write(f"Displaying the content of {summary_path}")
+            st.dataframe(df_summary)  
+
+    with column3:
+        upload_directory = 'testOnFile/testFiles/'
+        uploaded_test_file = st.file_uploader("Upload the file(s) you want to check")
+
+
+        if uploaded_test_file is not None:
+            
+            test_file_path = os.path.join(upload_directory, uploaded_test_file.name)
+
+            with open(test_file_path, "wb") as d:
+                d.write(uploaded_test_file.getbuffer()) 
+            d.close
+
+            st.success(f"File uploaded and saved to {upload_directory}")
+        
+
+## TAB NUMBER FIVE ##
+with tab5:
     st.info("This tab is for adding new data for training the ML model")
     category_dirs = {
         "GrindBig": "Preprocessing/DatafilesSeparated/GrindBig",

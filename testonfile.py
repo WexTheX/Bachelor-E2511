@@ -77,7 +77,8 @@ def runInferenceOnFile(file_path:           str,
     
     df = extractDFfromFile(file_path, fs)
     ### Downsample
-    df = downsample(df, fs, ds_fs, variables)
+    if ds_fs < fs:
+        df = downsample(df, fs, ds_fs, variables)
     
     ### Feature extraction
     features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_accel)

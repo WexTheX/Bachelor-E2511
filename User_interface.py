@@ -116,6 +116,9 @@ with tab2:
         }
 
         plots, result = main(**config)
+        st.session_state["plots"] = plots
+        st.session_state["result"] = result
+
         #st.write(result)
     
     
@@ -123,18 +126,28 @@ with tab2:
 
 ## TAB NUMBER THREE ##
 with tab3:
-    if want_plots and plots != {}:
+    plots = st.session_state.get("plots", {})
+    result = st.session_state.get("result", {})
+
+    if want_plots and plots:
         st.write(f"Best clf and hyperparam search method: {result['model_name']}, {result['optimalizer']}")
-        st.write(f"Accuracy: {result['test_accuracy']}")
+        st.write(f"Accuracy: {round(result['test_accuracy'], 3)}")
 
         selected_plots = st.multiselect("Select plot", plots.keys())
-        
-        for plot in selected_plots:
-            st.pyplot(plot)
 
-        # if variance_explained == 2:
-        #     st.pyplot(plots[3])
-      
+
+        
+        for plot_name in selected_plots:
+            st.subheader(plot_name)
+
+            plot_obj = plots[plot_name]
+            
+            if isinstance(plot_obj, list):
+                for i, fig in enumerate(plot_obj):
+                    st.pyplot(fig)
+            else:
+                st.pyplot(plot_obj)
+
     else:
         st.info("Plots will be displayed here after training if 'Want plots' is checked.")
 
@@ -149,10 +162,7 @@ with tab3:
 #                      'Decision boundaries': fig_5
 #                      }
 
-with tab4:
-    column1, column2,column3 = st.columns(3)
-
-    with column1:
+with tab4:    
         if want_offline_test:
             predictions_path = 'testOnFile/predictions.csv' 
             df_predictions = pd.read_csv(predictions_path)
@@ -163,15 +173,12 @@ with tab4:
             st.info("If want_offline_test is checked and main function ran the test results of the uploaded files will be displayed here")
     
 
-    with column2:
-        st.write("YO")
         if want_calc_exposure:
             summary_path = 'testOnFile/summary.csv' 
             df_summary = pd.read_csv(summary_path)
             st.write(f"Displaying the content of {summary_path}")
             st.dataframe(df_summary)  
 
-    with column3:
         upload_directory = 'testOnFile/testFiles/'
         uploaded_test_file = st.file_uploader("Upload the file(s) you want to check")
 

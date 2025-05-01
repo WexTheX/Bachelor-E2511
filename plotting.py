@@ -176,7 +176,8 @@ def plotPCATable(PCA_object:          Any,
       figures_list.append(fig)
   
   else:
-    print(f"Too many principal components ({n_components}) to plot a PCA table in a meaningful way. Max is {upper_pc_limit}.")
+    print(f"Too many principal components ({n_components}) to plot a PCA table in a meaningful way.")
+    return None
   
   return figures_list
 
@@ -455,15 +456,16 @@ def confusionMatrix(labels:           Sequence,
   fig = plt.figure(figsize=(10, 8))
 
   try:
-    
+    fig, ax = plt.subplots(figsize=(10, 8))
+
     test_predict = clf.predict(X_test)
     
     conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities)
     plt.figure(figsize=(10, 8))
-    sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activities, yticklabels=activities)
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.title(f'Confusion matrix, {model}: {optimalizer}')
+    sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activities, yticklabels=activities, ax=ax)
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Actual")
+    ax.set_title(f'Confusion matrix, {model}: {optimalizer}')
 
   except Exception as e:
     print(f"Unable to plot confusion matrix: {e}")

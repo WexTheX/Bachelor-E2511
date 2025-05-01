@@ -25,6 +25,7 @@ import os
 import pandas as pd
 import random
 from collections import Counter
+from typing import List, Dict, Any, Tuple, Sequence, Optional
 
 ### Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
@@ -37,8 +38,12 @@ def runInferenceOnFile(file_path:           str,
                         want_prints:        bool,
                         file_to_test:       str,
                         variables:          list[str],
-                        norm_accel:         bool
-                        ) -> pd.DataFrame:
+                        norm_IMU:           bool,
+                        clf_path:           str = "OutputFiles/Separated/classifier.pkl",
+                        pca_path:           str = "OutputFiles/Separated/PCA.pkl",
+                        scaler_path:        str = "OutputFiles/Separated/scaler.pkl",
+                        start_offset:       int = 10
+                        ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     
     '''
     Processes a time-series data file, applies a pre-trained ML pipeline,
@@ -66,9 +71,9 @@ def runInferenceOnFile(file_path:           str,
     print(f"Testing file {file_to_test}")
     
     ### Load trained model
-    clf     = joblib.load("OutputFiles/Separated/classifier.pkl")
-    pca     = joblib.load("OutputFiles/Separated/PCA.pkl")
-    scaler  = joblib.load("OutputFiles/Separated/scaler.pkl")
+    clf     = joblib.load(clf_path)
+    pca     = joblib.load(pca_path)
+    scaler  = joblib.load(scaler_path)
 
     #print(clf.classes_)
     #print("Probability is set to?:", hasattr(clf, "predict_proba")) ##Printing 
@@ -82,12 +87,16 @@ def runInferenceOnFile(file_path:           str,
         df = downsample(df, fs, ds_fs, variables)
     
     ### Feature extraction
-    features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_accel)
+    features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_IMU)
 
     ### Convert to Dataframe and do PCA
-    features_df     = pd.DataFrame(features_list)
-    features_scaled = scaler.transform(features_df)
-    features_pca    = pca.transform(features_scaled)
+    try:
+        features_df     = pd.DataFrame(features_list)
+        features_scaled = scaler.transform(features_df)
+        features_pca    = pca.transform(features_scaled)
+
+    except Exception as e:
+        print(f"Error in runInferenceOnFile, scaler.transform or pca.transform. Might indicate the need to make new CLF, and pickle clf, scaler and pca: {e}")
 
     # Can be used to help calculate exposure_intensity_matrix 
     # xyz_accel = abs(np.sqrt(np.power(features_df['mean_accel_X'], 2) +
@@ -123,7 +132,7 @@ def runInferenceOnFile(file_path:           str,
 
         for i, probs in enumerate(probabilities):
 
-            start_idx   = (10 + (i * window_length_sec))
+            start_idx   = (start_offset + (i * window_length_sec))
             end_idx     = start_idx + window_length_sec
             time_range  = f"{start_idx}–{end_idx}"
 
@@ -143,7 +152,7 @@ def runInferenceOnFile(file_path:           str,
 
         for i, pred in enumerate(preds):
 
-            start_idx   = (10 + (i * window_length_sec))
+            start_idx   = (start_offset + (i * window_length_sec))
             end_idx     = start_idx + window_length_sec
             time_range  = f"{start_idx}–{end_idx}"
 
@@ -157,7 +166,7 @@ def runInferenceOnFile(file_path:           str,
         
     df_result = pd.DataFrame(results, columns=["Time", "Activity", "Probability", "Top-3"])
 
-    df_result['Smoothed activity'] = moving_mode_filter(df_result['Activity'], window=3)
+    df_result['Filtered activity'] = moving_mode_filter(df_result['Activity'], window=3)
 
     if want_prints:
         print(df_result)
@@ -171,7 +180,9 @@ def offlineTest(test_file_path:        str,
                 ds_fs:                 int,
                 window_length_seconds: int,
                 variables:             list[str],
-                want_prints:           bool
+                norm_IMU:              bool,
+                want_prints:           bool,
+                predictions_csv:       str = "predictions.csv"
                 ) -> pd.DataFrame:
     
     '''
@@ -192,7 +203,6 @@ def offlineTest(test_file_path:        str,
     - Saves the combined results to a specified CSV file in the output directory.
     '''
     
-    # feature_df_all = pd.DataFrame()
 
     print(f"Making predictions on data from {test_file_path}: ")
 
@@ -211,33 +221,14 @@ def offlineTest(test_file_path:        str,
         elif filename.endswith(".bin"): ##Converting .bin to .txt
             convert_bin_to_txt(file_to_test_no_ext)
 
-        df_result, features_df = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints, file_to_test, variables, norm_accel=False)
+        df_result, features_df = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints,
+                                                    file_to_test, variables, norm_IMU)
     
-        # header_lines = [
-        #     f"_______________________________________________________________________________",
-        #     f"Predictions from: {os.path.basename(file_to_test)}"
-        # ]
-
-        # header_df = pd.DataFrame([[line, "", "", ""] for line in header_lines],
-        #                         columns=["Time", "Activity", "Probability", "Top-3"])
-
-        ###Adding header above every prediction set
-        # column_header = pd.DataFrame([["Time", "Activity", "Probability", "Top-3"]],
-        #                         columns=["Time", "Activity", "Probability", "Top-3"])
-
-        ### Adding the data together
-        # df_result_all.append(header_df)
-        # df_result_all.append(column_header)
-
         df_result_all.append(df_result)
 
-        # TODO
-        # df.append() er på vei ut, må finne alternativ
-
-        ### Saving as csv
-
+    # Save as csv
     combined_df = pd.concat(df_result_all, ignore_index=True)
-    filename_out = os.path.join(prediction_csv_path, "predictions.csv")
+    filename_out = os.path.join(prediction_csv_path, predictions_csv)
     combined_df.to_csv(filename_out, index=False)
 
     ### Finished, printing file  for output file
@@ -254,7 +245,9 @@ def calcExposure(combined_df:           pd.DataFrame,
                  exposures:             list[str],
                  safe_limit_vector:     list[float],
                  csv_path:              str,
-                 filter_on:             bool
+                 filter_on:             bool,
+                 predictions_csv:       str = "predictions.csv",
+                 summary_csv:           str = "summary.csv"
                 ) -> pd.DataFrame:
     
     '''
@@ -270,16 +263,17 @@ def calcExposure(combined_df:           pd.DataFrame,
     if combined_df.empty:
 
         try:
-            full_path   = os.path.join(path, "predictions.csv")
+            full_path   = os.path.join(path, predictions_csv)
             combined_df = pd.read_csv(full_path)
+            print(f"Retrieving dataframe from {full_path}.")
 
         except Exception as e:
-            print(f"Error: Unable to read predictions.csv")
+            print(f"Error: Unable to read {predictions_csv}: {e}")
 
-    if filter_on:
-        print(f"Calculating exposure... (filter on)")
-        predicted_activities    = combined_df['Smoothed activity']
-    else:
+    if filter_on == True:
+        print(f"Calculating exposure... (filter on).")
+        predicted_activities    = combined_df['Filtered activity']
+    if filter_on == False:
         print(f"Calculating exposure... (filter off)")
         predicted_activities    = combined_df['Activity']
 
@@ -301,7 +295,7 @@ def calcExposure(combined_df:           pd.DataFrame,
 
     summary_df                  = exposure_summary(total_exposure_vector, safe_limit_vector, exposures)
 
-    filename_out = os.path.join(csv_path, "summary.csv")
+    filename_out = os.path.join(csv_path, summary_csv)
     summary_df.to_csv(filename_out, index=False)
 
     # --- 3. Print in terminal ---
@@ -318,9 +312,16 @@ def calcExposure(combined_df:           pd.DataFrame,
 
 def initialize_exposure_intensity_matrix(exposures:                     list[str], 
                                          activities:                    list[str],
-                                         gravityless_norm_accel_mean:   float = round(random.uniform(10.0, 20.0), 1) - 9.81,
-                                         gravityless_norm_accel_energy: float = round(random.uniform(10.0, 20.0), 1) - 9.81,
-                                         temperature_energy:            float = round(random.uniform(10.0, 20.0), 1)
+                                         # Dummy variables
+                                         variable_0:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                         weld_to_rad:                   float = 1234.0,
+                                         variable_1:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                         variable_2:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                         variable_3:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                         # Dummy sensor proxies
+                                         gravityless_norm_accel_mean:   float = round(random.uniform(10.0, 2000.0), 1) - 9.81,
+                                         gravityless_norm_accel_energy: float = round(random.uniform(10.0, 2000.0), 1) - 9.81,
+                                         temperature_energy:            float = round(random.uniform(10.0, 2000.0), 1)
                                          ) -> pd.DataFrame:
     
     '''
@@ -341,17 +342,17 @@ def initialize_exposure_intensity_matrix(exposures:                     list[str
     # TODO 
     # Future work: find more proxies, set up sensor readings coming in
 
-    df = pd.DataFrame(0.0, index=exposures, columns=activities) 
+    df = pd.DataFrame(0.0, index=exposures, columns=activities)
 
     # If there is something common to all welding or grinding, use *WELD and *GRIND
     WELD    = df.columns[df.columns.str.startswith('WELD')]
     GRIND   = df.columns[df.columns.str.startswith('GRIND')]
     
-    df.loc['CARCINOGEN',    ['WELDSTMAG', 'WELDSTTIG']] = round(random.uniform(10.0, 20.0), 1)
-    df.loc['RESPIRATORY',   ['SANDSIM', 'WELDALTIG']]   = round(random.uniform(10.0, 20.0), 1) 
-    df.loc['NEUROTOXIN',    ['WELDSTTIG']]              = round(random.uniform(10.0, 20.0), 1)
-    df.loc['RADIATION',     [*WELD]]                    = 99999.0
-    df.loc['NOISE',         [*GRIND]]                   = round(random.uniform(10.0, 20.0), 1)
+    df.loc['CARCINOGEN',    ['WELDSTMAG', 'WELDSTTIG']] = variable_0
+    df.loc['RESPIRATORY',   ['SANDSIM', 'WELDALTIG']]   = variable_1
+    df.loc['NEUROTOXIN',    ['WELDSTTIG']]              = variable_2
+    df.loc['RADIATION',     [*WELD]]                    = weld_to_rad
+    df.loc['NOISE',         [*GRIND]]                   = variable_3
     df.loc['VIBRATION',     [*GRIND]]                   = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
     df.loc['THERMAL',       [*WELD]]                    = temperature_energy
     df.loc['MSK',           [*GRIND, 'IMPA']]           = gravityless_norm_accel_energy

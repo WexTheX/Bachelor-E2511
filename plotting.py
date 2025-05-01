@@ -15,8 +15,17 @@ from collections import defaultdict
 
 from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 
-def normDistPlot(dataset, size):
-  # Plot of normal distribution, WIP
+def normDistPlot(dataset: Any,
+                 size:    Any
+                 ) -> None:
+  
+  '''Plots a histogram of randomly generated normally distributed data.
+
+  Uses the 'mean_accel_X' and 'sd_accel_X' values from the input dataset
+  to generate 'size' random samples from a normal distribution. It then
+  plots a histogram of these samples and adds a vertical dashed line
+  indicating the mean of the generated samples.'''
+
   mean = dataset["mean_accel_X"]
   sd = dataset["sd_accel_X"]
     
@@ -26,8 +35,23 @@ def normDistPlot(dataset, size):
   plt.axvline(values.mean(), color='k', linestyle='dashed', linewidth=2)
   plt.figure()
 
-def plotFFT(sets, variables):
-  # Plot of FFT of sets and variables, REDO needed
+  return None
+
+def plotFFT(sets:       Any,
+            variables:  Any
+            ) -> None:
+
+  '''Plots the FFT magnitude spectrum for specified variables across datasets.
+
+  Iterates through each dataset identifier in 'sets' and each variable
+  name in 'variables'. For each combination, it retrieves the FFT results
+  (frequency axis, FFT components, and size) using the `getFFT` function.
+  It then plots the scaled magnitude of the positive frequency components
+  (2.0/N * |Y(f)|) onto the *same* matplotlib axes. Finally, it adds a
+  legend identifying each plotted line.'''
+
+  #TODO: Redo this function
+
   label_names = []
 
   for i in sets:
@@ -50,25 +74,58 @@ def plotFFT(sets, variables):
   plt.legend(label_names)
   plt.figure()
 
-def plotWelch(signal, feature, fs, filtering=True, omega_n = 15, order = 3):
+  return None
+
+def plotWelch(signal_path:  str,
+              feature:      str,
+              fs:           int,
+              filtering:    bool=True,
+              omega_n:      int = 15,
+              order:        int = 3
+              ) -> None:
+  
+  '''Computes and plots the Power Spectral Density (PSD) using Welch's method.
+
+  Reads data from a CSV file named '<signal>.csv', extracts the specified
+  'feature' column. It then computes the PSD using the `getWelch` function,
+  optionally applying a filter beforehand based on the 'filtering' flag
+  and related parameters ('omega_n', 'order'). The resulting PSD is plotted
+  against frequency on a semi-logarithmic scale.'''
+  
   # Plot of Welch Method
-  df = pd.read_csv(signal+".csv")
+  df = pd.read_csv(signal_path+".csv")
   x = df[feature]
   freq, psd = getWelch(x, fs, filtering, omega_n, order)
 
   plt.semilogy(freq, psd)  # Log scale for better visibility
 
-def testWelch(sets_n, variables_n, fs):
+  return None
+
+def testWelch(sets_n:       Any,
+              variables_n:  Any,
+              fs:           int
+              ) -> None:
+  
+  '''Attempts to test the Welch method calculation (currently incomplete/incorrect).
+
+  This function defines ranges for filter parameters but does not use them.
+  It calls the `getWelch` function with inputs `sets_n` and `variables_n`
+  which might be incorrect if `getWelch` expects a 1D numerical array as
+  its primary data input (like in `plotWelch`). The calculated frequency
+  and PSD results are currently not used (e.g., plotted or returned).'''
+
   omega_range = [10, 20, 30, 40, 50]
   filter_order = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
   freq, psd = getWelch(sets_n, variables_n, fs, filterOn = True)
 
-def plotPCATable(PCA_object:        Any,
-                  #  X:                 pd.DataFrame, 
-                  #  n_components:      int,
-                   features_per_PCA:  int
-                   ) -> Optional[List[Figure]]:
+  return None
+
+def plotPCATable(PCA_object:          Any,
+                 features_per_table:  int,
+                 lower_pc_limit:      int = 2,
+                 upper_pc_limit:      int = 10
+                 ) -> Optional[List[Figure]]:
   
   '''
   Generates heatmap(s) visualizing scaled PCA loadings.
@@ -95,17 +152,17 @@ def plotPCATable(PCA_object:        Any,
 
 
   # --- 2. Plot PCA table
-  if 2 <= n_components <= 10:
+  if lower_pc_limit <= n_components <= upper_pc_limit:
     
     loadings = PCA_object.components_.T * np.sqrt(PCA_object.explained_variance_)
     loadings_percantage = (loadings - np.min(loadings)) / (np.max(loadings) - np.min(loadings))
 
     # print(f"Total amount of features: {len(loadings)}")
     
-    for i in range(len(loadings) // features_per_PCA):
+    for i in range(len(loadings) // features_per_table):
       
-      start_idx = i * features_per_PCA
-      end_idx   = start_idx + features_per_PCA
+      start_idx = i * features_per_table
+      end_idx   = start_idx + features_per_table
 
       loadings_percantage_part  = loadings_percantage[start_idx:end_idx]
       feature_names_part        = PCA_object.feature_names_in_[start_idx:end_idx]
@@ -119,15 +176,18 @@ def plotPCATable(PCA_object:        Any,
       figures_list.append(fig)
   
   else:
-    print(f"Too many principal components ({n_components}) to plot a PCA table in a meaningful way.")
+    print(f"Too many principal components ({n_components}) to plot a PCA table in a meaningful way. Max is {upper_pc_limit}.")
   
   return figures_list
 
-def biplot(feature_df:        pd.DataFrame,
-           scaler:            Any,
-           train_labels:      Sequence,
-           label_mapping:     Dict[str, Any],
-           want_arrows:       bool
+def biplot(feature_df:              pd.DataFrame,
+           scaler:                  Any,
+           train_labels:            Sequence,
+           label_mapping:           Dict[str, Any],
+           want_arrows:             bool,
+           feature_start_index:     int = 90,
+           num_features_per_sensor: int = 15,
+           output_filename:         str = "plots/biplot.png"
            ) -> Figure:
   
   '''
@@ -141,10 +201,14 @@ def biplot(feature_df:        pd.DataFrame,
 
 
   # --- 1. Fit scaler and PCA transform ---
-  PCA_object        = PCA(n_components = 2)
-  total_data_scaled = scaler.fit_transform(feature_df)
-  X                 = pd.DataFrame(PCA_object.fit_transform(total_data_scaled))
+  try:
+    PCA_object        = PCA(n_components = 2)
+    total_data_scaled = scaler.fit_transform(feature_df)
+    X                 = pd.DataFrame(PCA_object.fit_transform(total_data_scaled))
 
+  except Exception as e:
+    print(f"Error during scaling or PCA in biplot: {e}")
+    raise
 
   # --- 2. Plotting ---
   xs, ys = X[0], X[1]
@@ -171,12 +235,11 @@ def biplot(feature_df:        pd.DataFrame,
   if want_arrows:
 
     # Decide which indices to make arrows from
-    start_index = 90
-    coeff = PCA_object.components_.T[start_index:start_index+15]
+    coeff = PCA_object.components_.T[feature_start_index:feature_start_index + num_features_per_sensor]
     
     for i in range(len(coeff)):
         plt.arrow(0, 0, coeff[i, 0], coeff[i, 1], color='r', alpha=0.5)
-        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, total_data_scaled.columns[i+start_index], color='g')
+        plt.text(coeff[i, 0] * 1.2, coeff[i, 1] * 1.2, total_data_scaled.columns[i+feature_start_index], color='g')
 
   plt.xlabel("PC1")
   plt.ylabel("PC2")
@@ -186,19 +249,21 @@ def biplot(feature_df:        pd.DataFrame,
 
 
   # --- 3. Save plot ---
-  output_filename = "plots/biplot.png"
   try:
-    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
     print(f"Error saving plot to {output_filename}: {e}")  
 
   return fig
 
-def biplot3D(feature_df:      pd.DataFrame,
-             scaler:          Any,
-             train_labels:    Sequence,
-             label_mapping:   Dict[str, Any],
-             want_arrows:     bool
+def biplot3D(feature_df:              pd.DataFrame,
+             scaler:                  Any,
+             train_labels:            Sequence,
+             label_mapping:           Dict[str, Any],
+             want_arrows:             bool,
+             feature_start_index:     int = 90,
+             num_features_per_sensor: int = 15,
+             output_filename:         str = "plots/biplot3D.png"
              ) -> Figure:
   
   '''
@@ -220,6 +285,7 @@ def biplot3D(feature_df:      pd.DataFrame,
     PCA_object        = PCA(n_components = 3)
     total_data_scaled = scaler.fit_transform(feature_df)
     X                 = pd.DataFrame(PCA_object.fit_transform(total_data_scaled))
+
   except Exception as e:
     print(f"Error during scaling or PCA in biplot3D: {e}")
     raise
@@ -248,8 +314,7 @@ def biplot3D(feature_df:      pd.DataFrame,
   if want_arrows:  
 
     # Decide which indices to make arrows from (Hardcoded)
-    feature_start_index     = 90 
-    num_features_per_sensor = 15
+    
     coeff = PCA_object.components_.T[feature_start_index:feature_start_index + num_features_per_sensor]
     
     # Alternative for all arrows:
@@ -269,7 +334,6 @@ def biplot3D(feature_df:      pd.DataFrame,
 
 
   # --- 3. Save plot ---
-  output_filename = "plots/biplot3D.png"
   try:
     plt.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
@@ -357,7 +421,7 @@ def plotDecisionBoundaries(X:             pd.DataFrame,
     # --- 2. Save plot ---
     output_filename = "plots/decision_boundaries.png"
     try:
-      plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+      fig.savefig(output_filename, dpi=300, bbox_inches='tight')
     except Exception as e:
       print(f"Error saving plot to {output_filename}: {e}")  
 
@@ -388,9 +452,10 @@ def confusionMatrix(labels:           Sequence,
   model       = result['model_name']
   optimalizer = result['optimalizer']
 
-  try:
-    fig = plt.figure(figsize=(10, 8))
+  fig = plt.figure(figsize=(10, 8))
 
+  try:
+    
     test_predict = clf.predict(X_test)
     
     conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities)
@@ -411,9 +476,10 @@ def confusionMatrix(labels:           Sequence,
 
   return fig
 
-def plotFeatureImportance(pca:              Any,
-                          threshold:        float = 3,
-                          output_filename:  str = "plots/feature_importance.png"
+def plotFeatureImportance(pca:                    Any,
+                          original_feature_names: List[str],
+                          threshold:              float = 0.79,
+                          output_filename:        str = "plots/feature_importance.png"
                           ) -> Figure:
 
   '''
@@ -432,28 +498,9 @@ def plotFeatureImportance(pca:              Any,
   'plots/feature_importance.png'.
   '''
 
-  # --- 1. Generate Feature Names (Hardcoded) ---
-  original_feature_names  = []
   feature_dict            = {}
 
-  # sensors                 = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z', 'temp']
-  sensors                 = ['accel_norm', 'gyro_norm', 'mag_norm', 'temp']
-  time_feature_suffixes   = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entr', 'iqr', 'kurt', 'skew', 'corr']
-  freq_sensors            = ['accel_norm', 'gyro_norm', 'mag_norm']
-  freq_feature_suffixes   = ['psdmean', 'psdmax', 'psdmin', 'psdpeakf']
-
-  # Add time features
-  for sensor in sensors:
-      for suffix in time_feature_suffixes:
-          original_feature_names.append(f"{suffix}_{sensor}")
-
-  # Add frequency features
-  for sensor in freq_sensors:
-      for suffix in freq_feature_suffixes:
-          original_feature_names.append(f"{suffix}_{sensor}") 
-
-
-  # --- 2. Calculate Importance Vector ---
+  # --- 1. Calculate Importance Vector ---
   try:  
     # Absolute components weighted by explained variance
     vector = (np.abs(pca.components_.T) @ (pca.explained_variance_ratio_))
@@ -467,9 +514,16 @@ def plotFeatureImportance(pca:              Any,
   sorted_normalized_vector_percentage = 100 * (sorted_vector / sorted_vector.sum())
 
   
-  # --- 3. Identify and Format Least Important Features ---
+  # --- 2. Identify and Format Least Important Features ---
   # Make a dict with {feature_name: importance_value}
-  feature_dict = {name: normalized_vector_percentage[i] for i, name in enumerate(original_feature_names)}
+  try:
+    feature_dict = {name: normalized_vector_percentage[i] for i, name in enumerate(original_feature_names)}
+  except Exception as e:
+    error_message = (
+      f" - Number of importance scores calculated: {len(normalized_vector_percentage)}"
+      f" - Number of feature names provided: {len(original_feature_names)}\n"
+      f" - This suggests feature extraction must be done again, or norm_IMU changed.\n")
+    print(error_message)
 
 
   sensor_importance_df, suffix_importance_df, fig_1 = getSensorAndSuffixImportance(feature_dict)
@@ -477,72 +531,74 @@ def plotFeatureImportance(pca:              Any,
   low_value_feature_dict = {key: value for key, value in feature_dict.items() if value < threshold}
   sorted_dict_items = sorted(low_value_feature_dict.items(), key=lambda item: item[1], reverse=True)
   dict_string = "Least important features:\n\n" + "\n".join([f"{key}: {value:.3f}" for key, value in sorted_dict_items])
+
+    # --- 3. Plotting ---
   
+  if sorted_dict_items:
+
+    ranks = np.arange(1, len(sorted_normalized_vector_percentage) + 1)
+    fig, ax = plt.subplots(figsize=(8, 5)) # Create figure and axes
+
+    # Plot sorted importance scores
+    ax.plot(ranks, sorted_normalized_vector_percentage,
+          color='tab:blue',   
+          linestyle='-',   
+          linewidth=1,        
+          marker='o',      
+          markersize=4, 
+          markeredgecolor='blue',
+          label='Sorted feature importance')
+      
+    # Plot threshold line
+    ax.axhline(y=threshold, 
+          color='red', 
+          linestyle='--',
+          linewidth=1.5,  
+          label=f'Threshold ({threshold:.3f})')
+    
+    # Vertical threshold line + text
+    intersection_index = np.where(sorted_normalized_vector_percentage <= threshold)[0]
+    
+    ax.axvline(x=intersection_index[0],
+          color='grey',  
+          linestyle='--', 
+          linewidth=1.5,
+          label=f'Threshold Cross ({intersection_index} features above)')
+    
+    ax.text(intersection_index[0] + 2,  # X: Offset slightly right from the line
+            threshold + 0.02,          # Y: Offset slightly above threshold line
+            f" Features: {intersection_index[0]} ",
+            color='grey',           
+            fontsize=8,
+            ha='left',         
+            va='bottom',
+            # bbox=dict(boxstyle='round,pad=0.3', fc='white', ec='grey', alpha=0.8)
+            )
+
+    # Add text box with least important features 
+    fig.text(0.75, # X position 
+          0.85, # Y position 
+          dict_string,
+          fontsize=7,
+          va='top', 
+          ha='left', 
+          bbox=dict(boxstyle='round,pad=0.5', fc='wheat', alpha=0.6))
+
+    ax.set_title(f"Importance of {len(original_feature_names)} original features to {pca.n_components} Principal Components", fontsize=16)
+    ax.set_xlabel("Sorted features", fontsize=12)
+    ax.set_ylabel("% Contribution to all PC's", fontsize=12)
+
+    ax.grid(True, linestyle=':',  alpha=0.6)
+    ax.set_xticks(np.arange(0, len(sorted_vector), 10))
+    ax.tick_params(axis='x', rotation=45)
+
+    plt.subplots_adjust(right=0.73)
+
   if not sorted_dict_items:
     print(f"No features below {threshold} in importance.")
 
 
-  # --- 4. Plotting ---
-  ranks = np.arange(1, len(sorted_normalized_vector_percentage) + 1)
-  fig, ax = plt.subplots(figsize=(8, 5)) # Create figure and axes
-
-  # Plot sorted importance scores
-  ax.plot(ranks, sorted_normalized_vector_percentage,
-        color='tab:blue',   
-        linestyle='-',   
-        linewidth=1,        
-        marker='o',      
-        markersize=4, 
-        markeredgecolor='blue',
-        label='Sorted feature importance')
-    
-  # Plot threshold line
-  ax.axhline(y=threshold, 
-        color='red', 
-        linestyle='--',
-        linewidth=1.5,  
-        label=f'Threshold ({threshold:.3f})')
-  
-  # Vertical threshold line + text
-  intersection_index = np.where(sorted_normalized_vector_percentage <= threshold)[0]
-  
-  ax.axvline(x=intersection_index[0],
-        color='grey',  
-        linestyle='--', 
-        linewidth=1.5,
-        label=f'Threshold Cross ({intersection_index} features above)')
-   
-  ax.text(intersection_index[0] + 2,  # X: Offset slightly right from the line
-          threshold + 0.02,          # Y: Offset slightly above threshold line
-          f" Features: {intersection_index[0]} ",
-          color='grey',           
-          fontsize=8,
-          ha='left',         
-          va='bottom',
-          # bbox=dict(boxstyle='round,pad=0.3', fc='white', ec='grey', alpha=0.8)
-           )
-
-  # Add text box with least important features 
-  fig.text(0.75, # X position 
-         0.85, # Y position 
-         dict_string,
-         fontsize=7,
-         va='top', 
-         ha='left', 
-         bbox=dict(boxstyle='round,pad=0.5', fc='wheat', alpha=0.6))
-
-  ax.set_title(f"Importance of {len(original_feature_names)} original features to {pca.n_components} Principal Components", fontsize=16)
-  ax.set_xlabel("Sorted features", fontsize=12)
-  ax.set_ylabel("% Contribution to all PC's", fontsize=12)
-
-  ax.grid(True, linestyle=':',  alpha=0.6)
-  ax.set_xticks(np.arange(0, len(sorted_vector), 10))
-  ax.tick_params(axis='x', rotation=45)
-
-  plt.subplots_adjust(right=0.73)
-
-
-  # --- 5. Save plot ---
+  # --- 4. Save plot ---
   try:
     fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
@@ -612,9 +668,8 @@ def getSensorAndSuffixImportance(feature_dict:    dict[Any, Any],
 
   return sensor_df, suffix_df, fig
 
-def screePlot(pca:  Any,
-              
-              output_filename: str = "plots/PCA_scree_plot.png"
+def screePlot(pca:              Any,
+              output_filename:  str = "plots/PCA_scree_plot.png"
               ) -> Figure:
 
   '''
@@ -626,24 +681,28 @@ def screePlot(pca:  Any,
   number of components. The generated plot is also saved to a file.
   '''
 
-
-  n_components = pca.n_components_
-  explained_variance_ratio = pca.explained_variance_ratio_
-
-  # --- 1. Create the Scree Plot ---
   fig = plt.figure(figsize=(8, 5))
-  component_numbers = np.arange(n_components) + 1
 
-  # Plot individual component variance
-  plt.plot(component_numbers, explained_variance_ratio, 'o-', linewidth=2, label='Individual Variance')
+  try:
+    n_components = pca.n_components_
+    explained_variance_ratio = pca.explained_variance_ratio_
 
-  # Add labels and title
-  plt.title('Scree Plot')
-  plt.xlabel('Principal Component Number')
-  plt.ylabel('Proportion of Variance Explained')
-  plt.xticks(component_numbers, rotation=90)
-  plt.legend()
-  plt.grid(True)
+    # --- 1. Create the Scree Plot ---
+    component_numbers = np.arange(n_components) + 1
+
+    # Plot individual component variance
+    plt.plot(component_numbers, explained_variance_ratio, 'o-', linewidth=2, label='Individual Variance')
+
+    # Add labels and title
+    plt.title('Scree Plot')
+    plt.xlabel('Principal Component Number')
+    plt.ylabel('Proportion of Variance Explained')
+    plt.xticks(component_numbers, rotation=90)
+    plt.legend()
+    plt.grid(True)
+
+  except Exception as e:
+    print(f"PCA error in screePlot: {e}")
 
 
   # --- 2. Save file ---
@@ -657,11 +716,9 @@ def screePlot(pca:  Any,
 def plotLearningCurve(results:          List[Dict[str, Any]],
                       X:                pd.DataFrame,
                       y:                Sequence,
-
                       n_cols:           int = 3,
                       train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 10),
                       output_filename:  str = "plots/Learning_curve.png",
-
                       ) -> Figure:
   
   '''

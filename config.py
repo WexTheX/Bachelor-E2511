@@ -5,16 +5,18 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
+from typing import List, Dict, Any, Tuple, Sequence, Optional
+
 
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
     'want_feature_extraction':  0,
     'separate_types':           1, 
-    'want_new_CLFs':            1,
-    'want_plots':               0,
+    'want_new_CLFs':            0,
+    'want_plots':               1,
     'want_pickle':              0, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        1,
+    'want_offline_test':        0,
     'want_calc_exposure':       0,
     'model_selection':          ['svm', 'lr', 'ada', 'gnb', 'knn', 'rf'],
     'method_selection':         ['rs'],
@@ -22,14 +24,13 @@ main_config = {
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
     'random_seed':              4201,
-    'variance_explained':       0.95,
-    'random_seed':              420,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
     'ds_fs':                    800,  # Downsampled frequency
     'cmap':                     'tab10', # Colormap for plotting
     'n_iter':                   30,   # Iterations for RandomizedSearch
+    'norm_IMU':                 False,
 
     # --- EXPOSURE CALCULATION VARIABLES ---
     'exposures': [
@@ -164,9 +165,11 @@ def setupML():
 
     return model_names, models, optimization_methods, search_kwargs
 
-def loadDataset(separate_types):
+def loadDataset(separate_types: bool,
+                norm_IMU:       bool
+                ) -> Tuple[str, str, List[str], List[str]]:
     
-    if separate_types:
+    if separate_types == True:
         
         path            = "Preprocessing/DatafilesSeparated" 
         output_path     = "OutputFiles/Separated/"
@@ -178,7 +181,8 @@ def loadDataset(separate_types):
             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
 
-    else:
+    if separate_types == False:
+
         path            = "Preprocessing/Datafiles"
         output_path     = "OutputFiles/NotSeparated/"
 
@@ -186,4 +190,33 @@ def loadDataset(separate_types):
             'IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING'
         ]
 
-    return path, output_path, labels
+    if norm_IMU == True:
+    
+        time_feature_suffixes   = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entr', 'iqr', 'kurt', 'skew', 'corr']
+        sensors                 = ['accel_norm', 'gyro_norm', 'mag_norm', 'temp']
+
+        freq_feature_suffixes   = ['psdmean', 'psdmax', 'psdmin', 'psdmax(Hz)']  
+        freq_sensors            = ['accel_norm', 'gyro_norm', 'mag_norm']
+    
+    if norm_IMU == False:
+
+        time_feature_suffixes   = ['mean', 'sd', 'mad', 'max', 'min', 'energy', 'entr', 'iqr', 'kurt', 'skew', 'corr']
+        sensors                 = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z', 'temp']
+
+        freq_feature_suffixes   = ['psdmean', 'psdmax', 'psdmin', 'psdmax(Hz)']  
+        freq_sensors            = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z']
+
+    original_feature_names = []
+
+    # Add time features
+    for sensor in sensors:
+        for suffix in time_feature_suffixes:
+            original_feature_names.append(f"{suffix}_{sensor}")
+
+    # Add frequency features
+    for sensor in freq_sensors:
+        for suffix in freq_feature_suffixes:
+            original_feature_names.append(f"{suffix}_{sensor}") 
+
+
+    return path, output_path, labels, original_feature_names

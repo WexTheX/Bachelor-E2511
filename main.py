@@ -41,6 +41,7 @@ def main(
     fs: int,
     ds_fs: int,
     cmap: str,
+    norm_IMU: bool,
 
     # Paths
     test_file_path: str,
@@ -68,13 +69,12 @@ def main(
     Pipeline steps are configurable via parameters.
     '''
     
-    ''' SETUP '''
-
-    fig_list_1, n_results, accuracy_list = [], [], []
-    fig_1, fig_2, fig_3 = None, None, None
+    fig_list_0, fig_list_1, n_results, accuracy_list = [], [], [], []
+    fig_0, fig_1, fig_2, fig_3, fig_4, fig_5 = None, None, None, None, None, None
+    plots = {}
     combined_df = pd.DataFrame()
     result = {}
-    plots = {}
+    
 
     ''' GET ML MODELS AND HPO METHODS '''
 
@@ -82,7 +82,7 @@ def main(
 
     ''' LOAD DATASET '''
 
-    path, output_path, labels = loadDataset(separate_types)
+    path, output_path, labels, original_feature_names = loadDataset(separate_types, norm_IMU)
 
     num_labels      = len(labels)
     cmap_name       = plt.get_cmap(cmap, num_labels)
@@ -110,7 +110,7 @@ def main(
             if (ds_fs != fs):
                 fe_df = downsample(fe_df, fs, ds_fs, variables)
             
-            window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, Norm_Accel=False)
+            window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, norm_IMU)
 
             all_window_features = all_window_features + window_df
 
@@ -146,7 +146,8 @@ def main(
 
     ''' SPLITTING TEST/TRAIN + SCALING'''
     
-    train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size, random_state=random_seed, stratify=window_labels)
+    train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size,
+                                                                        random_state=random_seed, stratify=window_labels)
 
     scaler = StandardScaler()
     scaler.set_output(transform="pandas")
@@ -169,7 +170,8 @@ def main(
 
         ''' HYPERPARAMETER OPTIMIZATION AND CLASSIFIER '''
 
-        n_results = makeNClassifiers(models, model_names, optimization_methods, model_selection, method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
+        n_results = makeNClassifiers(models, model_names, optimization_methods, model_selection,
+                                     method_selection, PCA_train_df, train_labels, search_kwargs, n_iter)
         
         ''' EVALUATION '''
 
@@ -197,9 +199,9 @@ def main(
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_0  = plotPCATable(PCA_final, features_per_PCA=28) 
+        fig_list_0  = plotPCATable(PCA_final, features_per_table=28) 
 
-        fig_list_1  = plotFeatureImportance(PCA_final) 
+        fig_list_1  = plotFeatureImportance(PCA_final, original_feature_names) 
 
         fig_2       = screePlot(PCA_final)
         
@@ -212,16 +214,16 @@ def main(
         fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
         plots = {
-                     'Learning curve': fig_0,
-                     'Confusion matrix': fig_1,
-                     'PCA table': fig_list_0,
-                     'Feature importance': fig_list_1,
-                     'Scree plot': fig_2,
-                     'Biplot': fig_3,
-                     'Biplot 3D': fig_4,
-                     'Decision boundaries': fig_5
-                     }
-        
+            'Learning curve': fig_0,
+            'Confusion matrix': fig_1,
+            'PCA table': fig_list_0,
+            'Feature importance': fig_list_1,
+            'Scree plot': fig_2,
+            'Biplot': fig_3,
+            'Biplot 3D': fig_4,
+            'Decision boundaries': fig_5
+        }
+    
         if __name__ == "__main__":
             plt.show() 
 
@@ -235,11 +237,13 @@ def main(
     
     if want_offline_test:
 
-        combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds, variables, want_prints=True)
+        combined_df = offlineTest(test_file_path, prediction_csv_path, fs, ds_fs, window_length_seconds,
+                                  variables, norm_IMU, want_prints=True)
 
     if want_calc_exposure:
 
-        summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels, exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
+        summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels,
+                                   exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
     
     return plots, result
 

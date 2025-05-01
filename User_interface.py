@@ -162,10 +162,7 @@ with tab3:
 #                      'Decision boundaries': fig_5
 #                      }
 
-with tab4:
-    column1, column2,column3 = st.columns(3)
-
-    with column1:
+with tab4:    
         if want_offline_test:
             predictions_path = 'testOnFile/predictions.csv' 
             df_predictions = pd.read_csv(predictions_path)
@@ -176,15 +173,12 @@ with tab4:
             st.info("If want_offline_test is checked and main function ran the test results of the uploaded files will be displayed here")
     
 
-    with column2:
-        st.write("YO")
         if want_calc_exposure:
             summary_path = 'testOnFile/summary.csv' 
             df_summary = pd.read_csv(summary_path)
             st.write(f"Displaying the content of {summary_path}")
             st.dataframe(df_summary)  
 
-    with column3:
         upload_directory = 'testOnFile/testFiles/'
         uploaded_test_file = st.file_uploader("Upload the file(s) you want to check")
 

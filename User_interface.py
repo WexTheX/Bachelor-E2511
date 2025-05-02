@@ -25,6 +25,7 @@ exposures = [
 ]
 safe_limit_vector = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"] #Unused
+norm_IMU = False
 
 plots = {}
 prediction_list = {}
@@ -80,7 +81,7 @@ with tab2:
             ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=5)
             window_length_seconds = st.selectbox("Window length (seconds):", [20, 40])
             test_size = st.selectbox("Amount of test data (%)", [0.25, 0.3])
-            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages)
+            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=4)
 
 
 
@@ -112,7 +113,8 @@ with tab2:
             'n_iter': n_iter,
             'exposures': exposures,
             'safe_limit_vector': safe_limit_vector,
-            'variables': variables
+            'variables': variables,
+            'norm_IMU': norm_IMU
         }
 
         plots, result = main(**config)

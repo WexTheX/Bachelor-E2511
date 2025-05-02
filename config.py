@@ -16,7 +16,7 @@ main_config = {
     'want_new_CLFs':            0,
     'want_plots':               1,
     'want_pickle':              0, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        0,
+    'want_offline_test':        1,
     'want_calc_exposure':       0,
     'model_selection':          ['svm', 'lr', 'ada', 'gnb', 'knn', 'rf'],
     'method_selection':         ['rs'],

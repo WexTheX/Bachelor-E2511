@@ -39,9 +39,9 @@ def runInferenceOnFile(file_path:           str,
                         file_to_test:       str,
                         variables:          list[str],
                         norm_IMU:           bool,
-                        clf_path:           str = "OutputFiles/Separated/classifier.pkl",
-                        pca_path:           str = "OutputFiles/Separated/PCA.pkl",
-                        scaler_path:        str = "OutputFiles/Separated/scaler.pkl",
+                        clf_path:           str = "OutputFiles/Separated/classifier.joblib",
+                        pca_path:           str = "OutputFiles/Separated/PCA.joblib",
+                        scaler_path:        str = "OutputFiles/Separated/scaler.joblib",
                         start_offset:       int = 10
                         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     
@@ -208,7 +208,7 @@ def offlineTest(test_file_path:        str,
 
     # Paths
     test_files          = os.listdir(test_file_path)
-    df_result_all       = [] #Storing results
+    df_result_all       = [] # List for storing results
 
     for filename in test_files:
 

@@ -342,12 +342,13 @@ def biplot3D(feature_df:              pd.DataFrame,
 
   return fig
 
-def plotDecisionBoundaries(X:             pd.DataFrame, 
-                           train_labels:  Sequence, 
-                           label_mapping: Dict[str, Any],
-                           results:       List[Dict[str, Any]],
-                           accuracy_list: List[float],
-                           cmap:          str,
+def plotDecisionBoundaries(X:               pd.DataFrame, 
+                           train_labels:    Sequence, 
+                           label_mapping:   Dict[str, Any],
+                           results:         List[Dict[str, Any]],
+                           accuracy_list:   List[float],
+                           cmap:            str,
+                           output_filename: str = "plots/decision_boundaries.png"
                           ) -> Optional[Figure]:
   
   '''
@@ -416,11 +417,14 @@ def plotDecisionBoundaries(X:             pd.DataFrame,
         # ax.set_aspect('equal', adjustable='box')
 
       fig.suptitle("Classifier Decision Boundaries", fontsize=14)
-      fig.tight_layout()
+
+    for j in range(num_plots, len(axes)):
+      fig.delaxes(axes[j])
+
+    fig.tight_layout()
 
   
     # --- 2. Save plot ---
-    output_filename = "plots/decision_boundaries.png"
     try:
       fig.savefig(output_filename, dpi=300, bbox_inches='tight')
     except Exception as e:
@@ -480,7 +484,8 @@ def confusionMatrix(labels:           Sequence,
 
 def plotFeatureImportance(pca:                    Any,
                           original_feature_names: List[str],
-                          threshold:              float = 0.79,
+                          threshold:              Optional[float] = None,
+                          percentile_cutoff:      float = 25.0,
                           output_filename:        str = "plots/feature_importance.png"
                           ) -> Figure:
 
@@ -500,13 +505,16 @@ def plotFeatureImportance(pca:                    Any,
   'plots/feature_importance.png'.
   '''
 
-  feature_dict            = {}
+  feature_dict = {}
 
-  # --- 1. Calculate Importance Vector ---
+  # --- 1. Calculate Importance Vector and threshold ---
   try:  
     # Absolute components weighted by explained variance
     vector = (np.abs(pca.components_.T) @ (pca.explained_variance_ratio_))
     normalized_vector_percentage = 100 * (vector / vector.sum())
+    
+    if threshold is None:
+      threshold = np.percentile(normalized_vector_percentage, percentile_cutoff)
 
   except AttributeError as e:
     print(f"Error: PCA object passed to evaluateFeatureImportance does not have correct attributes: {e}")
@@ -534,7 +542,8 @@ def plotFeatureImportance(pca:                    Any,
   sorted_dict_items = sorted(low_value_feature_dict.items(), key=lambda item: item[1], reverse=True)
   dict_string = "Least important features:\n\n" + "\n".join([f"{key}: {value:.3f}" for key, value in sorted_dict_items])
 
-    # --- 3. Plotting ---
+
+  # --- 3. Plotting ---
   
   if sorted_dict_items:
 
@@ -718,8 +727,9 @@ def screePlot(pca:              Any,
 def plotLearningCurve(results:          List[Dict[str, Any]],
                       X:                pd.DataFrame,
                       y:                Sequence,
-                      n_cols:           int = 3,
-                      train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 10),
+                      cv_string:        str = "SKF", #SKF = StratifiedKFold, SS = ShuffleSplit
+                      n_splits:         int = 5,
+                      train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 5),
                       output_filename:  str = "plots/Learning_curve.png",
                       ) -> Figure:
   
@@ -734,25 +744,39 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
 
 
   # --- 1. Plotting Setup ---
+
+  if cv_string == "SKF":
+    cv_type = StratifiedKFold(n_splits=n_splits)
+  elif cv_string == "SS":
+    cv_type = ShuffleSplit(n_splits=n_splits, test_size=0.2, random_state=0)
+
   models = []
 
   for result in results:
     models.append(result['classifier'])
 
-  n_models = len(models)
-  n_rows = (n_models + n_cols - 1) // n_cols
+  # n_models = len(models)
+  # n_rows = (n_models + n_cols - 1) // n_cols
 
-  fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(5 * n_cols, 4 * n_rows), sharey=True)
-  axes = axes.flatten()  # Flatten in case it's 2D array of axes
+  # fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(5 * n_cols, 4 * n_rows), sharey=True)
+  # axes = axes.flatten()  # Flatten in case it's 2D array of axes
 
+  num_plots   = len(models)
+  ncols       = math.ceil(math.sqrt(num_plots))
+  nrows       = math.ceil(num_plots / ncols)
+
+  fig_width   = ncols * 4.5
+  fig_height  = nrows * 4
+
+  fig, axes   = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height), squeeze=False)
+  axes        = axes.flatten()  # Flatten in case it's 2D array of axes
 
   # --- 2. CV  ---
   common_params = {
       "X": X,
       "y": y,
       "train_sizes": train_sizes,
-      "cv": StratifiedKFold(n_splits=10), # Fast
-      # "cv": ShuffleSplit(n_splits=50, test_size=0.2, random_state=0), # Slower but prob more realistic
+      "cv": cv_type,
       "score_type": "both",
       "n_jobs": -1,
       "line_kw": {"marker": "o"},
@@ -774,6 +798,9 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
         print(f"Error plotting learning curve: {e}")
         axes[ax_idx].set_title(f"Error plotting {estimator.__class__.__name__}")
         axes[ax_idx].text(0.5, 0.5, "Plotting failed", ha='center', va='center', color='red')
+
+  for j in range(num_plots, len(axes)):
+    fig.delaxes(axes[j])
 
   plt.tight_layout()
 

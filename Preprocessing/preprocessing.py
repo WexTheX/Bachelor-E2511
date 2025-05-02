@@ -3,29 +3,19 @@ import scipy as sp
 import math as math
 import re
 import os
-from typing import List, Dict, Any, Tuple, Sequence
+from typing import List, Dict, Any, Tuple, Sequence, Union
 import pickle
+import joblib
 
+def downsample(df:          pd.DataFrame,
+               fs:          int,
+               ds_fs:       int,
+               variables:   list[str]
+               ) -> pd.DataFrame:
+   
+    # We should have an option to downsample to see how diff sampling frequencies affect ML accuracy
+    # This is a hyperparemeter ???
 
-# We should have an option to downsample to see how diff sampling frequencies affect ML accuracy
-# This is a hyperparemeter ???
-def downsample(df: pd.DataFrame, fs, ds_fs, variables):
-    ''' OLD
-    dropped_rows = []
-
-    if((old_fs / new_fs).is_integer() == False):
-        print(f"Old fs: {old_fs} / New fs: {new_fs} is not whole number")
-        quit()
-    elif((fs < ds_fs)):
-        print(f"Old fs: {old_fs} is smaller than New fs: {new_fs}")
-        quit()
-    else:
-        for i in range(len(df['Timestamp'])):
-            if((i % (old_fs / new_fs)) != 0):
-                dropped_rows.append(i)
-
-    new_df = df.drop(dropped_rows)
-    '''
     try:
         new_df = pd.DataFrame(columns=variables)
         for column in df:
@@ -37,15 +27,23 @@ def downsample(df: pd.DataFrame, fs, ds_fs, variables):
 
     return new_df
 
-def convert_date_format(filename):
+def convert_date_format(filename: str
+                        ) -> str:
+
     # Convert date format from DD.MM.YYYY to YYYY.MM.DD in the filename
     match = re.match(r"(\d{2})\.(\d{2})\.(\d{4})", filename)  # Finds date in the file name
+
     if match:
         day, month, year = match.groups()
         return f"{year}.{month}.{day} " + filename[len(match.group(0)):]  # Keeps the rest of the filename
-    return filename  # Returns date if nothing is changed
+    
+    return filename # Returns date if nothing is changed
 
-def rename_data(path, path_names, activity_name):
+def rename_data(path:           str,
+                path_names:     Sequence,
+                activity_name:  str
+                ) -> None:
+    
     path = os.path.normpath(path)
 
     for i in range(len(path_names)):
@@ -53,11 +51,12 @@ def rename_data(path, path_names, activity_name):
         print(f"Re-naming files in: {folder_path}")
 
         
-# Convert bin to txt file if bin file found
+        # Convert bin to txt file if bin file found
         for f in os.listdir(folder_path):
             if f.endswith(".bin") and not f.startswith(activity_name[i]):
                 convert_bin_to_txt(os.path.join(folder_path, f))
-# Fetch and sort .txt files based on new date format
+
+        # Fetch and sort .txt files based on new date format
         files = sorted(
             [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activity_name[i])],
             key=convert_date_format  # Sorts based on date YYYY / MM / DD
@@ -75,13 +74,23 @@ def rename_data(path, path_names, activity_name):
 
     print("Namechanges completed!")
 
-def tab_txt_to_csv(txt_file, csv_file):
+    return None
+
+def tab_txt_to_csv(txt_file:    str,
+                   csv_file:    str
+                   ) -> None:
+    
     # Convert tab seperated txt file to csv file
     # txt_file, csv_file format : "filename.txt", "filename.csv"
     df_txt = pd.read_csv(txt_file, delimiter=r'\t', engine='python') # Delimiter is now all whitespace (tab and space etc)
     df_txt.to_csv(csv_file, index = None)
 
-def fillSets(path, path_names, activity_name):
+    return None
+
+def fillSets(path:          str,
+             path_names:    str,
+             activity_name: str
+             ) -> Tuple[list, list]:
     
     rename_data(path, path_names, activity_name)
 
@@ -95,7 +104,6 @@ def fillSets(path, path_names, activity_name):
     for i, name in enumerate(path_names):
         folder_path = os.path.join(path,name)
         print(f"Finding files in: {folder_path}")
-        
         
         for f in os.listdir(folder_path):
             if f.endswith(".bin") and not f.startswith(activity_name[i]):
@@ -124,9 +132,13 @@ def fillSets(path, path_names, activity_name):
         
     print("Done filling sets")
     print("\n")
+
     return sets, sets_label
         
-def find_next_available_index(folder_path, prefix):
+def find_next_available_index(folder_path:  str,
+                              prefix:       str
+                              ) -> int:
+    
     # Finds next available index for files with a given prefix
     existing_numbers = []
 
@@ -143,10 +155,14 @@ def find_next_available_index(folder_path, prefix):
     for i in range(len(existing_numbers)):
         if i != existing_numbers[i]:
             return i  # Return first hole in dataset
+        
     return existing_numbers[-1] + 1  # Carries on the sequence
 
-#### Converting bin to txt ####
-def convert_bin_to_txt(input_file):
+def convert_bin_to_txt(input_file: str
+                       ) -> None:
+    
+    #### Converting bin to txt ####
+
     output_file = os.path.splitext(input_file)[0] + ".txt"
     # Read binary data and filter out unnecessary symbols
     with open(input_file, "rb") as bin_file:
@@ -164,11 +180,18 @@ def convert_bin_to_txt(input_file):
     compare_bin_and_txt(input_file, output_file)
 
     print(f"File convert from .bin to .txt done. file saved as '{output_file}'.")
+
     bin_file.close()
     txt_file.close()
+
     os.remove(input_file)
 
-def compare_bin_and_txt(input_file, output_file):
+    return None
+
+def compare_bin_and_txt(input_file:     str,
+                        output_file:    str
+                        ) -> None:
+    
     # Les innholdet fra begge filene som tekst
     with open(input_file, "rb") as f_bin:
         bin_lines = f_bin.read().replace(b"\x00", b"").decode("utf-8", errors="ignore").splitlines()
@@ -202,7 +225,10 @@ def compare_bin_and_txt(input_file, output_file):
     f_txt.close()
     f_bin.close()
 
-def delete_header(path):
+    return None
+
+def delete_header(path: str
+                  ) -> None:
 
     # delete first n lines before "Timestamp"
     # changes "Timestamp [ms][xx]" to "Timestamp"
@@ -220,7 +246,7 @@ def delete_header(path):
                 line = re.sub(r'\bTEMP\b', 'Temp', line)
                 line = re.sub(r'\bPressure\b', 'Press', line)
                 
-            if found_timestamp:
+            if found_timestamp == True:
                 lines_to_keep.append(line)
 
     if not found_timestamp:
@@ -231,8 +257,10 @@ def delete_header(path):
     with open(file_path, "w") as f:
         f.writelines(lines_to_keep)
 
+    return None
+
 def pickleFiles(n_results:      list[dict[str, Any]], 
-                result:        dict[str, Any],
+                result:         dict[str, Any],
                 output_path:    str, 
                 PCA_object:     Any,
                 scaler:         Any
@@ -269,3 +297,31 @@ def pickleFiles(n_results:      list[dict[str, Any]],
         pickle.dump(scaler, scaler_file)
 
     scaler_file.close()
+
+    return None
+
+def saveJoblibFiles(n_results:      list[dict[str, Any]], 
+                result:         dict[str, Any],
+                output_path:    str, 
+                PCA_object:     Any,
+                scaler:         Any
+                ) -> None:
+    
+    ## Saves all classifiers from n_results
+
+    print(f"Saving files to {output_path} ... ")
+
+    for r in n_results:
+        model_name      = r['model_name']
+        optimizer       = r['optimalizer']
+        clf             = r['classifier']    
+
+        joblib.dump(clf, f"{output_path}{model_name}_{optimizer}_clf.joblib")
+
+    ## Save best classifier
+    joblib.dump(result['classifier'], f"{output_path}classifier.joblib")
+
+    joblib.dump(PCA_object, f"{output_path}PCA.joblib")
+    joblib.dump(scaler, f"{output_path}scaler.joblib")
+
+    return None

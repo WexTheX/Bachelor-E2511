@@ -25,6 +25,7 @@ exposures = [
 ]
 safe_limit_vector = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"] #Unused
+norm_IMU = False
 
 plots = {}
 prediction_list = {}
@@ -67,7 +68,7 @@ with tab2:
             Splitting_method = st.selectbox("Validation technique:", ["StratifiedKFOLD", "TimeSeriesSplit"])
             want_feature_extraction = st.checkbox("Want feature extraction")
             want_new_CLFs = st.checkbox("Want new classifiers")
-            want_pickle = st.checkbox("Save classifier and transformations with pickle")
+            save_joblib = st.checkbox("Save classifier and transformations with joblib")
             separate_types = st.checkbox("Separate types of classes (TIG VS MAG etc)", True)
             want_offline_test = st.checkbox("Want offline test")
             want_calc_exposure = st.checkbox("Want calc exposure")
@@ -80,7 +81,7 @@ with tab2:
             ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=5)
             window_length_seconds = st.selectbox("Window length (seconds):", [20, 40])
             test_size = st.selectbox("Amount of test data (%)", [0.25, 0.3])
-            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages)
+            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=4)
 
 
 
@@ -91,7 +92,7 @@ with tab2:
 
         config = {
             'want_feature_extraction': want_feature_extraction,
-            'want_pickle': want_pickle,
+            'save_joblib': save_joblib,
             'separate_types': separate_types,
             'want_new_CLFs': want_new_CLFs,
             'want_plots': want_plots,
@@ -112,7 +113,8 @@ with tab2:
             'n_iter': n_iter,
             'exposures': exposures,
             'safe_limit_vector': safe_limit_vector,
-            'variables': variables
+            'variables': variables,
+            'norm_IMU': norm_IMU
         }
 
         plots, result = main(**config)

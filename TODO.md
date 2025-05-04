@@ -86,3 +86,18 @@ Steinnes: Hyperparams optimalisering (+Kode stuff)
 Haldorsen: Testing og validering
 
 
+02/05/25:
+
+AOL     //      Resultat på live detection - Kolonner med predictions og faktiske verdier, separate_types = 1 og 0, eventuelt lage manuell confusion matrix  
+ENS     //      Diskuter resultat fra main vs offline test validering, skriv diskusjon på datacollection aktiviteter, overfitting
+OL      //      Skriv resultat for live test. Diskusjon på livetest
+EH      //      Se over live test tester, lag en liste. Skriv om offline test. Skriv om valg av aktiviteter
+
+Hva mangler?
+
+intro
+se over teori og metode
+resultat
+alt på diskusjon
+konklusjon
+hjelp med README file

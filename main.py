@@ -16,7 +16,7 @@ from typing import List, Dict, Any, Tuple, Sequence
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
 from machineLearning import setNComponents, evaluateCLFs, makeNClassifiers
 from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve
-from Preprocessing.preprocessing import fillSets, downsample, pickleFiles
+from Preprocessing.preprocessing import fillSets, downsample, pickleFiles, saveJoblibFiles
 from testonfile import offlineTest, calcExposure
 from config import setupML, loadDataset, main_config
 
@@ -24,7 +24,7 @@ from config import setupML, loadDataset, main_config
 def main(
     # Flags
     want_feature_extraction: bool, 
-    want_pickle: bool, 
+    save_joblib: bool, 
     separate_types: bool,
     want_new_CLFs: bool, 
     want_plots: bool, 
@@ -95,7 +95,7 @@ def main(
 
     ''' FEATURE EXTRACTION '''
 
-    if (want_feature_extraction):
+    if want_feature_extraction:
         # Create dataframe "feature_df" containing all features deemed relevant from the raw sensor data
         # One row in feature_df is all features from one window
         all_window_features = []
@@ -230,9 +230,9 @@ def main(
 
     ''' PICKLING CLASSIFIER '''
 
-    if want_pickle:
+    if save_joblib:
 
-        pickleFiles(n_results, result, output_path, PCA_final, scaler)
+        saveJoblibFiles(n_results, result, output_path, PCA_final, scaler)
 
     ''' OFFLINE TEST '''
     

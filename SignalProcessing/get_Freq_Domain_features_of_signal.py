@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import scipy
+from typing import List, Dict, Any, Tuple, Sequence, Optional
 from scipy.signal import butter, lfilter, freqz, welch
 from scipy.fft import fft, ifft, fftfreq
 from scipy import stats
@@ -32,7 +33,7 @@ def get_Freq_Domain_features_of_signal(signal:      Series,
     # signal_t = np.transpose(signal)
     
     # Compute PSD via Welch algorithm
-    freq, psd = getWelch(signal, Fs, True, 15, 3)
+    freq, psd = getWelch(signal, Fs, True, 15.0, 3)
 
     # plt.semilogy(freq, psd)  # Log scale for better visibility
     # plt.xlabel('Frequency (Hz)')
@@ -54,8 +55,8 @@ def get_Freq_Domain_features_of_signal(signal:      Series,
 
     return features
 
-def getFFT(signal
-           ):
+def getFFT(signal: Series
+           ) -> Any:
   
   # Make FFT of given file, with given feature  
   x_size = len(signal)
@@ -66,12 +67,12 @@ def getFFT(signal
 
   return x_yf, x_xf, x_size
 
-def getWelch(x, # signal
-             fs, 
-             filter_on, 
-             omega_n, 
-             order
-             ):
+def getWelch(x:         Series, # signal
+             fs:        int, 
+             filter_on: bool, 
+             omega_n:   float, 
+             order:     int
+             ) -> Tuple[np.ndarray, np.ndarray]:
 
     if filter_on:
         signal = butter_highpass_filter(x, fs, omega_n, order)
@@ -86,12 +87,14 @@ def getWelch(x, # signal
 
     return freq, psd
 
-def butter_highpass_filter(data, 
-                           fs, 
-                           omega_n,
-                           order
-                           ):
-
+def butter_highpass_filter(data:    Series, 
+                           fs:      int, 
+                           omega_n: float,
+                           order:   int
+                           ) -> np.ndarray:
+      
+    '''Applies a high-pass Butterworth filter to the input data.'''
+    
     b, a = butter(order, Wn=omega_n, fs=fs, btype='high', analog=False)
     result = lfilter(b, a, data)
 

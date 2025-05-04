@@ -29,11 +29,11 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
 
 datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
 
 
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
@@ -70,8 +70,8 @@ datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
 
 ''' ADD VARIABLES '''
 variables.append("Axl.X")
-variables.append("Axl.Y")
-variables.append("Axl.Z")
+# variables.append("Axl.Y")
+# variables.append("Axl.Z")
 
 # variables.append("Mag.X")
 # variables.append("Mag.Y")
@@ -372,10 +372,10 @@ plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
 plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
-ds_fs = 200
-# plotTime(datasets, variables, fs, ds_fs, size=size)
+ds_fs = 400
+plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-# plotWelch(datasets, variables, fs, ds_fs, size=size)
+plotWelch(datasets, variables, fs, ds_fs, size=size)
 
 # f_type = "iir"
 # ds_fs = 200

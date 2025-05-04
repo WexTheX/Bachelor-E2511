@@ -2,6 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 import pickle
+import joblib
 from bleak import BleakScanner, BleakClient
 import asyncio
 from muse_api_main.Muse_Utils import *
@@ -48,18 +49,21 @@ tot_sample_log = []                                      # Prepares dict of pred
 ''' PICKLE IMPORTS '''
 output_path = "OutputFiles/Separated/"                          # Define import path
 
-with open(output_path + "classifier.pkl", "rb") as CLF_file:    # Import classifier
-    clf = pickle.load(CLF_file)
-CLF_file.close()
+# with open(output_path + "classifier.pkl", "rb") as CLF_file:    # Import classifier
+#     clf = pickle.load(CLF_file)
+# CLF_file.close()
 
-with open(output_path + "PCA.pkl", "rb" ) as PCA_file:          # Import PCA
-    PCA_final = pickle.load(PCA_file)
-PCA_file.close()
+# with open(output_path + "PCA.pkl", "rb" ) as PCA_file:          # Import PCA
+#     PCA_final = pickle.load(PCA_file)
+# PCA_file.close()
 
-with open(output_path + "scaler.pkl", "rb" ) as scaler_File:    # Import Scaler
-    scaler = pickle.load(scaler_File)
-scaler_File.close()
+# with open(output_path + "scaler.pkl", "rb" ) as scaler_File:    # Import Scaler
+#     scaler = pickle.load(scaler_File)
+# scaler_File.close()
 
+clf         = joblib.load(output_path + "classifier.joblib")
+PCA_final   = joblib.load(output_path + "PCA.joblib")
+scaler      = joblib.load(output_path + "scaler.joblib")
 
 ''' NOTIFICATION FUNCTIONS '''
 def cmd_notification_handler(sender, data):
@@ -115,6 +119,7 @@ async def dataNotificationHandler(sender: int, data: bytearray):
 
 
 async def processSamples():
+
     ''' PROCESS SAMPLES FUNCTION
     This function is run as a task that constantly listens to the sample queue.
     Once a new element is added, it takes it in and converts it from a MuseData Object to an array.
@@ -131,6 +136,7 @@ async def processSamples():
     The prediction is then stored in a dict containing the class and the time the prediction occured.
     The sample list is then cleared to prepare for the next segment.
     '''
+    
     global prediction_counter, prediction_list, tot_sample_log
     sample_log = []
 

@@ -818,12 +818,29 @@ async def data_notification_handlerOLD(sender: int, data: bytearray):
     notification_counter += 1
     return
 
+################# from preprocessing.py ##############################
+def downsample(df:          pd.DataFrame,
+               fs:          int,
+               ds_fs:       int,
+               variables:   list[str]
+               ) -> pd.DataFrame:
+ ''' OLD
+    dropped_rows = []
 
-import numpy as np
-import pandas as pd
-# SignalProcessing part is needed when this file is imported in main.py
-from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
-from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
+    if((old_fs / new_fs).is_integer() == False):
+        print(f"Old fs: {old_fs} / New fs: {new_fs} is not whole number")
+        quit()
+    elif((fs < ds_fs)):
+        print(f"Old fs: {old_fs} is smaller than New fs: {new_fs}")
+        quit()
+    else:
+        for i in range(len(df['Timestamp'])):
+            if((i % (old_fs / new_fs)) != 0):
+                dropped_rows.append(i)
+
+    new_df = df.drop(dropped_rows)
+    '''
+
 
 ########################## from ExtractIMU_Features.py ################################
 

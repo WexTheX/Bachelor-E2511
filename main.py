@@ -223,7 +223,8 @@ def main(
             'Biplot 3D': fig_4,
             'Decision boundaries': fig_5
         }
-    
+
+        ## Only to not get double plots when using/ importing main function to user interface
         if __name__ == "__main__":
             plt.show() 
 

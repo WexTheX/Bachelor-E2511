@@ -28,7 +28,7 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
 
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
@@ -62,14 +62,14 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_2.txt")
 
 
-# datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
 
-datasets.append("800v200hz/800hz.txt")
+# datasets.append("800v200hz/800hz.txt")
 
 ''' ADD VARIABLES '''
-# variables.append("Axl.X")
+variables.append("Axl.X")
 # variables.append("Axl.Y")
 # variables.append("Axl.Z")
 
@@ -370,12 +370,12 @@ f_type = "fir"
 ds_fs = 800
 plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-# plotWelch(datasets, variables, fs, ds_fs, size=size)  
+plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
-ds_fs = 200
+ds_fs = 400
 plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-# plotWelch(datasets, variables, fs, ds_fs, size=size)
+plotWelch(datasets, variables, fs, ds_fs, size=size)
 
 # f_type = "iir"
 # ds_fs = 200
@@ -383,12 +383,12 @@ plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
 # plotWelch(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
 
-datasets = []
-datasets.append("800v200hz/200hz.txt")
+# datasets = []
+# datasets.append("800v200hz/200hz.txt")
 
 fs = 200
 ds_fs = 200
-plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
 # plotWelch(datasets, variables, fs, ds_fs, size=size)  
 

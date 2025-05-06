@@ -11,18 +11,18 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  True,
+    'want_feature_extraction':  False,
     'separate_types':           True, 
     'want_new_CLFs':            True,
     'want_plots':               True,
     'save_joblib':              True, # Save the classifier, scaler and PCA objects.
     'want_offline_test':        True,
     'want_calc_exposure':       False,
-    'model_selection':          ['svm', 'lr', 'ada', 'gnb', 'rf'],
+    'model_selection':          ['svm', 'lr'],
     'method_selection':         ['rs'],
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       0.95,
+    'variance_explained':       2,
     'random_seed':              4201,
     'window_length_seconds':    20,
     'test_size':                0.25,

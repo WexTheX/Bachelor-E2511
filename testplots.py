@@ -13,7 +13,7 @@ fs = 800
 filtering = False
 omega_n = 15
 order = 3
-size = 10
+size = 20
 
 column_names = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"]
 datasets = []
@@ -28,7 +28,7 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
 
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
+# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
@@ -36,18 +36,18 @@ datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
 
 
-# datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_6.txt")
 
-# datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_3.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStTIG/WELDSTTIG_4.txt")
 
-# datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_0.txt")
+datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_2.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/WeldStMAG/WELDSTMAG_3.txt")
@@ -69,11 +69,11 @@ datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
 # datasets.append("800v200hz/800hz.txt")
 
 ''' ADD VARIABLES '''
-variables.append("Axl.X")
+# variables.append("Axl.X")
 # variables.append("Axl.Y")
 # variables.append("Axl.Z")
 
-# variables.append("Mag.X")
+variables.append("Mag.X")
 # variables.append("Mag.Y")
 # variables.append("Mag.Z")
 
@@ -260,7 +260,7 @@ def plotTime(sets, vars, fs, ds_fs, f_type="fir", size=20):
       plt.plot(x)
 
       tname = j.split("/")
-      name = tname[1]
+      name = tname[2]
       # x.plot()
       legendNames.append(name + ", " + i)
 
@@ -373,9 +373,9 @@ plotTime(datasets, variables, fs, ds_fs, size=size)
 plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
 ds_fs = 400
-plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-plotWelch(datasets, variables, fs, ds_fs, size=size)
+# plotWelch(datasets, variables, fs, ds_fs, size=size)
 
 # f_type = "iir"
 # ds_fs = 200

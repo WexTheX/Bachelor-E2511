@@ -95,9 +95,9 @@ EH      //      Se over live test tester, lag en liste. Skriv om offline test. S
 
 Hva mangler?
 
-intro
-se over teori og metode
-resultat
-alt på diskusjon
-konklusjon
-hjelp med README file
+intro                       
+se over teori og metode     
+resultat                    
+alt på diskusjon            
+konklusjon                  
+hjelp med README file       

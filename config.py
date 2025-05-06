@@ -11,14 +11,14 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  False,
+    'want_feature_extraction':  True,
     'separate_types':           True, 
-    'want_new_CLFs':            False,
+    'want_new_CLFs':            True,
     'want_plots':               True,
-    'save_joblib':              True, # Pickle the classifier, scaler and PCA objects.
+    'save_joblib':              True, # Save the classifier, scaler and PCA objects.
     'want_offline_test':        True,
     'want_calc_exposure':       False,
-    'model_selection':          ['svm', 'lr', 'ada', 'gnb', 'svm'],
+    'model_selection':          ['svm', 'lr', 'ada', 'gnb', 'rf'],
     'method_selection':         ['rs'],
 
     # --- DATASET & MODELING VARIABLES ---
@@ -63,12 +63,12 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                 #1.0, 10.0, 100.0
+                                 1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-    #     "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-    #     "coef0":                [0.0, 0.5, 1.0],
-    #     #"degree":               [2, 3, 4, 5]
+        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        "coef0":                [0.0, 0.5, 1.0],
+        "degree":               [2, 3, 4, 5]
     }
 
     RF_param_grid = {
@@ -177,7 +177,7 @@ def loadDataset(separate_types: bool,
         labels = [
             'GRINDBIG', 'GRINDSMALL',
             'IDLE', 'IMPA', 'GRINDMED',
-            'SANDSIM',
+            #'SANDSIM',
             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
 
@@ -187,7 +187,9 @@ def loadDataset(separate_types: bool,
         output_path     = "OutputFiles/NotSeparated/"
 
         labels = [
-            'IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING'
+            'IDLE', 'GRINDING', 'IMPA', 
+            # 'SANDSIMULATED', 
+            'WELDING'
         ]
 
     if norm_IMU == True:

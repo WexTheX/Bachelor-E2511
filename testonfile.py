@@ -173,7 +173,6 @@ def runInferenceOnFile(file_path:           str,
 
     return df_result, features_df
     
-
 def offlineTest(test_file_path:        str,
                 prediction_csv_path:   str,
                 fs:                    int, 

@@ -26,6 +26,9 @@ pip install requirements.txt
 ```
 
 # Usage 
+
+
+## Training and data analysis
 To use the program, run the `main.py` file with the desired paramaters. The desired paramaters are in a seperate python file; `config.py`:
 
 At the bottom of the `main.py` file:
@@ -84,40 +87,92 @@ main_config = {
 - **`want_new_CLFs`**: Creates and compares classifier models that are selected in `model_selection` and chooses the highest performing model if `true `. 
 - **`want_plots`**: Shows a variety of useful plots such as the confusion matrix, PCA plot and learningcurve if `True`. Good in combination with `want_new_CLFs` for analysis.
 - **`want_pickle`**: Saves the current classifier by using the `pickle` library. Good if new data is collected and `want_new_CLFs` finds a better model.
-- **`want_offline_test`**: Tests the classifier and its certainty for each window in all the data files in `YourDirectory/Bachelor-E2511/`
-- **`want_calc_exposure`**: 
-- **`model_selection`**:
+- **`want_offline_test`**: Tests the classifier and its certainty (top 3 predicted classes) for each window in all the data files in `YourDirectory/Bachelor-E2511/testOnFile/testFiles` if `true`.
+- **`want_calc_exposure`**: A work in progress functionality that calculates estimated exposure to vibrations, neurotoxins etc if `true`.
+- **`model_selection`**: Allows you to specify which machine learning models to use or test within the program. This enables straightforward model comparison and selection for your task.
+
+You can choose one or multiple models from the following list:
+
+ Code | Model Name                  
+-|-
+`svm` | Support Vector Machine       
+`lr`  | Logistic Regression          
+`ada` | Adaptive Boosting (AdaBoost)
+`gnb` | Gaussian Naive Bayes        
+`knn` | K-Nearest Neighbors         
+`rf`  | Random Forest               
+
+To compare multiple models, simply pass a list like:
+
+```python
+model_selection = ['svm', 'lr', 'rf']
+```
+
 - **`method_selection`**:
 
 #### Dataset & modeling variables
-- **`variance_explained`**:
-- **`random_seed`**:
-- **`window_length_seconds`**:
-- **`test_size`**:
-- **`fs`**:
-- **`ds_fs`**:
-- **`cmap`**:
-- **`n_iter`**:
-- **`norm_imu`**:
+- **`variance_explained`**: The amount of variance from 0-1 (0-100%) to be captured by the PCA components normal is 0.95 (95%). If `variance_explained` > 1 then the program treats it as the amount of PCA components to use. I.e `variance_explained=3` means it will only use 3 principal components. This may be useful for analysis since it allows for the clusters to be plotted in 3D.
+- **`random_seed`**: For validation it ensures randomness of the training-test split. 
+- **`window_length_seconds`**: How long the windows should be, for this project `window_length_seconds=20` was standard.
+- **`test_size`**: How much of the dataset should be used for testing, from 0-1 (0-100%). Normaly `test_size=0.25`.
+- **`fs`**: The sample frequency used on the sensor.
+- **`ds_fs`**: The desired downsampled frequency.
+- **`cmap`**: Color setting in the `pyplot` library. Only for getting nice colors. The project used mainly `cmap=tab10`. Visit `https://matplotlib.org/stable/users/explain/colors/colormaps.html` for more info.
+- **`n_iter`**: The amount of iterations to be used when using randomized search for hyperparameter optimization. The project used `n_iter=30`.
+- **`norm_imu`**: Whether to use IMU x, y, z as features, `false` or the norm of x,y,z as features, `true`. Genereally for the project `norm_imu` was set to `false`.
 
 #### Exposure
-- **`exposures`**:
+- **`exposures`**: 
 - **`safe_limit_vector`**:
 - **`variables`**:
 - **`test_file_path`**:
-- **`prediction_csv_path`**: y
+- **`prediction_csv_path`**: 
 - **`clf_results_path`**:
 
- #### Visualization
- To better visualize options and paramters that you can change run the `User_interface.py` file like this:
-
- ```bash
- streamlit run User_interface.py
- ```
- 
 
 
 
+## Real time classification
+Real time classification is done by running `realtime.py`. At the top of the file there are some settings that can be changed:
+
+```python
+device_list = ["Muse_E2511_GREY", "Muse_E2511_RED", "muse_v3_3", "muse_v3"] # List of bluetooth devices 
+device_name = device_list[0]                        # Choose device to connect to from listq
+
+window_length_sec = 20                  # Length of one window for prediction
+fs = 200                                # Frequency of sensor sampling
+window_size = window_length_sec * fs
+real_time_window_sec = 30  
+```
+
+
+## Visualization
+To visualize options and paramters that you can change run the `User_interface.py` file like this:
+
+```bash
+streamlit run User_interface.py
+```
+
+This should open a web browser page with the user interface running on `localhost` port `8051`.
+
+![Interface1](images\Userinterface_1.png)
+
+From here one can interact with the code, providing the same functionalities as altering the code and runnning `main.py` aswell as `realtime.py`, though it's recomended to also pay attention to the terminal since only results are displayed not the progress. Just to avoid impatience.
+
+![Interface2](images\Userinterface_2.png)
+
+Change the settings as you would in the `config.py` file.
+
+![Interface3](images\Userinterface_3.png)
+
+Examine the results and plots that you want.
+
+![Interface4](images\Userinterface_4.png)
+
+Test the classifier on a file showing it's certainty and top 3 predictions for different windows.
 
 
 
+![Interface5](images\Userinterface_5.png)
+
+On the last tab one may add new files/data that can be used for training.

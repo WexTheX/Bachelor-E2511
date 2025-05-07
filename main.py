@@ -82,38 +82,44 @@ def main(
 
     ''' LOAD DATASET '''
 
-    path, output_path, labels, original_feature_names = loadDataset(separate_types, norm_IMU)
+    path, output_path, labels, original_feature_names, cmap_name, label_mapping = loadDataset(separate_types, norm_IMU, cmap)
 
-    num_labels      = len(labels)
-    cmap_name       = plt.get_cmap(cmap, num_labels)
-    label_mapping   = {label: cmap_name(i) for i, label in enumerate(labels)}
-
-    path_names          = os.listdir(path)
-    activity_name       = [name.upper() for name in path_names]
-
-    sets, sets_labels   = fillSets(path, path_names, activity_name)
+    sets, sets_labels, activity_name = fillSets(path)
 
     ''' FEATURE EXTRACTION '''
 
     # sets, sets_labels, file, fs, ds_fs, window_length_seconds, norm_IMU, output_path
-    # Dette er args til en eventuell feature_extraction.py
+    # Dette er args til en eventuell feature_extraction()
 
     if want_feature_extraction:
         # Create dataframe "feature_df" containing all features deemed relevant from the raw sensor data
         # One row in feature_df is all features from one window
-        all_window_features = []
-        window_labels = []
+        all_window_features: List[Dict[str, Any]] = []
+        window_labels:       List[str] = []
 
         start_time = time.time()
         
         for i, file in enumerate(sets):
             print(f"Extracting features from file: {file}")
-            df = extractDFfromFile(file, fs)
+
+            start_time_2 = time.time()
+            try:
+                df = extractDFfromFile(file, fs)
+            except Exception as e:
+                print(f"Warning: Failed to extract DF from {file}. Continuing to next file.")
+                continue
+
+            stop_time_2 = time.time()
+            print(f"time spent in extractDFfromFile: {stop_time_2 - start_time_2}")
 
             if (ds_fs < fs):
                 df = downsample(df, fs, ds_fs, variables)
             
+            start_time_3 = time.time()
             window_df, df_window_labels = extractFeaturesFromDF(df, sets_labels[i], window_length_seconds, ds_fs, norm_IMU)
+            stop_time_3 = time.time()
+            print(f"time spent in extractFeaturesFromDF: {stop_time_3 - start_time_3}")
+ 
 
             all_window_features = all_window_features + window_df
 
@@ -129,9 +135,9 @@ def main(
         elapsed_time = end_time - start_time
         print(f"Features extracted in {elapsed_time} seconds")
             
-        feature_df.to_csv(output_path+str(ds_fs)+"feature_df.csv", index=False)
+        feature_df.to_csv(output_path+str(ds_fs)+"_feature_df.csv", index=False)
 
-        with open(output_path+"window_labels.txt", "w") as fp:
+        with open(output_path+str(ds_fs)+"_window_labels.txt", "w") as fp:
             for item in window_labels:
                 fp.write("%s\n" % item)
 
@@ -139,8 +145,8 @@ def main(
 
     if "feature_df" not in globals():
         window_labels   = []
-        feature_df      = pd.read_csv(output_path+str(ds_fs)+"feature_df.csv")
-        f               = open(output_path+"window_labels.txt", "r") 
+        feature_df      = pd.read_csv(output_path+str(ds_fs)+"_feature_df.csv")
+        f               = open(output_path+str(ds_fs)+"_window_labels.txt", "r") 
         data            = f.read()
         window_labels   = data.split("\n")
         f.close()
@@ -247,7 +253,7 @@ def main(
     if want_calc_exposure:
 
         summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels,
-                                   exposures, safe_limit_vector, prediction_csv_path, filter_on=True)
+                                   exposures, safe_limit_vector, filter_on=True)
     
     return plots, result
 

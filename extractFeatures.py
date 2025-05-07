@@ -9,16 +9,24 @@ from Preprocessing.preprocessing import tab_txt_to_csv, delete_header, rename_da
 
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
-
+import time
 def extractDFfromFile(file_path:    str,
                       fs:           int
                       ) -> pd.DataFrame:
-    
-    ''' TURN FILE INTO CSV READABLE FORMAT '''
-    delete_header(file_path + ".txt") # Deletes lines before Timestamp and does some regex
-    tab_txt_to_csv(file_path + ".txt", file_path + ".csv") # Converts from .txt to .csv
 
-    df = pd.read_csv(file_path+".csv")
+    try:
+      df = pd.read_csv(file_path+".txt", delimiter="\t")
+
+    except pd.errors.ParserError as pe:
+      try:
+        delete_header(file_path + ".txt")
+        df = pd.read_csv(file_path+".txt", delimiter="\t")
+      except Exception as e:
+        print(f"Error in delete_header in file {file_path}: {e}")
+
+    except Exception as e:
+      print(f"Error in read_csv in file {file_path}: {e}")
+
 
     ''' REMOVE 10 SECONDS '''
     df.drop(df.index[:fs*10]) # Drop everything before 10 seconds

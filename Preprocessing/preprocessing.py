@@ -87,18 +87,18 @@ def tab_txt_to_csv(txt_file:    str,
 
     return None
 
-def fillSets(path:          str,
-             path_names:    str,
-             activity_name: str
-             ) -> Tuple[list, list]:
+def fillSets(path:  str
+             ) -> Tuple[List, List, List[str]]:
     
+    path_names          = os.listdir(path)
+    activity_name       = [name.upper() for name in path_names]
+
     rename_data(path, path_names, activity_name)
 
-    sets = []
-    sets_label = []
+    sets:       List[str] = []
+    sets_label: List[str] = []
 
     #### make list of folder paths
-    path_names = os.listdir(path)
     path = os.path.normpath(path)
     
     for i, name in enumerate(path_names):
@@ -130,17 +130,17 @@ def fillSets(path:          str,
     #                     convert_bin_to_txt(os.path.join(folder_path, f))
     #     txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt") and os.path.isfile(os.path.join(folder_path, f))]
         
-    print("Done filling sets")
+    print(f"Done filling sets, {len(sets)} files found.")
     print("\n")
 
-    return sets, sets_label
+    return sets, sets_label, activity_name
         
 def find_next_available_index(folder_path:  str,
                               prefix:       str
                               ) -> int:
     
     # Finds next available index for files with a given prefix
-    existing_numbers = []
+    existing_numbers: List[int] = []
 
     for f in os.listdir(folder_path):
         match = re.match(rf"^{prefix}_(\d+)\.txt$", f)
@@ -188,37 +188,38 @@ def convert_bin_to_txt(input_file: str
 
     return None
 
-def compare_bin_and_txt(input_file:     str,
-                        output_file:    str
+def compare_bin_and_txt(input_file:         str,
+                        output_file:        str,
+                        differences_log:    str = "differences_log.txt"
                         ) -> None:
     
-    # Les innholdet fra begge filene som tekst
+    # Read contents of both files as text
     with open(input_file, "rb") as f_bin:
         bin_lines = f_bin.read().replace(b"\x00", b"").decode("utf-8", errors="ignore").splitlines()
     with open(output_file, "r", encoding="utf-8") as f_txt:
         txt_lines = f_txt.read().splitlines()
 
-    # Sammenlign linje for linje
-    max_lines = max(len(bin_lines), len(txt_lines))  # Håndterer ulik lengde
+    # Compare line by line
+    max_lines = max(len(bin_lines), len(txt_lines))  # Handles different length
     differences = []
 
     for i in range(8, max_lines):
-        bin_line = bin_lines[i] if i < len(bin_lines) else "<Mangler i .bin>"
-        txt_line = txt_lines[i] if i < len(txt_lines) else "<Mangler i .txt>"
+        bin_line = bin_lines[i] if i < len(bin_lines) else "<Missing in .bin>"
+        txt_line = txt_lines[i] if i < len(txt_lines) else "<Missing in .txt>"
 
         if bin_line != txt_line:
-            differences.append(f"Forskjell på linje {i+1}:\n  BIN: '{bin_line}'\n  TXT: '{txt_line}'\n")
+            differences.append(f"Difference at line {i+1}:\n  BIN: '{bin_line}'\n  TXT: '{txt_line}'\n")
 
     # Skriv ut resultatet
     if differences:
-        print(f"Fil {input_file}:")
-        print(f"{len(differences)} forskjeller funnet mellom filene:\n")
+        print(f"File {input_file}:")
+        print(f"{len(differences)} differences found between files:\n")
         for diff in differences[:10]:  # Vis maks 10 forskjeller for oversikt
             print(diff)
         
-        with open("differences_log.txt", "w", encoding="utf-8") as log_file:
+        with open(differences_log, "w", encoding="utf-8") as log_file:
             log_file.writelines(differences)
-        print("Alle forskjeller er lagret i 'differences_log.txt'.")
+        print(f"All differences saved in {differences_log}.")
 
         quit()
 
@@ -227,16 +228,18 @@ def compare_bin_and_txt(input_file:     str,
 
     return None
 
-def delete_header(path: str
+
+def delete_header(file_path: str
                   ) -> None:
 
     # delete first n lines before "Timestamp"
     # changes "Timestamp [ms][xx]" to "Timestamp"
-    file_path = path
     found_timestamp = False
 
     # Read all lines
+    
     with open(file_path, "r") as f:
+
         lines_to_keep = []
         
         for line in f:

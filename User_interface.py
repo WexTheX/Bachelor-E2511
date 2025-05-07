@@ -118,6 +118,7 @@ with tab2:
         }
 
         plots, result = main(**config)
+        
         st.session_state["plots"] = plots
         st.session_state["result"] = result
 

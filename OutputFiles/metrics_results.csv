@@ -1,0 +1,2 @@
+model_name,optimalizer,accuracy,f1_score,valid_mean,valid_std,train_test_delta
+Support Vector Machine,RandomizedSearchCV,0.9963636363636363,0.9963843192829921,0.9867019499685314,0.003478803169904297,0.013298050031468556

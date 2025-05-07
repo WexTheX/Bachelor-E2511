@@ -5,20 +5,31 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 # SignalProcessing part is needed when this file is imported in main.py
 from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
-from Preprocessing.preprocessing import tab_txt_to_csv, delete_header, rename_data, compare_bin_and_txt
+from preprocessing import tab_txt_to_csv, delete_header, rename_data, compare_bin_and_txt
 
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
-
+import time
 def extractDFfromFile(file_path:    str,
                       fs:           int
                       ) -> pd.DataFrame:
-    
-    ''' TURN FILE INTO CSV READABLE FORMAT '''
-    delete_header(file_path + ".txt") # Deletes lines before Timestamp and does some regex
-    tab_txt_to_csv(file_path + ".txt", file_path + ".csv") # Converts from .txt to .csv
 
-    df = pd.read_csv(file_path+".csv")
+    # try:
+    #   df = pd.read_csv(file_path+".txt", delimiter="\t")
+
+    # except pd.errors.ParserError as pe:
+    #   try:
+    #     # print("Kom inni delete header")
+    #     delete_header(file_path + ".txt")
+    #     df = pd.read_csv(file_path+".txt", delimiter="\t")
+    #   except Exception as e:
+    #     print(f"Error in delete_header in file {file_path}: {e}")
+
+    # except Exception as e:
+    #   print(f"Error in read_csv in file {file_path}: {e}")
+    
+    delete_header(file_path + ".txt")
+    df = pd.read_csv(file_path+".txt", delimiter="\t")
 
     ''' REMOVE 10 SECONDS '''
     df.drop(df.index[:fs*10]) # Drop everything before 10 seconds

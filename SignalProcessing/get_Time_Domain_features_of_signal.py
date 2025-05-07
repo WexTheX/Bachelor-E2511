@@ -32,24 +32,27 @@ def get_Time_Domain_features_of_signal(signal:      Series,
     features[f'kurtosis{suffix}']       = stats.kurtoKursis(signal, fisher=True)
     features[f'skewness{suffix}']       = stats.skew(signal)
     features[f'correlation{suffix}']    = autocorrelation(signal) # https://realpython.com/numpy-scipy-pandas-correlation-python/#example-numpy-correlation-calculation
+
     # features['auto_regression_coefficient']   = 1 #TODO auto_regression_coefficient https://machinelearningmastery.com/autoregression-models-time-series-forecasting-python/
     # features['simple_moving_average_x']       = simple_moving_average(x_features, moving_average_window)
     # features['angular_velocity']              = 1 #TODO angular velocity | how to get? 
     # features['linear_acceleration']           = 1 # for Norm data this is already there
+    # Number/Percentage of Outliers: Defined by a rule (e.g., > Q3 + 1.5IQR or < Q1 - 1.5IQR). ????
+    # Percentage range???? IQR for 90-10 etc
     
     return features
 
-def median_filter(array,
-                  size = 10
+def median_filter(array:    pd.Series,
+                  size:     int = 10
                   ):
     
     """returns median filtered signal"""
     return scipy.ndimage.median_filter(array, size=size)
 
-def butter_lowpass_with_cutoff(cutoff,
-                               fs,
-                               order=3,
-                               btype='low'):
+def butter_lowpass_with_cutoff(cutoff:  float,
+                               fs:      int,
+                               order:   int = 3,
+                               btype:   str ='low'):
     
     return butter(order, cutoff, fs=fs, btype=btype, analog=False)
 
@@ -109,8 +112,8 @@ def entropy(labels,
 
     return ent
 
-def interquartile_range(signal
-                        ):
+def interquartile_range(signal: pd.Series
+                        ) -> float:
 
     """finds the interquartile range of a 1d numpy array"""
     # https://www.statology.org/interquartile-range-python/
@@ -118,6 +121,16 @@ def interquartile_range(signal
     q3, q1 = np.percentile(signal, [75, 25])
     iqr = q3 - q1
     return iqr
+
+def percentage_range(signal:            pd.Series,
+                     lower_percentage:  int = 10,
+                     upper_percentage:  int = 90
+                     ) -> float:
+    
+    q_upper, q_lower = np.percentile(signal, [lower_percentage, upper_percentage])
+    percentage_range = q_upper - q_lower
+    
+    return percentage_range
 
 def simple_moving_average(signal, 
                           window_size
@@ -140,14 +153,14 @@ def simple_moving_average(signal,
 
     return moving_averages
 
-def autocorrelation(signal
-                    ):
+def autocorrelation(signal: pd.Series
+                    ) -> float:
     
     dataframe = pd.concat([signal.shift(1), signal], axis=1)
     dataframe.columns = ['t-1', 't+1']
-    resultMatrix = dataframe.corr()
+    result_matrix = dataframe.corr()
 
-    result = resultMatrix.iloc[0,1]
+    result = result_matrix.iloc[0,1]
 
     return result
 

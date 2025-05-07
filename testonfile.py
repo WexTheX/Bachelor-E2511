@@ -29,7 +29,7 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 
 ### Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
-from Preprocessing.preprocessing import convert_bin_to_txt, downsample
+from preprocessing import convert_bin_to_txt, downsample
 
 def runInferenceOnFile(file_path:           str,
                         fs:                 int,
@@ -238,15 +238,15 @@ def offlineTest(test_file_path:        str,
     return combined_df #,features_df_all
 
 def calcExposure(combined_df:           pd.DataFrame,
-                 path:                  str,
+                 csv_path:              str,
                  window_length_seconds: int,
                  labels:                list[str], 
                  exposures:             list[str],
                  safe_limit_vector:     list[float],
-                 csv_path:              str,
                  filter_on:             bool,
                  predictions_csv:       str = "predictions.csv",
-                 summary_csv:           str = "summary.csv"
+                 summary_csv:           str = "summary.csv",
+                 seconds_to_x:          int = 3600
                 ) -> pd.DataFrame:
     
     '''
@@ -262,7 +262,7 @@ def calcExposure(combined_df:           pd.DataFrame,
     if combined_df.empty:
 
         try:
-            full_path   = os.path.join(path, predictions_csv)
+            full_path   = os.path.join(csv_path, predictions_csv)
             combined_df = pd.read_csv(full_path)
             print(f"Retrieving dataframe from {full_path}.")
 
@@ -279,7 +279,7 @@ def calcExposure(combined_df:           pd.DataFrame,
     default_value = 0.0
 
     activity_counts             = predicted_activities.value_counts()
-    activity_length             = activity_counts * window_length_seconds / 3600
+    activity_length             = activity_counts * window_length_seconds / seconds_to_x
     activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
 
     # --- 2. Create exposure intensity matrix and calculate exposure, make summary ---
@@ -340,21 +340,26 @@ def initialize_exposure_intensity_matrix(exposures:                     list[str
     
     # TODO 
     # Future work: find more proxies, set up sensor readings coming in
+    try:
+        df = pd.DataFrame(0.0, index=exposures, columns=activities)
 
-    df = pd.DataFrame(0.0, index=exposures, columns=activities)
-
-    # If there is something common to all welding or grinding, use *WELD and *GRIND
-    WELD    = df.columns[df.columns.str.startswith('WELD')]
-    GRIND   = df.columns[df.columns.str.startswith('GRIND')]
+        # If there is something common to all welding or grinding, use *WELD and *GRIND
+        WELD    = df.columns[df.columns.str.startswith('WELD')]
+        GRIND   = df.columns[df.columns.str.startswith('GRIND')]
+        
+        df.loc['CARCINOGEN',    ['WELDSTMAG', 'WELDSTTIG']] = variable_0
+        df.loc['RESPIRATORY',   ['WELDALTIG']]              = variable_1
+        df.loc['NEUROTOXIN',    ['WELDSTTIG']]              = variable_2
+        df.loc['RADIATION',     [*WELD]]                    = weld_to_rad
+        df.loc['NOISE',         [*GRIND]]                   = variable_3
+        df.loc['VIBRATION',     [*GRIND]]                   = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
+        df.loc['THERMAL',       [*WELD]]                    = temperature_energy
+        df.loc['MSK',           [*GRIND, 'IMPA']]           = gravityless_norm_accel_energy
     
-    df.loc['CARCINOGEN',    ['WELDSTMAG', 'WELDSTTIG']] = variable_0
-    df.loc['RESPIRATORY',   ['SANDSIM', 'WELDALTIG']]   = variable_1
-    df.loc['NEUROTOXIN',    ['WELDSTTIG']]              = variable_2
-    df.loc['RADIATION',     [*WELD]]                    = weld_to_rad
-    df.loc['NOISE',         [*GRIND]]                   = variable_3
-    df.loc['VIBRATION',     [*GRIND]]                   = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
-    df.loc['THERMAL',       [*WELD]]                    = temperature_energy
-    df.loc['MSK',           [*GRIND, 'IMPA']]           = gravityless_norm_accel_energy
+    except KeyError as e:
+        print(f"Error: A row or column label was not found in the DataFrame: {e}. Check 'exposures' and 'activities' lists.")
+    except Exception as e:
+        print(f"Error: Failed to create exposure intensity matrix: {e}")
 
     return df
 
@@ -376,8 +381,12 @@ def exposure_summary(total_exposure_vector:     np.array,
         'Exposure level':   total_exposure_vector,
         'Safe limit':       safe_limit_vector
     }
-
-    df = pd.DataFrame(data, index=exposures)
+    try:
+        df = pd.DataFrame(data, index=exposures)
+    except Exception as e:
+        print(f"Failed to create exposure summary: {e}")
+        print(f"Length of total_exposure_vector: {len(total_exposure_vector)}")
+        print(f"Length of safe_limit_vector: {len(safe_limit_vector)}")
 
     df['Ratio [%]'] = 100 * (df['Exposure level'] / df['Safe limit'])
     

@@ -5,20 +5,22 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
+import matplotlib.pyplot as plt
+from matplotlib.colors import Colormap
 from typing import List, Dict, Any, Tuple, Sequence, Optional
 
 
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  False,
-    'separate_types':           True, 
-    'want_new_CLFs':            False,
-    'want_plots':               True,
-    'save_joblib':              False, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        False,
-    'want_calc_exposure':       False,
-    'model_selection':          ['svm', 'lr', 'ada', 'gnb', 'svm'],
+    'want_feature_extraction':  0,
+    'separate_types':           1,
+    'want_new_CLFs':            0,
+    'want_plots':               0,
+    'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
+    'want_offline_test':        0,
+    'want_calc_exposure':       1,
+    'model_selection':          ['svm', 'lr'],
     'method_selection':         ['rs'],
 
     # --- DATASET & MODELING VARIABLES ---
@@ -34,9 +36,9 @@ main_config = {
 
     # --- EXPOSURE CALCULATION VARIABLES ---
     'exposures': [
-        'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
+        'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK',
     ],
-    'safe_limit_vector': [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400.0], 
+    'safe_limit_vector': [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400.0, 99.0], 
     'variables': ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"],
 
     # --- FILE PATHS ---
@@ -63,7 +65,7 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                 #1.0, 10.0, 100.0
+                                #  1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
     #     "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
@@ -166,28 +168,28 @@ def setupML():
     return model_names, models, optimization_methods, search_kwargs
 
 def loadDataset(separate_types: bool,
-                norm_IMU:       bool
+                norm_IMU:       bool,
+                cmap:           Colormap
                 ) -> Tuple[str, str, List[str], List[str]]:
     
     if separate_types == True:
         
-        path            = "Preprocessing/DatafilesSeparated" 
+        path            = "Datafiles/DatafilesSeparated" 
         output_path     = "OutputFiles/Separated/"
 
         labels = [
             'GRINDBIG', 'GRINDSMALL',
             'IDLE', 'IMPA', 'GRINDMED',
-            'SANDSIM',
             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
 
     if separate_types == False:
 
-        path            = "Preprocessing/Datafiles"
-        output_path     = "OutputFiles/NotSeparated/"
+        path            = "Datafiles/DatafilesCombined"
+        output_path     = "OutputFiles/Combined/"
 
         labels = [
-            'IDLE', 'GRINDING', 'IMPA', 'SANDSIMULATED', 'WELDING'
+            'IDLE', 'GRINDING', 'IMPA', 'WELDING'
         ]
 
     if norm_IMU == True:
@@ -206,7 +208,7 @@ def loadDataset(separate_types: bool,
         freq_feature_suffixes   = ['psdmean', 'psdmax', 'psdmin', 'psdmax(Hz)']  
         freq_sensors            = ['accel_X', 'accel_Y', 'accel_Z', 'gyro_X', 'gyro_Y', 'gyro_Z', 'mag_X', 'mag_Y', 'mag_Z']
 
-    original_feature_names = []
+    original_feature_names: List[str] = []
 
     # Add time features
     for sensor in sensors:
@@ -218,5 +220,8 @@ def loadDataset(separate_types: bool,
         for suffix in freq_feature_suffixes:
             original_feature_names.append(f"{suffix}_{sensor}") 
 
+    num_labels      = len(labels)
+    cmap_name       = plt.get_cmap(cmap, num_labels)
+    label_mapping   = {label: cmap_name(i) for i, label in enumerate(labels)}
 
-    return path, output_path, labels, original_feature_names
+    return path, output_path, labels, original_feature_names, cmap_name, label_mapping

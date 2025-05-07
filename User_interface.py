@@ -200,16 +200,20 @@ with tab4:
 ## TAB NUMBER FIVE ##
 with tab5:
     st.info("This tab is for adding new data for training the ML model")
+
+    path = "Datafiles"
+    # TODO Fix separated and combined
+
     category_dirs = {
-        "GrindBig": "Preprocessing/DatafilesSeparated/GrindBig",
-        "GrindMed": "Preprocessing/DatafilesSeparated/GrindMed",
-        "GrindSmall": "Preprocessing/DatafilesSeparated/GrindSmall",
-        "Idle": "Preprocessing/DatafilesSeparated/Idle",
-        "Impa": "Preprocessing/DatafilesSeparated/Impa",  
-        "SandSim": "Preprocessing/DatafilesSeparated/SandSim",
-        "WeldAlTIG": "Preprocessing/DatafilesSeparated/WeldAlTIG",
-        "WeldStMAG": "Preprocessing/DatafilesSeparated/WeldStMAG",
-        "WeldStTIG": "Preprocessing/DatafilesSeparated/WeldStTIG"
+        "GrindBig": path + "/DatafilesSeparated/GrindBig",
+        "GrindMed": path + "/DatafilesSeparated/GrindMed",
+        "GrindSmall": path + "/DatafilesSeparated/GrindSmall",
+        "Idle": path + "/DatafilesSeparated/Idle",
+        "Impa": path + "/DatafilesSeparated/Impa",  
+        "SandSim": path + "/DatafilesSeparated/SandSim",
+        "WeldAlTIG": path + "/DatafilesSeparated/WeldAlTIG",
+        "WeldStMAG": path + "/DatafilesSeparated/WeldStMAG",
+        "WeldStTIG": path + "/DatafilesSeparated/WeldStTIG"
     }
 
     #Dropdown menu for category selection

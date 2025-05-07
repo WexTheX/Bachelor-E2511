@@ -29,7 +29,7 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 
 ### Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
-from Preprocessing.preprocessing import convert_bin_to_txt, downsample
+from preprocessing import convert_bin_to_txt, downsample
 
 def runInferenceOnFile(file_path:           str,
                         fs:                 int,
@@ -348,7 +348,7 @@ def initialize_exposure_intensity_matrix(exposures:                     list[str
         GRIND   = df.columns[df.columns.str.startswith('GRIND')]
         
         df.loc['CARCINOGEN',    ['WELDSTMAG', 'WELDSTTIG']] = variable_0
-        df.loc['RESPIRATORY',   ['SANDSIM', 'WELDALTIG']]   = variable_1
+        df.loc['RESPIRATORY',   ['WELDALTIG']]              = variable_1
         df.loc['NEUROTOXIN',    ['WELDSTTIG']]              = variable_2
         df.loc['RADIATION',     [*WELD]]                    = weld_to_rad
         df.loc['NOISE',         [*GRIND]]                   = variable_3

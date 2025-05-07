@@ -20,6 +20,8 @@ datasets = []
 variables = []
 
 ''' ADD DATASETS '''
+# TODO NB! HER MÅ MYE FIKSES :)
+
 # datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindBig/GRINDBIG_2.txt")

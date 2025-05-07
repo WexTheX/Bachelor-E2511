@@ -54,7 +54,7 @@ def main(
     safe_limit_vector: list[float],
     variables: list[str]
 
-    ) -> Tuple[dict, dict, list[float]]:
+    ) -> Tuple[dict[str, Any], dict[str, Any] | Any]:
 
     '''
     Orchestrates the activity recognition ML pipeline.
@@ -95,6 +95,9 @@ def main(
 
     ''' FEATURE EXTRACTION '''
 
+    # sets, sets_labels, file, fs, ds_fs, window_length_seconds, norm_IMU, output_path
+    # Dette er args til en eventuell feature_extraction.py
+
     if want_feature_extraction:
         # Create dataframe "feature_df" containing all features deemed relevant from the raw sensor data
         # One row in feature_df is all features from one window
@@ -105,12 +108,12 @@ def main(
         
         for i, file in enumerate(sets):
             print(f"Extracting features from file: {file}")
-            fe_df = extractDFfromFile(file, fs)
+            df = extractDFfromFile(file, fs)
 
-            if (ds_fs != fs):
-                fe_df = downsample(fe_df, fs, ds_fs, variables)
+            if (ds_fs < fs):
+                df = downsample(df, fs, ds_fs, variables)
             
-            window_df, df_window_labels = extractFeaturesFromDF(fe_df, sets_labels[i], window_length_seconds, ds_fs, norm_IMU)
+            window_df, df_window_labels = extractFeaturesFromDF(df, sets_labels[i], window_length_seconds, ds_fs, norm_IMU)
 
             all_window_features = all_window_features + window_df
 

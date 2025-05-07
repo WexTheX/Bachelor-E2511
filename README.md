@@ -77,7 +77,7 @@ main_config = {
 }
 ```
  
- Global variables are `True` or `False`, i.e `1` or `0`. For example if you want plots for visualization set `want_plots = 1`.
+ Global variables are boolean `True` or `False`, i.e `1` or `0`. For example if you want plots for visualization set `want_plots = 1`.
 
  # Settings explanation
 

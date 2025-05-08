@@ -1,0 +1,28 @@
+
+Vinkelsliping 3 stk 1 min hver ca, Stor, medium, small
+
+
+Muttertrekking 1 min ca
+
+
+Sveising stål1 1 min ca
+
+
+Sveising aluminium lengre enn 1 minutt
+
+
+
+IDLE: 		00:22.49 	00:22.49
+GRINDMED:	01:10.40	01:32.89
+IDLE:		00:13.16	01:46.05
+GRINDBIG: 	01:05.06	02:51.11
+IDLE:		00:10.00	03:01.11
+GRINDSMALL:	01:18.66	04:19.77
+IDLE:		00:52.04	05:11.81
+IMPA:		01:16.79	06:28.60
+IDLE:		01:20.79	07:49.39
+WELDSTTIG:	01:14.48	09:03.87
+IDLE: 		00:46.41	09:50.28
+WELDALTIG:	01:54.27	11:44.55
+
+

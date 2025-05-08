@@ -20,10 +20,14 @@ random_seed = 420
 frequencies = [25, 50, 100, 200, 400, 800, 1600]
 percentages = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1, 2, 3]
 n_iter = 30
-exposures = [
-    'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
-]
-safe_limit_vector = [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400]
+exposures_and_limits = {'CARCINOGEN': 1000.0,
+                        'RESPIRATORY': 750.0,
+                        'NEUROTOXIN': 30.0,
+                        'RADIATION': 120.0,
+                        'NOISE': 900.0,
+                        'VIBRATION': 400.0,
+                        'THERMAL': 2500.0,
+                        'MSK': 500.0}
 variables = ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"] #Unused
 norm_IMU = False
 
@@ -114,8 +118,7 @@ with tab2:
             'prediction_csv_path': prediction_csv_path,
             'clf_results_path': clf_results_path,
             'n_iter': n_iter,
-            'exposures': exposures,
-            'safe_limit_vector': safe_limit_vector,
+            'exposures_and_limits': exposures_and_limits,
             'variables': variables,
             'norm_IMU': norm_IMU
         }

@@ -10,6 +10,9 @@
 # 9) Save results to CSV and prints
 
 '''
+
+NB! If pulling test files from FilesFromAker_ALL, DON'T have any Aker files in the training set. 
+
 To run this file, enter the correct filepath for the files to be tested in test_file_path
 and where you want the csv file saved in prediction_csv_path. Set fs to the sample frequency
 for the data collection, and ds_fs to the wanted downsample frequency. Keep in mind ds_fs has
@@ -42,7 +45,7 @@ def runInferenceOnFile(file_path:           str,
                         clf_path:           str = "OutputFiles/Separated/classifier.joblib",
                         pca_path:           str = "OutputFiles/Separated/PCA.joblib",
                         scaler_path:        str = "OutputFiles/Separated/scaler.joblib",
-                        start_offset:       int = 10
+                        start_offset:       int = 0
                         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     
     '''
@@ -80,7 +83,7 @@ def runInferenceOnFile(file_path:           str,
 
     ### Load file and preprocess
     
-    df = extractDFfromFile(file_path, fs)
+    df = extractDFfromFile(file_path, fs, drop_index=False)
 
     ### Downsample
     if ds_fs < fs:
@@ -237,12 +240,12 @@ def offlineTest(test_file_path:        str,
 
     return combined_df #,features_df_all
 
-def calcExposure(combined_df:           pd.DataFrame,
+def calcExposure(
+                 combined_df:           pd.DataFrame,
                  csv_path:              str,
                  window_length_seconds: int,
-                 labels:                list[str], 
-                 exposures:             list[str],
-                 safe_limit_vector:     list[float],
+                 labels:                list[str],
+                 exposures_and_limits:  dict[str, float],
                  filter_on:             bool,
                  predictions_csv:       str = "predictions.csv",
                  summary_csv:           str = "summary.csv",
@@ -257,6 +260,9 @@ def calcExposure(combined_df:           pd.DataFrame,
     predefined intensity matrix, and generates a summary comparing these
     scores to safe limits. Prints intermediate results and the final summary.
     '''
+
+    exposures           = exposures_and_limits.keys()
+    safe_limit_vector   = exposures_and_limits.values()
 
     # --- 1. Setup from combined DataFrame ---
     if combined_df.empty:
@@ -285,10 +291,10 @@ def calcExposure(combined_df:           pd.DataFrame,
     # --- 2. Create exposure intensity matrix and calculate exposure, make summary ---
     # x
     activity_duration_vector    = activity_length_complete.values
-
+    
     # A
     exposure_intensity_matrix   = initialize_exposure_intensity_matrix(exposures, labels)
-
+    
     # b = Ax
     total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
 

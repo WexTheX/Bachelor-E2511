@@ -11,7 +11,8 @@ from preprocessing import tab_txt_to_csv, delete_header, rename_data, compare_bi
 # Still based on Roya's "ExtractIMU_Features"
 import time
 def extractDFfromFile(file_path:    str,
-                      fs:           int
+                      fs:           int,
+                      drop_index:   bool = True
                       ) -> pd.DataFrame:
 
     # try:
@@ -28,12 +29,13 @@ def extractDFfromFile(file_path:    str,
     # except Exception as e:
     #   print(f"Error in read_csv in file {file_path}: {e}")
     
-    delete_header(file_path + ".txt")
+    # delete_header(file_path + ".txt")
     df = pd.read_csv(file_path+".txt", delimiter="\t")
 
     ''' REMOVE 10 SECONDS '''
-    df.drop(df.index[:fs*10]) # Drop everything before 10 seconds
-    df.drop(df.index[fs*10:]) # Drop everything after 10 seconds
+    if drop_index == True:
+        df.drop(df.index[:fs*10]) # Drop everything before 10 seconds
+        df.drop(df.index[fs*10:]) # Drop everything after 10 seconds
 
     return df
 

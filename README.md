@@ -147,7 +147,7 @@ real_time_window_sec = 30
 
 
 ## Visualization
-To visualize options and paramters that you can change run the `User_interface.py` file like this:
+To visualize options and paramters run the `User_interface.py` file like this:
 
 ```bash
 streamlit run User_interface.py
@@ -155,24 +155,24 @@ streamlit run User_interface.py
 
 This should open a web browser page with the user interface running on `localhost` port `8051`.
 
-![Interface1](images\Userinterface_1.png)
+![Interface1](GIT_images\Interface1.png)
 
 From here one can interact with the code, providing the same functionalities as altering the code and runnning `main.py` aswell as `realtime.py`, though it's recomended to also pay attention to the terminal since only results are displayed not the progress. Just to avoid impatience.
 
-![Interface2](images\Userinterface_2.png)
+![Interface2](GIT_images\Interface2.png)
 
 Change the settings as you would in the `config.py` file.
 
-![Interface3](images\Userinterface_3.png)
+![Interface3](GIT_images\Interface5.png)
 
 Examine the results and plots that you want.
 
-![Interface4](images\Userinterface_4.png)
+![Interface4](GIT_images\Interface8.png)
 
 Test the classifier on a file showing it's certainty and top 3 predictions for different windows.
 
 
 
-![Interface5](images\Userinterface_5.png)
+![Interface5](GIT_images\Interface9.png)
 
 On the last tab one may add new files/data that can be used for training.

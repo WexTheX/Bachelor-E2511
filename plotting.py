@@ -729,7 +729,7 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
                       y:                Sequence,
                       cv_string:        str = "SKF", #SKF = StratifiedKFold, SS = ShuffleSplit
                       n_splits:         int = 5,
-                      train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 5),
+                      train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 15),
                       output_filename:  str = "plots/Learning_curve.png",
                       ) -> Figure:
   

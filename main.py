@@ -102,23 +102,16 @@ def main(
         for i, file in enumerate(sets):
             print(f"Extracting features from file: {file}")
 
-            start_time_2 = time.time()
             try:
                 df = extractDFfromFile(file, fs)
             except Exception as e:
                 print(f"Warning: Failed to extract DF from {file}: {e}. Continuing to next file")
                 continue
 
-            stop_time_2 = time.time()
-            print(f"time spent in extractDFfromFile: {stop_time_2 - start_time_2}")
-
             if (ds_fs < fs):
                 df = downsample(df, fs, ds_fs, variables)
             
-            start_time_3 = time.time()
             window_df, df_window_labels = extractFeaturesFromDF(df, sets_labels[i], window_length_seconds, ds_fs, norm_IMU)
-            stop_time_3 = time.time()
-            print(f"time spent in extractFeaturesFromDF: {stop_time_3 - start_time_3}")
  
 
             all_window_features = all_window_features + window_df

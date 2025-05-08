@@ -29,7 +29,7 @@ def get_Time_Domain_features_of_signal(signal:      Series,
     features[f'energy{suffix}']         = sum(pow(abs(signal), 2)) # https://stackoverflow.com/questions/34133680/calculate-energy-of-time-domain-data
     features[f'entropy{suffix}']        = entropy(signal) # https://stackoverflow.com/questions/15450192/fastest-way-to-compute-entropy-in-python
     features[f'iqr{suffix}']            = interquartile_range(signal) # https://www.statology.org/interquartile-range-python/
-    features[f'kurtosis{suffix}']       = stats.kurtoKursis(signal, fisher=True)
+    features[f'kurtosis{suffix}']       = stats.kurtosis(signal, fisher=True)
     features[f'skewness{suffix}']       = stats.skew(signal)
     features[f'correlation{suffix}']    = autocorrelation(signal) # https://realpython.com/numpy-scipy-pandas-correlation-python/#example-numpy-correlation-calculation
 

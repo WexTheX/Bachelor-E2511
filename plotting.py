@@ -789,7 +789,7 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
   for ax_idx, estimator in enumerate(models):
 
     try:
-      LearningCurveDisplay.from_estimator(estimator, **common_params, ax=axes[ax_idx])
+      LearningCurveDisplay.from_estimator(estimator, **common_params, ax=axes[ax_idx], scoring="balanced_accuracy")
       handles, _ = axes[ax_idx].get_legend_handles_labels()
       axes[ax_idx].legend(handles[:2], ["Training Score", "Test Score"])
       axes[ax_idx].set_title(f"Learning Curve for {estimator.__class__.__name__}")

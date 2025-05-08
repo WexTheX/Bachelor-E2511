@@ -16,13 +16,14 @@ main_config = {
     'want_feature_extraction':  1,
     'separate_types':           1,
     'want_new_CLFs':            1,
-    'want_plots':               1,
+    'want_plots':               0,
     'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
     'want_calc_exposure':       0,
-    'model_selection':          ['lr', 'svm', 'knn'
-                                 , 'rf', 'gb', 'ada'
-                                 , 'gnb'
+    'model_selection':          ['lr', 
+                                #  'svm', 'knn'
+                                #  , 'rf', 'gb', 'ada'
+                                #  , 'gnb'
                                 ],
     'method_selection':         ['rs'],
 

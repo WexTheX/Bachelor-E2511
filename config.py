@@ -14,6 +14,7 @@ main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
     'want_feature_extraction':  1,
+    'norm_IMU':                 0,
     'separate_types':           1,
     'want_new_CLFs':            1,
     'want_plots':               0,
@@ -25,12 +26,12 @@ main_config = {
                                 #  , 'rf', 'gb', 'ada'
                                 #  , 'gnb'
                                 ],
-    'method_selection':         ['rs'],
+    'method_selection':         [],
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
     'random_seed':              42,
-    'window_length_seconds':    20,
+    'window_length_seconds':    15,
     'test_size':                0.25,
     'fs':                       800,
     'ds_fs':                    800,  # Downsampled frequency, DS is WIP bc filtering

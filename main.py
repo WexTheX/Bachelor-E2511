@@ -26,7 +26,7 @@ from config import setupML, loadDataset, main_config
 
 def main(
     # Flags
-    want_feature_extraction: bool, 
+    want_feature_extraction: bool,
     save_joblib: bool, 
     separate_types: bool,
     want_new_CLFs: bool, 
@@ -102,7 +102,7 @@ def main(
         start_time = time.time()
         
         for i, file in enumerate(sets):
-            print(f"Extracting features from file: {file}")
+            # print(f"Extracting features from file: {file}")
 
             try:
                 df = extractDFfromFile(file, fs)
@@ -120,7 +120,7 @@ def main(
 
             window_labels = window_labels + df_window_labels
 
-            print(f"Total number of windows: {len(window_labels)}")
+            # print(f"Total number of windows: {len(window_labels)}")
 
         feature_df = pd.DataFrame(all_window_features)
 
@@ -255,18 +255,33 @@ def main(
     return plots, result
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and 1 == 1:
+
+    start_time = time.time()
 
     f1_mean = []
     f1_std = []
-    for i in range(150, 160, 5):
+    accuracy_mean = []
+    accuracy_std = []
 
-        main_config["want_feature_extraction"] = 1
-        main_config["window_length_seconds"] = i
+    window_lengths_for_plot = []
 
-        randomness_list = [random.randint(0,999), random.randint(1000,1999), random.randint(2000,2999), random.randint(3000,3999), random.randint(4000,4999)]
+    window_sec_lower = 15
+    window_sec_upper = 240
+    window_sec_interval = 5
 
-        f1_total = np.zeros((len(randomness_list)))
+    for i in range(window_sec_lower, window_sec_upper, window_sec_interval):
+
+        window_lengths_for_plot.append(i)
+
+        main_config["want_feature_extraction"]  = True
+        main_config["window_length_seconds"]    = i
+
+        randomness_list     = [random.randint(0,999999), random.randint(1000000,1999999), random.randint(2000000,2999999), random.randint(3000000,3999999), random.randint(4000000,4999999),
+                               random.randint(5000000,5999999), random.randint(6000000,6999999), random.randint(7000000,7999999), random.randint(8000000,8999999), random.randint(9000000,9999999)]
+
+        current_f1          = np.zeros((len(randomness_list)))
+        current_accuracy    = np.zeros((len(randomness_list)))
 
         for j, rand_seed in enumerate(randomness_list): 
           
@@ -274,13 +289,98 @@ if __name__ == "__main__":
 
           plots, result = main(**main_config)
 
-          f1_total[j] = result["test_f1_score"]
+          current_f1[j]         = result["test_f1_score"]
+          current_accuracy[j]   = result["test_accuracy"]
 
           main_config["want_feature_extraction"] = 0
         
-        f1_mean.append(f1_total.mean())
-        f1_std.append(f1_total.std())
+        f1_mean.append(current_f1.mean())
+        f1_std.append(current_f1.std())
 
-    plt.figure()
-    plt.plot(f1_mean)
+        accuracy_mean.append(current_accuracy.mean())
+        accuracy_std.append(current_accuracy.std())
+
+    np_f1_means = np.array(f1_mean)
+    np_f1_stds = np.array(f1_std)  
+
+    np_accuracy_means = np.array(accuracy_mean)
+    np_accuracy_stds = np.array(accuracy_std)  
+
+    np_window_lengths = np.array(window_lengths_for_plot)
+
+    ## --- FIG 1 ---
+    plt.figure(figsize=(10, 6)) # Adjust figure size as needed
+
+    # Plot the mean F1 score line
+    plt.plot(np_window_lengths, np_f1_means, label='Mean F1 Score', color='blue', marker='o')
+
+    # Plot the ±1 standard deviation shaded area
+    plt.fill_between(
+        np_window_lengths,
+        np_f1_means - np_f1_stds, # Lower bound of the shaded area
+        np_f1_means + np_f1_stds, # Upper bound of the shaded area
+        color='blue',
+        alpha=0.2,                # Transparency of the shaded area
+        label='Mean ± 1 STD'
+    )
+
+    plt.legend(fontsize=20)
+
+    plt.xlabel("Window Length (seconds)")
+    plt.ylabel("F1 Score")
+    plt.title("F1 Score vs. Window Length")
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.xticks(np.arange(window_sec_lower, window_sec_upper + 1, 25)) # Ensure all window lengths are shown as ticks
+    plt.ylim(0, 1.05) # F1 score is between 0 and 1
+    plt.tight_layout() # Adjust plot to prevent labels from overlapping
+
+    output_filename = "plots/f1_score_vs_window_length.png"
+
+    try:
+        plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    except Exception as e:
+        print(f"Error saving plot to {output_filename}: {e}")
+
+    ## --- FIG 2 ---
+
+    plt.figure(figsize=(10, 6)) # Adjust figure size as needed
+
+    # Plot the mean F1 score line
+    plt.plot(np_window_lengths, np_accuracy_means, label='Mean Accuracy Score', color='red', marker='o')
+
+    # Plot the ±1 standard deviation shaded area
+    plt.fill_between(
+        np_window_lengths,
+        np_accuracy_means - np_accuracy_stds, # Lower bound of the shaded area
+        np_accuracy_means + np_accuracy_stds, # Upper bound of the shaded area
+        color='red',
+        alpha=0.2,                # Transparency of the shaded area
+        label='Mean ± 1 STD'
+    )
+
+    plt.legend(fontsize=20)
+
+    plt.xlabel("Window Length (seconds)")
+    plt.ylabel("Accuracy Score")
+    plt.title("Accuracy Score vs. Window Length")
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.xticks(np.arange(window_sec_lower, window_sec_upper + 1, 25)) # Ensure all window lengths are shown as ticks
+    plt.ylim(0, 1.05) # Accuracy score is between 0 and 1
+    plt.tight_layout() # Adjust plot to prevent labels from overlapping
+
+    output_filename = "plots/accuracy_score_vs_window_length.png"
+    try:
+        plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    except Exception as e:
+        print(f"Error saving plot to {output_filename}: {e}")
+
+    end_time = time.time()  # End timer
+    elapsed_time = end_time - start_time
+    print(f"Score vs window length plotted in {elapsed_time} seconds")
+    
     plt.show()
+
+if __name__ == "__main__" and 1 == 0:
+    main(**main_config)

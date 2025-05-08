@@ -249,6 +249,7 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
 
       else:
         clf = base_estimator
+        best_clf = clf
         best_params = None
         best_score = None
         train_test_delta = 0.0000

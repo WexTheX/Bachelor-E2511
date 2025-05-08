@@ -16,13 +16,14 @@ main_config = {
     'want_feature_extraction':  1,
     'separate_types':           1,
     'want_new_CLFs':            1,
-    'want_plots':               1,
+    'want_plots':               0,
     'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
     'want_calc_exposure':       0,
-    'model_selection':          ['lr', 'svm', 'knn'
-                                 , 'rf', 'gb', 'ada'
-                                 , 'gnb'
+    'model_selection':          ['lr', 
+                                #  'svm', 'knn'
+                                #  , 'rf', 'gb', 'ada'
+                                #  , 'gnb'
                                 ],
     'method_selection':         ['rs'],
 
@@ -35,13 +36,17 @@ main_config = {
     'ds_fs':                    800,  # Downsampled frequency, DS is WIP bc filtering
     'cmap':                     'tab10', # Colormap for plotting
     'n_iter':                   30,   # Iterations for RandomizedSearch
-    'norm_IMU':                 False,
 
     # --- EXPOSURE CALCULATION VARIABLES ---
-    'exposures': [
-        'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK',
-    ],
-    'safe_limit_vector': [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400.0, 99.0], 
+    'exposures_and_limits': {'CARCINOGEN':  1000.0,
+                             'RESPIRATORY': 750.0, 
+                             'NEUROTOXIN':  30.0, 
+                             'RADIATION':   120.0, 
+                             'NOISE':       900.0, 
+                             'VIBRATION':   400.0,
+                             'THERMAL':     2500.0, 
+                             'MSK':         500.0},
+    
     'variables': ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"],
 
     # --- FILE PATHS ---
@@ -173,11 +178,13 @@ def setupML():
 def loadDataset(separate_types: bool,
                 norm_IMU:       bool,
                 cmap:           Colormap
-                ) -> Tuple[str, str, List[str], List[str]]:
+                ) -> Tuple[str, str, List[str], List[str], Colormap, dict]:
     
+    ''' Define the path to training datafiles here.'''
+
     if separate_types == True:
         
-        path            = "Datafiles/DatafilesSeparated" 
+        path            = "Datafiles/DatafilesSeparated_without_Aker" 
         output_path     = "OutputFiles/Separated/"
 
         labels = [
@@ -188,7 +195,7 @@ def loadDataset(separate_types: bool,
 
     if separate_types == False:
 
-        path            = "Datafiles/DatafilesCombined"
+        path            = "Datafiles/DatafilesCombined_without_Aker"
         output_path     = "OutputFiles/Combined/"
 
         labels = [

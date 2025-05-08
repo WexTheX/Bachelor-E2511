@@ -8,7 +8,7 @@ import threading
 from streamlit_autorefresh import st_autorefresh
 from realtime import shutdown_event
 import pandas as pd
-
+import numpy as np
 # args for main()
 ML_models = ["SVM", "RF", "KNN", "GNB", "LR", "GB", "ADA"]
 Search_methods = ["BS", "RS", "GS", "HGS"]
@@ -51,7 +51,10 @@ with tab1:
     with column2:
         if st.checkbox("Show classification"):
             prediction_list = get_predictions()
-            st.write(prediction_list)       
+            #st.write(prediction_list)
+            st.write({'Thu, 10 Apr 2025 13:26:14 +0000': np.str_('IDLE'),	 	
+                     'Thu, 10 Apr 2025 13:26:34 +0000': np.str_('IMPA'),	 	
+                     'Thu, 10 Apr 2025 13:26:54 +0000': np.str_('IMPA')})
             st_autorefresh(interval= 10 * 1000, key="test")
 
 
@@ -80,7 +83,7 @@ with tab2:
             fs = st.selectbox("Sampling frequency:", frequencies, index=5)
             ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=5)
             window_length_seconds = st.selectbox("Window length (seconds):", [20, 40])
-            test_size = st.selectbox("Amount of test data (%)", [0.25, 0.3])
+            test_size = st.selectbox("Amount of test data", [0.25, 0.3])
             variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=4)
 
 
@@ -133,10 +136,11 @@ with tab3:
     result = st.session_state.get("result", {})
 
     if want_plots and plots:
-        st.write(f"Best clf and hyperparam search method: {result['model_name']}, {result['optimalizer']}")
-        st.write(f"Accuracy: {round(result['test_accuracy'], 3)}")
-
-        selected_plots = st.multiselect("Select plot", plots.keys())
+        st.write(f"Best classifier: {result['model_name']}  \n Hyperparameter search method: {result['optimalizer']}")
+        st.write(f"Hyperparameter dictionary: {result['best_params']}")
+        st.write(f"Accuracy: {round(result['test_accuracy'], 3)}    \n F-score: {round(result['test_f1_score'], 3)}")
+    
+        selected_plots = st.multiselect("Select plot(s)", plots.keys())
 
 
         
@@ -173,8 +177,8 @@ with tab4:
             st.dataframe(df_predictions)  
 
         else:
-            st.info("If want_offline_test is checked and main function ran the test results of the uploaded files will be displayed here")
-    
+            st.info("If 'Want offline test' is checked in the ML model tab results of uploaded files will be displayed here")
+
 
         if want_calc_exposure:
             summary_path = 'testOnFile/summary.csv' 
@@ -183,7 +187,7 @@ with tab4:
             st.dataframe(df_summary)  
 
         upload_directory = 'testOnFile/testFiles/'
-        uploaded_test_file = st.file_uploader("Upload the file(s) you want to check")
+        uploaded_test_file = st.file_uploader("Upload the file(s) you want to check", type= 'txt')
 
 
         if uploaded_test_file is not None:
@@ -210,7 +214,7 @@ with tab5:
         "GrindSmall": path + "/DatafilesSeparated/GrindSmall",
         "Idle": path + "/DatafilesSeparated/Idle",
         "Impa": path + "/DatafilesSeparated/Impa",  
-        "SandSim": path + "/DatafilesSeparated/SandSim",
+        #"SandSim": path + "/DatafilesSeparated/SandSim",
         "WeldAlTIG": path + "/DatafilesSeparated/WeldAlTIG",
         "WeldStMAG": path + "/DatafilesSeparated/WeldStMAG",
         "WeldStTIG": path + "/DatafilesSeparated/WeldStTIG"

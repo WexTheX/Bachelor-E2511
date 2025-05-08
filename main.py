@@ -4,6 +4,9 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
+import math as math
+import random as random
+import numpy as np
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -101,23 +104,16 @@ def main(
         for i, file in enumerate(sets):
             print(f"Extracting features from file: {file}")
 
-            start_time_2 = time.time()
             try:
                 df = extractDFfromFile(file, fs)
             except Exception as e:
                 print(f"Warning: Failed to extract DF from {file}: {e}. Continuing to next file")
                 continue
 
-            stop_time_2 = time.time()
-            print(f"time spent in extractDFfromFile: {stop_time_2 - start_time_2}")
-
             if (ds_fs < fs):
                 df = downsample(df, fs, ds_fs, variables)
             
-            start_time_3 = time.time()
             window_df, df_window_labels = extractFeaturesFromDF(df, sets_labels[i], window_length_seconds, ds_fs, norm_IMU)
-            stop_time_3 = time.time()
-            print(f"time spent in extractFeaturesFromDF: {stop_time_3 - start_time_3}")
  
 
             all_window_features = all_window_features + window_df
@@ -261,4 +257,30 @@ def main(
 
 if __name__ == "__main__":
 
-    main(**main_config)
+    f1_mean = []
+    f1_std = []
+    for i in range(150, 160, 5):
+
+        main_config["want_feature_extraction"] = 1
+        main_config["window_length_seconds"] = i
+
+        randomness_list = [random.randint(0,999), random.randint(1000,1999), random.randint(2000,2999), random.randint(3000,3999), random.randint(4000,4999)]
+
+        f1_total = np.zeros((len(randomness_list)))
+
+        for j, rand_seed in enumerate(randomness_list): 
+          
+          main_config["random_seed"] = rand_seed
+
+          plots, result = main(**main_config)
+
+          f1_total[j] = result["test_f1_score"]
+
+          main_config["want_feature_extraction"] = 0
+        
+        f1_mean.append(f1_total.mean())
+        f1_std.append(f1_total.std())
+
+    plt.figure()
+    plt.plot(f1_mean)
+    plt.show()

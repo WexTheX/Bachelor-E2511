@@ -30,12 +30,14 @@ variables = []
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_1.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/GrindMed/GRINDMED_2.txt")
 
-datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_1.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_2.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_6.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_8.txt")
-# datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_11.txt")
+# datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_0.txt")
+# datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_1.txt")
+# datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_2.txt")
+datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_3.txt")
+# datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_4.txt")
+# datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_5.txt")
+# datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_6.txt")
+
 
 
 # datasets.append("Preprocessing/DatafilesSeparated/WeldAlTIG/WELDALTIG_0.txt")
@@ -64,7 +66,7 @@ datasets.append("Preprocessing/DatafilesSeparated/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Impa/IMPA_2.txt")
 
 
-datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_0.txt")
+# datasets.append("Datafiles/DatafilesSeparated_without_Aker/Idle/IDLE_0.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
 
@@ -375,6 +377,11 @@ plotTime(datasets, variables, fs, ds_fs, size=size)
 plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
 ds_fs = 400
+plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotFFT(datasets, variables, fs, ds_fs, size=size)
+plotWelch(datasets, variables, fs, ds_fs, size=size)
+
+ds_fs = 200
 plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
 plotWelch(datasets, variables, fs, ds_fs, size=size)

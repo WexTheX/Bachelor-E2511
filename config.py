@@ -13,32 +13,37 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  0,
+    'want_feature_extraction':  1,
+    'norm_IMU':                 0,
     'separate_types':           1,
     'want_new_CLFs':            0,
-    'want_plots':               0,
+    'want_plots':               1,
     'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
-    'want_calc_exposure':       1,
+    'want_calc_exposure':       0,
     'model_selection':          ['svm', 'lr'],
     'method_selection':         ['rs'],
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
-    'random_seed':              4201,
-    'window_length_seconds':    20,
+    'random_seed':              42011,
+    'window_length_seconds':    5,
     'test_size':                0.25,
     'fs':                       800,
     'ds_fs':                    800,  # Downsampled frequency
     'cmap':                     'tab10', # Colormap for plotting
     'n_iter':                   30,   # Iterations for RandomizedSearch
-    'norm_IMU':                 False,
 
     # --- EXPOSURE CALCULATION VARIABLES ---
-    'exposures': [
-        'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK',
-    ],
-    'safe_limit_vector': [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400.0, 99.0], 
+    'exposures_and_limits': {'CARCINOGEN':  1000.0,
+                             'RESPIRATORY': 750.0, 
+                             'NEUROTOXIN':  30.0, 
+                             'RADIATION':   120.0, 
+                             'NOISE':       900.0, 
+                             'VIBRATION':   400.0,
+                             'THERMAL':     2500.0, 
+                             'MSK':         500.0},
+    
     'variables': ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"],
 
     # --- FILE PATHS ---
@@ -170,11 +175,13 @@ def setupML():
 def loadDataset(separate_types: bool,
                 norm_IMU:       bool,
                 cmap:           Colormap
-                ) -> Tuple[str, str, List[str], List[str]]:
+                ) -> Tuple[str, str, List[str], List[str], Colormap, dict]:
     
+    ''' Define the path to training datafiles here.'''
+
     if separate_types == True:
         
-        path            = "Datafiles/DatafilesSeparated" 
+        path            = "Datafiles/DatafilesSeparated_without_Aker" 
         output_path     = "OutputFiles/Separated/"
 
         labels = [
@@ -185,7 +192,7 @@ def loadDataset(separate_types: bool,
 
     if separate_types == False:
 
-        path            = "Datafiles/DatafilesCombined"
+        path            = "Datafiles/DatafilesCombined_without_Aker"
         output_path     = "OutputFiles/Combined/"
 
         labels = [

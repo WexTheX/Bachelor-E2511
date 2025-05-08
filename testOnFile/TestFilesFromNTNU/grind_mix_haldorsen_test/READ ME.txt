@@ -1,0 +1,18 @@
+00:00:24 sensor start
+IDLE
+IDLE
+IDLE
+00:01:24 grind cord small start
+00:02:07 grind cord small stop
+IDLE
+00:02:28 grind battery start
+00:03:15 grind battery stop
+IDLE
+00:03:37 big grind start
+00:04:17 big grind stop
+IDLE
+00:04:40 IDLE grind sim start
+00:05:17 IDLE grind sim stop
+00:05:17 grind cord start
+00:05:41 grind cord stop
+00:05:54 sensor stop

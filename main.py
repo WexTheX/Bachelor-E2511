@@ -50,9 +50,8 @@ def main(
 
     # Specific Parameters
     n_iter: int,
-    exposures: list[str],
-    safe_limit_vector: list[float],
-    variables: list[str]
+    variables: list[str],
+    exposures_and_limits: dict[str, float],
 
     ) -> Tuple[dict[str, Any], dict[str, Any] | Any]:
 
@@ -155,6 +154,8 @@ def main(
 
     ''' SPLITTING TEST/TRAIN + SCALING'''
     
+    # for i in randomness(0, max) # velg 5 random randomnesses
+
     train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size,
                                                                         random_state=random_seed, stratify=window_labels)
 
@@ -253,7 +254,7 @@ def main(
     if want_calc_exposure:
 
         summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels,
-                                   exposures, safe_limit_vector, filter_on=True)
+                                   exposures_and_limits, filter_on=True)
     
     return plots, result
 

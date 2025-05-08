@@ -95,12 +95,15 @@ You can choose one or multiple models from the following list:
 
  Code | Model Name                  
 -|-
+`lr`  | Logistic Regression  
 `svm` | Support Vector Machine       
-`lr`  | Logistic Regression          
+`knn` | K-Nearest Neighbors   
+`rf`  | Random Forest     
 `ada` | Adaptive Boosting (AdaBoost)
+`gb`  | Gradient Boosting
 `gnb` | Gaussian Naive Bayes        
-`knn` | K-Nearest Neighbors         
-`rf`  | Random Forest               
+       
+          
 
 To compare multiple models, simply pass a list like:
 

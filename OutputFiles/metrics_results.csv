@@ -1,2 +1,8 @@
-model_name,optimalizer,accuracy,f1_score,valid_mean,valid_std,train_test_delta
-Logistic Regression,Base model,1.0,1.0,0.0,0.0,0.0
+model_name,optimalizer,accuracy,f1_score,predict_time_[ms],valid_mean,valid_std,train_test_delta
+Logistic Regression,Base model,0.9853801169590644,0.9854238509854105,0.0024852696915119016,0.0,0.0,0.0
+AdaBoost,Base model,0.9152046783625731,0.9151550383217595,0.0029690781531975284,0.0,0.0,0.0
+Gaussian Naive Bayes,Base model,0.9298245614035088,0.9307083504242388,0.003055522316380551,0.0,0.0,0.0
+Gradient Boosting,Base model,0.9736842105263158,0.9736499726815412,0.015661730403788605,0.0,0.0,0.0
+Random Forest,Base model,0.97953216374269,0.979439395260264,0.02113420363755254,0.0,0.0,0.0
+Support Vector Machine,Base model,0.9824561403508771,0.9825495546170722,0.037025987056263705,0.0,0.0,0.0
+K-Nearest Neighbors,Base model,0.97953216374269,0.9796994906561863,0.7663275066174959,0.0,0.0,0.0

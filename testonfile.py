@@ -293,12 +293,12 @@ def calcExposure(
     activity_duration_vector    = activity_length_complete.values
     
     # A
-    exposure_intensity_matrix   = initialize_exposure_intensity_matrix(exposures, labels)
+    exposure_intensity_matrix   = initializeExposureIntensityMatrix(exposures, labels)
     
     # b = Ax
     total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
 
-    summary_df                  = exposure_summary(total_exposure_vector, safe_limit_vector, exposures)
+    summary_df                  = exposureSummary(total_exposure_vector, safe_limit_vector, exposures)
 
     filename_out = os.path.join(csv_path, summary_csv)
     summary_df.to_csv(filename_out, index=False)
@@ -315,19 +315,19 @@ def calcExposure(
 
     return summary_df
 
-def initialize_exposure_intensity_matrix(exposures:                     list[str], 
-                                         activities:                    list[str],
-                                         # Dummy variables
-                                         variable_0:                    float = round(random.uniform(10.0, 2000.0), 1),
-                                         weld_to_rad:                   float = 1234.0,
-                                         variable_1:                    float = round(random.uniform(10.0, 2000.0), 1),
-                                         variable_2:                    float = round(random.uniform(10.0, 2000.0), 1),
-                                         variable_3:                    float = round(random.uniform(10.0, 2000.0), 1),
-                                         # Dummy sensor proxies
-                                         gravityless_norm_accel_mean:   float = round(random.uniform(10.0, 2000.0), 1) - 9.81,
-                                         gravityless_norm_accel_energy: float = round(random.uniform(10.0, 2000.0), 1) - 9.81,
-                                         temperature_energy:            float = round(random.uniform(10.0, 2000.0), 1)
-                                         ) -> pd.DataFrame:
+def initializeExposureIntensityMatrix(  exposures:                     list[str], 
+                                        activities:                    list[str],
+                                        # Dummy variables
+                                        variable_0:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                        weld_to_rad:                   float = 1234.0,
+                                        variable_1:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                        variable_2:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                        variable_3:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                        # Dummy sensor proxies
+                                        gravityless_norm_accel_mean:   float = round(random.uniform(10.0, 2000.0), 1) - 9.81,
+                                        gravityless_norm_accel_energy: float = round(random.uniform(10.0, 2000.0), 1) - 9.81,
+                                        temperature_energy:            float = round(random.uniform(10.0, 2000.0), 1)
+                                        ) -> pd.DataFrame:
     
     '''
     Initializes and populates the exposure intensity matrix.
@@ -369,11 +369,11 @@ def initialize_exposure_intensity_matrix(exposures:                     list[str
 
     return df
 
-def exposure_summary(total_exposure_vector:     np.array,
-                     safe_limit_vector:         np.array,
-                     exposures:                 list[str],
-                     neutral_limit:             float = 0.80
-                     ) -> pd.DataFrame:
+def exposureSummary(total_exposure_vector:     np.array,
+                    safe_limit_vector:         np.array,
+                    exposures:                 list[str],
+                    neutral_limit:             float = 0.80
+                    ) -> pd.DataFrame:
 
     '''
     Creates a summary DataFrame comparing exposure levels to safe limits.

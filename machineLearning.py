@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import time
 import joblib
+import timeit
 
 from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
@@ -10,6 +11,7 @@ from sklearn.model_selection import GridSearchCV, HalvingGridSearchCV, Randomize
 from sklearn.experimental import enable_halving_search_cv
 from sklearn import metrics, dummy
 from typing import List, Dict, Any, Tuple, Sequence
+
 
 def trainScaler(df):
   ''' PRE PROCESSING '''
@@ -348,7 +350,10 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
     std_test_score    = result_dict['std_test_score']
     train_test_delta  = result_dict['train_test_delta']
 
+    start             = time.time()
     test_predict      = clf.predict(test_df)
+    end               = time.time()
+    predict_time      = 1000 * (end-start) / len(test_labels)
 
     accuracy_score    = metrics.accuracy_score(test_labels, test_predict)
     f1_score          = metrics.f1_score(test_labels, test_predict, average="weighted")
@@ -369,12 +374,13 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
         'optimalizer':      optimalizer,
         'accuracy':         accuracy_score,
         'f1_score':         f1_score,
+        'avg_predict_time': predict_time,
         'valid_mean':       mean_test_score,
         'valid_std':        std_test_score,
         'train_test_delta': train_test_delta
     })
 
-  metrics_df = pd.DataFrame(rows).sort_values(by='f1_score', ascending=False)
+  metrics_df = pd.DataFrame(rows).sort_values(by='avg_predict_time', ascending=True)
   metrics_df.to_csv(output_path, index=False)
 
   print(metrics_df)

@@ -17,20 +17,20 @@ main_config = {
     'norm_IMU':                 0,
     'separate_types':           1,
     'want_new_CLFs':            1,
-    'want_plots':               0,
-    'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        0,
-    'want_calc_exposure':       0,
+    'want_plots':               1,
+    'save_joblib':              1, # Pickle the classifier, scaler and PCA objects.
+    'want_offline_test':        1,
+    'want_calc_exposure':       1,
     'model_selection':          ['lr', 
-                                #  'svm', 'knn'
-                                #  , 'rf', 'gb', 'ada'
-                                #  , 'gnb'
+                                 'svm', 'knn'
+                                 , 'rf', 'gb', 'ada'
+                                 , 'gnb'
                                 ],
     'method_selection':         [],
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
-    'random_seed':              42,
+    'random_seed':              42123,
     'window_length_seconds':    15,
     'test_size':                0.25,
     'fs':                       800,

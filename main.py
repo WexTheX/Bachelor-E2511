@@ -102,7 +102,7 @@ def main(
         start_time = time.time()
         
         for i, file in enumerate(sets):
-            # print(f"Extracting features from file: {file}")
+            print(f"Extracting features from file: {file}")
 
             try:
                 df = extractDFfromFile(file, fs)
@@ -120,7 +120,7 @@ def main(
 
             window_labels = window_labels + df_window_labels
 
-            # print(f"Total number of windows: {len(window_labels)}")
+            print(f"Total number of windows: {len(window_labels)}")
 
         feature_df = pd.DataFrame(all_window_features)
 
@@ -254,8 +254,10 @@ def main(
     
     return plots, result
 
-
 if __name__ == "__main__" and 1 == 1:
+    main(**main_config)
+
+if __name__ == "__main__" and 1 == 0:
 
     start_time = time.time()
 
@@ -381,6 +383,3 @@ if __name__ == "__main__" and 1 == 1:
     print(f"Score vs window length plotted in {elapsed_time} seconds")
     
     plt.show()
-
-if __name__ == "__main__" and 1 == 0:
-    main(**main_config)

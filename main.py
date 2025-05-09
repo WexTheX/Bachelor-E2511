@@ -255,7 +255,7 @@ def main(
     return plots, result
 
 
-if __name__ == "__main__" and 1 == 1:
+if __name__ == "__main__" and 1 == 0:
 
     start_time = time.time()
 
@@ -382,5 +382,5 @@ if __name__ == "__main__" and 1 == 1:
     
     plt.show()
 
-if __name__ == "__main__" and 1 == 0:
+if __name__ == "__main__" and 1 == 1:
     main(**main_config)

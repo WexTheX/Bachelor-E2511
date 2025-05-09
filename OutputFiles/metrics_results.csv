@@ -1,2 +1,2 @@
 model_name,optimalizer,accuracy,f1_score,valid_mean,valid_std,train_test_delta
-Logistic Regression,Base model,1.0,1.0,0.0,0.0,0.0
+Logistic Regression,Base model,0.9883040935672515,0.9883072829770733,0.0,0.0,0.0

@@ -17,9 +17,9 @@ main_config = {
     'norm_IMU':                 0,
     'separate_types':           1,
     'want_new_CLFs':            1,
-    'want_plots':               0,
-    'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        0,
+    'want_plots':               1,
+    'save_joblib':              1, # Pickle the classifier, scaler and PCA objects.
+    'want_offline_test':        1,
     'want_calc_exposure':       0,
     'model_selection':          ['lr', 
                                 #  'svm', 'knn'
@@ -31,10 +31,10 @@ main_config = {
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
     'random_seed':              42,
-    'window_length_seconds':    15,
+    'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
-    'ds_fs':                    800,  # Downsampled frequency, DS is WIP bc filtering
+    'ds_fs':                    200,  # Downsampled frequency, DS is WIP bc filtering
     'cmap':                     'tab10', # Colormap for plotting
     'n_iter':                   30,   # Iterations for RandomizedSearch
 

@@ -18,8 +18,8 @@ main_config = {
     'separate_types':           1,
     'want_new_CLFs':            1,
     'want_plots':               1,
-    'save_joblib':              1, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        1,
+    'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
+    'want_offline_test':        0,
     'want_calc_exposure':       0,
     'model_selection':          ['lr', 
                                  'svm', 'knn'

@@ -13,24 +13,24 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  1,
+    'want_feature_extraction':  0,
     'norm_IMU':                 0,
     'separate_types':           1,
-    'want_new_CLFs':            1,
-    'want_plots':               1,
-    'save_joblib':              1, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        1,
-    'want_calc_exposure':       1,
-    'model_selection':          ['lr', 
-                                 'svm', 'knn'
-                                 , 'rf', 'gb', 'ada'
-                                 , 'gnb'
+    'want_new_CLFs':            0,
+    'want_plots':               0,
+    'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
+    'want_offline_test':        0,
+    'want_calc_exposure':       0,
+    'model_selection':          ['svm', 
+                                #  'svm', 'knn'
+                                #  , 'rf', 'gb', 'ada'
+                                #  , 'gnb'
                                 ],
-    'method_selection':         [],
+    'method_selection':         ['gs', 'rs', 'hgs', 'Bs'],
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       0.95,
-    'random_seed':              42123,
+    'variance_explained':       0.70,
+    'random_seed':              42,
     'window_length_seconds':    15,
     'test_size':                0.25,
     'fs':                       800,
@@ -46,7 +46,8 @@ main_config = {
                              'NOISE':       900.0, 
                              'VIBRATION':   400.0,
                              'THERMAL':     2500.0, 
-                             'MSK':         500.0},
+                             'MSK':         500.0
+                            },
     
     'variables': ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"],
 
@@ -74,22 +75,12 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                 1.0, 10.0, 100.0
+                                #  1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
         "coef0":                [0.0, 0.5, 1.0],
-        "degree":               [2, 3, 4, 5]
-    }
-
-    RF_param_grid = {
-        'n_estimators':         [50, 100, 200],         # Number of trees in the forest
-        'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
-        'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
-        'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
-        'max_features':         ['sqrt', 'log2'],       # Number of features considered for splitting
-        # 'bootstrap':            [True, False],          # Whether to use bootstrapped samples
-        'criterion':            ['gini', 'entropy']     # Splitting criteria
+        # "degree":               [2, 3, 4, 5]
     }
 
     KNN_param_grid = {
@@ -108,7 +99,7 @@ def setupML():
     }
 
     LR_param_grid = {
-        'C':                    [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],             #
+        'C':                    [0.001, 0.01, 0.1],#, 1.0, 10.0, 100.0],             #
         # 'dual':                 [False],                                    # Dual or Primal formulation
         # 'fit_intercept':        [True],                                     # Constant added to function (bias)             
         # 'intercept_scaling':    [1],                                        # Only useful when Solver = liblinear, fit_intercept = true
@@ -120,6 +111,16 @@ def setupML():
         # 'solver':               ['lbfgs', 'newton-cg', 'sag', 'saga'],      # Algorithm for optimization problem
         'tol':                  [0.0001],                                   # Tolerance for stopping criteria
         #'warm_start':           [False]                                      # Reuse previous calls solution
+    }
+
+    RF_param_grid = {
+        'n_estimators':         [50, 100, 200],         # Number of trees in the forest
+        'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
+        'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
+        'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
+        'max_features':         ['sqrt', 'log2'],       # Number of features considered for splitting
+        # 'bootstrap':            [True, False],          # Whether to use bootstrapped samples
+        'criterion':            ['gini', 'entropy']     # Splitting criteria
     }
 
     GB_param_grid = {
@@ -185,7 +186,7 @@ def loadDataset(separate_types: bool,
 
     if separate_types == True:
         
-        path            = "Datafiles/DatafilesSeparated_without_Aker" 
+        path            = "Datafiles/DatafilesSeparated_Aker" 
         output_path     = "OutputFiles/Separated/"
 
         labels = [

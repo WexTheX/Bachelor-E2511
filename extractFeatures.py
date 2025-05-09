@@ -76,7 +76,7 @@ def extractFeaturesFromDF(df:                   pd.DataFrame,
     mag_Z       = df["Mag.Z"]  # Magnetometer data in the Z direction
 
     temp        = df["Temp"]   # Ambient temperature (°C)
-    # press   = df["Press"]  # Air pressure (Pa or hPa)
+    press   = df["Press"]  # Air pressure (Pa or hPa)
 
     # range   = df["Range"]  # Distance to object (meters)
     # lum     = df["Lum"]    # Light intensity (lux)
@@ -168,6 +168,7 @@ def extractFeaturesFromDF(df:                   pd.DataFrame,
             window_features_mag_Y_Time      = get_Time_Domain_features_of_signal(window_mag_Y, "mag_Y")
             window_features_mag_Z_Time      = get_Time_Domain_features_of_signal(window_mag_Z, "mag_Z")
             window_features_temp_Time       = get_Time_Domain_features_of_signal(window_temp, "temp")
+            # window_features_press_Time       = get_Time_Domain_features_of_signal(window_temp, "press")
             
             # Get frequency features from Welch's method
             # 9 columns, 4 Frequency domain features each = 36 elements
@@ -194,6 +195,7 @@ def extractFeaturesFromDF(df:                   pd.DataFrame,
                             **window_features_mag_Y_Time,
                             **window_features_mag_Z_Time,
                             **window_features_temp_Time,
+                            # **window_features_press_Time,
 
                             **window_features_accel_X_Freq,
                             **window_features_accel_Y_Freq,

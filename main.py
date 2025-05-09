@@ -18,7 +18,7 @@ from typing import List, Dict, Any, Tuple, Sequence
 # Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
 from machineLearning import setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve
+from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve, datasetOverview
 from preprocessing import fillSets, downsample, pickleFiles, saveJoblibFiles
 from testonfile import offlineTest, calcExposure
 from config import setupML, loadDataset, main_config
@@ -219,6 +219,8 @@ def main(
         
         fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
+        datasetOverview(window_labels, window_length_seconds)
+
         plots = {
             'Learning curve': fig_0,
             'Confusion matrix': fig_1,
@@ -273,7 +275,8 @@ if __name__ == "__main__" and 1 == 0:
     window_sec_interval = 5
 
     for i in range(window_sec_lower, window_sec_upper, window_sec_interval):
-
+        
+        print(f"Current window length: {i} seconds.")
         window_lengths_for_plot.append(i)
 
         main_config["want_feature_extraction"]  = True
@@ -294,7 +297,7 @@ if __name__ == "__main__" and 1 == 0:
           current_f1[j]         = result["test_f1_score"]
           current_accuracy[j]   = result["test_accuracy"]
 
-          main_config["want_feature_extraction"] = 0
+          main_config["want_feature_extraction"] = False
         
         f1_mean.append(current_f1.mean())
         f1_std.append(current_f1.std())
@@ -373,6 +376,7 @@ if __name__ == "__main__" and 1 == 0:
     plt.tight_layout() # Adjust plot to prevent labels from overlapping
 
     output_filename = "plots/accuracy_score_vs_window_length.png"
+
     try:
         plt.savefig(output_filename, dpi=300, bbox_inches='tight')
     except Exception as e:
@@ -383,3 +387,6 @@ if __name__ == "__main__" and 1 == 0:
     print(f"Score vs window length plotted in {elapsed_time} seconds")
     
     plt.show()
+
+if __name__ == "__main__" and 1 == 0:
+    main(**main_config)

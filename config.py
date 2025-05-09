@@ -22,11 +22,11 @@ main_config = {
     'want_offline_test':        1,
     'want_calc_exposure':       0,
     'model_selection':          ['lr', 
-                                #  'svm', 'knn'
-                                #  , 'rf', 'gb', 'ada'
-                                #  , 'gnb'
+                                 'svm', 'knn'
+                                 , 'rf', 'gb', 'ada'
+                                 , 'gnb'
                                 ],
-    'method_selection':         [],
+    'method_selection':         ['rs'],
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
@@ -34,7 +34,7 @@ main_config = {
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
-    'ds_fs':                    200,  # Downsampled frequency, DS is WIP bc filtering
+    'ds_fs':                    800,  # Downsampled frequency, DS is WIP bc filtering
     'cmap':                     'tab10', # Colormap for plotting
     'n_iter':                   30,   # Iterations for RandomizedSearch
 

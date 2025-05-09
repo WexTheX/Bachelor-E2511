@@ -260,8 +260,6 @@ def main(
 if __name__ == "__main__" and 1 == 1:
     main(**main_config)
 
-
-
 if __name__ == "__main__" and 1 == 0:
 
     start_time = time.time()

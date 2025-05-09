@@ -31,7 +31,7 @@ main_config = {
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.70,
     'random_seed':              42,
-    'window_length_seconds':    15,
+    'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
     'ds_fs':                    800,  # Downsampled frequency, DS is WIP bc filtering

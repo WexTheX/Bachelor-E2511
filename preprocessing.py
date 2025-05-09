@@ -311,20 +311,23 @@ def saveJoblibFiles(n_results:  list[dict[str, Any]],
                 ) -> None:
     
     ## Saves all classifiers from n_results
+    try:
+        print(f"Saving PCA object, scaler and clf to {output_path}")
 
-    print(f"Saving files to {output_path} ... ")
+        for r in n_results:
+            model_name      = r['model_name']
+            optimizer       = r['optimalizer']
+            clf             = r['classifier']    
 
-    for r in n_results:
-        model_name      = r['model_name']
-        optimizer       = r['optimalizer']
-        clf             = r['classifier']    
+            joblib.dump(clf, f"{output_path}{model_name}_{optimizer}_clf.joblib")
 
-        joblib.dump(clf, f"{output_path}{model_name}_{optimizer}_clf.joblib")
+        ## Save best classifier
+        joblib.dump(result['classifier'], f"{output_path}classifier.joblib")
 
-    ## Save best classifier
-    joblib.dump(result['classifier'], f"{output_path}classifier.joblib")
-
-    joblib.dump(PCA_object, f"{output_path}PCA.joblib")
-    joblib.dump(scaler, f"{output_path}scaler.joblib")
+        joblib.dump(PCA_object, f"{output_path}PCA.joblib")
+        joblib.dump(scaler, f"{output_path}scaler.joblib")
+        
+    except Exception as e:
+        print(f"Warning: Failed to save PCA, scaler and clf: {e}")
 
     return None

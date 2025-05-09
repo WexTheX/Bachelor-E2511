@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 from matplotlib.lines import Line2D
 from matplotlib.figure import Figure
 from collections import defaultdict
+from collections import Counter
 
 from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 
@@ -795,9 +796,9 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
       axes[ax_idx].set_title(f"Learning Curve for {estimator.__class__.__name__}")
 
     except Exception as e:
-        print(f"Error plotting learning curve: {e}")
-        axes[ax_idx].set_title(f"Error plotting {estimator.__class__.__name__}")
-        axes[ax_idx].text(0.5, 0.5, "Plotting failed", ha='center', va='center', color='red')
+      print(f"Error plotting learning curve: {e}")
+      axes[ax_idx].set_title(f"Error plotting {estimator.__class__.__name__}")
+      axes[ax_idx].text(0.5, 0.5, "Plotting failed", ha='center', va='center', color='red')
 
   for j in range(num_plots, len(axes)):
     fig.delaxes(axes[j])
@@ -809,6 +810,54 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
   try:
     fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
-        print(f"Error saving plot to {output_filename}: {e}")
+    print(f"Error saving plot to {output_filename}: {e}")
 
   return fig
+
+
+def datasetOverview(labels:                 Sequence,
+                    window_length_seconds:  int,
+                    output_filename:        str = "plots/distribution_of_labels"
+                    ) -> Figure:
+  
+  counts_overview = {}
+
+  counts = Counter(labels)
+  total = sum(counts.values())
+
+  for k, v in counts.items():
+    fraction = round((v / total), 3)
+    counts_overview[k] = v, fraction
+
+  df = pd.DataFrame([counts_overview])
+
+  plot_labels = list(counts.keys())
+  plot_values = list(counts.values())
+
+  # Create Figure and Axes objects
+  fig, ax = plt.subplots(figsize=(10, 6)) # Adjust figsize as needed
+
+  bars = ax.bar(plot_labels, plot_values, color='skyblue')
+  
+  ax.set_xlabel("Label")
+  ax.set_ylabel("Number of windows")
+  ax.set_title(f"Distribution of labels: {window_length_seconds} second windows")
+  plt.xticks(rotation=45, ha="right") # Rotate x-axis labels if they overlap
+  ax.grid(axis='y', linestyle='--')
+  # ax.set_ylim(0, (max(plot_values) + 50))
+
+  # Optional: Add text labels on top of bars
+  for bar in bars:
+      yval = bar.get_height()
+      ax.text(bar.get_x() + bar.get_width()/2.0, yval + 0.005 * max(plot_values), # Adjust offset
+              int(yval), # Display integer count
+              ha='center', va='bottom')
+
+  plt.tight_layout()
+
+  try:
+    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
+  except Exception as e:
+    print(f"Error saving plot to {output_filename}: {e}")
+
+  print(df)

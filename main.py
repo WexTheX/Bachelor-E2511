@@ -18,7 +18,7 @@ from typing import List, Dict, Any, Tuple, Sequence
 # Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
 from machineLearning import setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve, datasetOverview
+from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve, datasetOverview, plotScoreVsWindowLength
 from preprocessing import fillSets, downsample, pickleFiles, saveJoblibFiles
 from testonfile import offlineTest, calcExposure
 from config import setupML, loadDataset, main_config
@@ -107,7 +107,7 @@ def main(
             try:
                 df = extractDFfromFile(file, fs)
             except Exception as e:
-                print(f"Warning: Failed to extract DF from {file}: {e}. Continuing to next file")
+                print(f"Warning: Failed to extract DF from {file}: {e}. Skipping and continuing to next file")
                 continue
 
             if (ds_fs < fs):
@@ -128,6 +128,7 @@ def main(
 
         end_time = time.time()  # End timer
         elapsed_time = end_time - start_time
+
         print(f"Features extracted in {elapsed_time} seconds")
             
         feature_df.to_csv(output_path+str(ds_fs)+"_feature_df.csv", index=False)
@@ -165,8 +166,8 @@ def main(
     ''' Principal Component Analysis (PCA)'''
 
     # Calculate PCA components, create PCA object, fit + transform
-    PCA_components      = setNComponents(train_data_scaled, variance_explained)
-    PCA_final           = PCA(n_components = PCA_components)
+    # PCA_components      = setNComponents(train_data_scaled, variance_explained)
+    PCA_final           = PCA(n_components = variance_explained)
     PCA_final.fit(train_data_scaled)
 
     PCA_train_df        = pd.DataFrame(PCA_final.transform(train_data_scaled))
@@ -219,7 +220,7 @@ def main(
         
         fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
-        datasetOverview(window_labels, window_length_seconds)
+        datasetOverview(window_labels, window_length_seconds, test_size)
 
         plots = {
             'Learning curve': fig_0,
@@ -256,10 +257,12 @@ def main(
     
     return plots, result
 
-if __name__ == "__main__" and 1 == 1:
+
+if __name__ == "__main__" and 1:
     main(**main_config)
 
-if __name__ == "__main__" and 1 == 0:
+
+if __name__ == "__main__" and 0:
 
     start_time = time.time()
 
@@ -270,9 +273,10 @@ if __name__ == "__main__" and 1 == 0:
 
     window_lengths_for_plot = []
 
-    window_sec_lower = 15
-    window_sec_upper = 240
+    window_sec_lower = 180
+    window_sec_upper = 195
     window_sec_interval = 5
+    num_randomness: int = 5
 
     for i in range(window_sec_lower, window_sec_upper, window_sec_interval):
         
@@ -282,111 +286,54 @@ if __name__ == "__main__" and 1 == 0:
         main_config["want_feature_extraction"]  = True
         main_config["window_length_seconds"]    = i
 
-        randomness_list     = [random.randint(0,999999), random.randint(1000000,1999999), random.randint(2000000,2999999), random.randint(3000000,3999999), random.randint(4000000,4999999),
-                               random.randint(5000000,5999999), random.randint(6000000,6999999), random.randint(7000000,7999999), random.randint(8000000,8999999), random.randint(9000000,9999999)]
+        randomness_list = []
+        
+        current_f1          = np.zeros(num_randomness)
+        current_accuracy    = np.zeros(num_randomness)
 
-        current_f1          = np.zeros((len(randomness_list)))
-        current_accuracy    = np.zeros((len(randomness_list)))
+        for i in range(num_randomness):
+            randomness_list.append(random.randint(i*1000000, (i+1)*1000000 - 1)) 
+        
+        print(randomness_list)
+                               
+        f1_scores = []
+        accuracies = []
 
         for j, rand_seed in enumerate(randomness_list): 
-          
           main_config["random_seed"] = rand_seed
+          main_config["want_new_CLFs"] = True
+          main_config['model_selection'] = 'svm'
+          main_config['method_selection'] = []
 
+          print(rand_seed)
           plots, result = main(**main_config)
-
-          current_f1[j]         = result["test_f1_score"]
-          current_accuracy[j]   = result["test_accuracy"]
-
+          current_f1[j] = result["test_f1_score"]
+          current_accuracy[j] = result["test_accuracy"]
+          print(current_accuracy[j])
           main_config["want_feature_extraction"] = False
-        
+
         f1_mean.append(current_f1.mean())
         f1_std.append(current_f1.std())
 
         accuracy_mean.append(current_accuracy.mean())
         accuracy_std.append(current_accuracy.std())
 
-    np_f1_means = np.array(f1_mean)
-    np_f1_stds = np.array(f1_std)  
+        print(f1_mean)
 
-    np_accuracy_means = np.array(accuracy_mean)
-    np_accuracy_stds = np.array(accuracy_std)  
-
-    np_window_lengths = np.array(window_lengths_for_plot)
-
-    ## --- FIG 1 ---
-    plt.figure(figsize=(10, 6)) # Adjust figure size as needed
-
-    # Plot the mean F1 score line
-    plt.plot(np_window_lengths, np_f1_means, label='Mean F1 Score', color='blue', marker='o')
-
-    # Plot the ±1 standard deviation shaded area
-    plt.fill_between(
-        np_window_lengths,
-        np_f1_means - np_f1_stds, # Lower bound of the shaded area
-        np_f1_means + np_f1_stds, # Upper bound of the shaded area
+    plotScoreVsWindowLength(
+        window_lengths=window_lengths_for_plot,
+        mean_scores=f1_mean,
+        std_scores=f1_std,
+        score_type='F1 score',
         color='blue',
-        alpha=0.2,                # Transparency of the shaded area
-        label='Mean ± 1 STD'
+        filename='plots/f1_score_vs_window_length_2'
     )
 
-    plt.legend(fontsize=20)
-
-    plt.xlabel("Window Length (seconds)")
-    plt.ylabel("F1 Score")
-    plt.title("F1 Score vs. Window Length")
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.xticks(np.arange(window_sec_lower, window_sec_upper + 1, 25)) # Ensure all window lengths are shown as ticks
-    plt.ylim(0, 1.05) # F1 score is between 0 and 1
-    plt.tight_layout() # Adjust plot to prevent labels from overlapping
-
-    output_filename = "plots/f1_score_vs_window_length.png"
-
-    try:
-        plt.savefig(output_filename, dpi=300, bbox_inches='tight')
-    except Exception as e:
-        print(f"Error saving plot to {output_filename}: {e}")
-
-    ## --- FIG 2 ---
-
-    plt.figure(figsize=(10, 6)) # Adjust figure size as needed
-
-    # Plot the mean F1 score line
-    plt.plot(np_window_lengths, np_accuracy_means, label='Mean Accuracy Score', color='red', marker='o')
-
-    # Plot the ±1 standard deviation shaded area
-    plt.fill_between(
-        np_window_lengths,
-        np_accuracy_means - np_accuracy_stds, # Lower bound of the shaded area
-        np_accuracy_means + np_accuracy_stds, # Upper bound of the shaded area
+    plotScoreVsWindowLength(
+        window_lengths=window_lengths_for_plot,
+        mean_scores=f1_mean,
+        std_scores=f1_std,
+        score_type='Accuracy score',
         color='red',
-        alpha=0.2,                # Transparency of the shaded area
-        label='Mean ± 1 STD'
+        filename='plots/accuracy_score_vs_window_length_2'
     )
-
-    plt.legend(fontsize=20)
-
-    plt.xlabel("Window Length (seconds)")
-    plt.ylabel("Accuracy Score")
-    plt.title("Accuracy Score vs. Window Length")
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.xticks(np.arange(window_sec_lower, window_sec_upper + 1, 25)) # Ensure all window lengths are shown as ticks
-    plt.ylim(0, 1.05) # Accuracy score is between 0 and 1
-    plt.tight_layout() # Adjust plot to prevent labels from overlapping
-
-    output_filename = "plots/accuracy_score_vs_window_length.png"
-
-    try:
-        plt.savefig(output_filename, dpi=300, bbox_inches='tight')
-    except Exception as e:
-        print(f"Error saving plot to {output_filename}: {e}")
-
-    end_time = time.time()  # End timer
-    elapsed_time = end_time - start_time
-    print(f"Score vs window length plotted in {elapsed_time} seconds")
-    
-    plt.show()
-
-if __name__ == "__main__" and 1 == 0:
-    main(**main_config)

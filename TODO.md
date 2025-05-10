@@ -101,3 +101,13 @@ resultat
 alt på diskusjon
 konklusjon
 hjelp med README file
+
+
+
+
+% Ekstra
+
+delete_header() fix
+kurt / skew fix for NaN
+gjer manuell plotting bedre
+fix calcexposure / exposuresummary

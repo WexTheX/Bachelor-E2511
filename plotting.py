@@ -817,9 +817,12 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
 
 def datasetOverview(labels:                 Sequence,
                     window_length_seconds:  int,
+                    test_size:              float,
                     output_filename:        str = "plots/distribution_of_labels"
                     ) -> Figure:
   
+  train_size = 1-test_size
+
   counts_overview = {}
 
   counts = Counter(labels)
@@ -831,27 +834,44 @@ def datasetOverview(labels:                 Sequence,
 
   df = pd.DataFrame([counts_overview])
 
-  plot_labels = list(counts.keys())
-  plot_values = list(counts.values())
+  sorted_counts = dict(sorted(counts.items()))
+  plot_labels = list(sorted_counts.keys())
+  plot_values = list(sorted_counts.values())
 
   # Create Figure and Axes objects
   fig, ax = plt.subplots(figsize=(10, 6)) # Adjust figsize as needed
 
   bars = ax.bar(plot_labels, plot_values, color='skyblue')
   
-  ax.set_xlabel("Label")
+  ax.set_xlabel("Class")
   ax.set_ylabel("Number of windows")
-  ax.set_title(f"Distribution of labels: {window_length_seconds} second windows")
+  ax.set_title(f"Distribution of classes in the dataset, {window_length_seconds} second windows")
   plt.xticks(rotation=45, ha="right") # Rotate x-axis labels if they overlap
   ax.grid(axis='y', linestyle='--')
   # ax.set_ylim(0, (max(plot_values) + 50))
 
+  total_minutes=0.0
+  total_samples =0
   # Optional: Add text labels on top of bars
   for bar in bars:
+      
       yval = bar.get_height()
+
       ax.text(bar.get_x() + bar.get_width()/2.0, yval + 0.005 * max(plot_values), # Adjust offset
               int(yval), # Display integer count
               ha='center', va='bottom')
+      
+      total_minutes += yval * window_length_seconds / 60
+      total_samples += yval
+
+  # Add total_seconds as a box annotation in the plot
+  ax.text(0.95, 0.95,
+          f"Total minutes: {int(total_minutes):,}\nTotal samples: {int(total_samples):,}\nTrain samples: {int(train_size * total_samples)}",
+          transform=ax.transAxes,
+          fontsize=12,
+          verticalalignment='top',
+          horizontalalignment='right',
+          bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.5))
 
   plt.tight_layout()
 
@@ -861,3 +881,47 @@ def datasetOverview(labels:                 Sequence,
     print(f"Error saving plot to {output_filename}: {e}")
 
   print(df)
+
+def plotScoreVsWindowLength(window_lengths, mean_scores, std_scores, score_type='F1 Score', color='blue', filename=None):
+    """
+    Plots a score (e.g., F1 score or Accuracy) with ±1 standard deviation shaded area and saves the plot.
+    
+    Parameters:
+        window_lengths (list or array): The x-axis values (window lengths).
+        mean_scores (list or array): The mean values of the scores (F1 or Accuracy).
+        std_scores (list or array): The standard deviation values for the scores.
+        score_type (str): Type of the score ('F1 Score' or 'Accuracy Score'). Default is 'F1 Score'.
+        color (str): The color of the plot line and shaded area. Default is 'blue'.
+        filename (str): The path to save the plot image. If None, the plot will not be saved.
+    """
+    np_window_lengths = np.array(window_lengths)
+    np_mean_scores = np.array(mean_scores)
+    np_std_scores = np.array(std_scores)
+
+    # --- Generalized Plot ---
+    plt.figure(figsize=(10, 6))
+    plt.plot(np_window_lengths, np_mean_scores, label=f'Mean {score_type}', color=color, marker='o')
+
+    plt.fill_between(np_window_lengths, np_mean_scores - np_std_scores, np_mean_scores + np_std_scores,
+                     color=color, alpha=0.2, label=f'Mean ± 1 STD')
+
+    plt.xlabel("Window Length (seconds)")
+    plt.ylabel(f"{score_type}")
+    plt.title(f"{score_type} vs. Window Length")
+    plt.legend(fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.xticks(np.arange(min(np_window_lengths), max(np_window_lengths) + 1, 25))
+    plt.ylim(0, 1.05)
+    plt.tight_layout()
+
+    # Save the plot if a filename is provided
+    if filename:
+        try:
+            plt.savefig(filename, dpi=300, bbox_inches='tight')
+            print(f"Saved {score_type} plot to {filename}")
+        except Exception as e:
+            print(f"Error saving {score_type} plot: {e}")
+
+    plt.show()
+
+    return None

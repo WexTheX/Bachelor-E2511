@@ -16,7 +16,7 @@ main_config = {
     'want_feature_extraction':  0,
     'norm_IMU':                 0,
     'separate_types':           1,
-    'want_new_CLFs':            0,
+    'want_new_CLFs':            1,
     'want_plots':               0,
     'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
@@ -26,15 +26,15 @@ main_config = {
                                 #  , 'rf', 'gb', 'ada'
                                 #  , 'gnb'
                                 ],
-    'method_selection':         ['gs', 'rs', 'hgs', 'Bs'],
+    'method_selection':         [],
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.70,
-    'random_seed':              42,
-    'window_length_seconds':    15,
+    'random_seed':              4,
+    'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
-    'ds_fs':                    800,  # Downsampled frequency, DS is WIP bc filtering
+    'ds_fs':                    800,    # Downsampled frequency, DS is WIP bc filtering
     'cmap':                     'tab10', # Colormap for plotting
     'n_iter':                   30,   # Iterations for RandomizedSearch
 
@@ -186,7 +186,7 @@ def loadDataset(separate_types: bool,
 
     if separate_types == True:
         
-        path            = "Datafiles/DatafilesSeparated_Aker" 
+        path            = "Datafiles/DatafilesSeparated_without_Aker" 
         output_path     = "OutputFiles/Separated/"
 
         labels = [

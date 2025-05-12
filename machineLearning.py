@@ -353,7 +353,7 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
     start             = time.time()
     test_predict      = clf.predict(test_df)
     end               = time.time()
-    predict_time      = 1000 * (end-start) #/ len(test_labels)
+    predict_time      = 1000 * (end-start) / len(test_labels)
 
     accuracy_score    = metrics.accuracy_score(test_labels, test_predict)
     f1_score          = metrics.f1_score(test_labels, test_predict, average="weighted")

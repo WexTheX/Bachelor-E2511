@@ -21,12 +21,9 @@ main_config = {
     'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
     'want_calc_exposure':       0,
-    'model_selection':          [#'lr', 
-                              'svm', #'knn'
-                                #  , 'rf', 'gb', 'ada'
-                                 #, 'gnb'
-                                ],
-    'method_selection':         [],
+    'model_selection':          ['lr'
+                                ], #['lr', 'svm', 'knn', 'rf', 'gb', 'ada', 'gnb']
+    'method_selection':         ["BS", "RS", "GS", "HGS"], #"BS", "RS", "GS", "HGS"
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       2,

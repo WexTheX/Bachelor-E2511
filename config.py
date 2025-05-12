@@ -21,13 +21,12 @@ main_config = {
     'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
     'want_calc_exposure':       0,
-    'model_selection':          ['lr'
-                                ], #['lr', 'svm', 'knn', 'rf', 'gb', 'ada', 'gnb']
-    'method_selection':         ["BS", "RS", "GS", "HGS"], #"BS", "RS", "GS", "HGS"
+    'model_selection':          ['lr'],# 'svm', 'knn', 'rf', 'ada', 'gnb'],
+    'method_selection':         ["BS"], #"BS", "RS", "GS", "HGS"
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       2,
-    'random_seed':              64,
+    'variance_explained':       0.95,
+    'random_seed':              420,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
@@ -72,12 +71,12 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                 1.0, 10.0, 100.0
+                                #  1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-        "coef0":                [0.0, 0.5, 1.0],
-        "degree":               [2, 3, 4, 5]
+        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        # "coef0":                [0.0, 0.5, 1.0],
+        # "degree":               [2, 3, 4, 5]
     }
 
     KNN_param_grid = {
@@ -112,9 +111,9 @@ def setupML():
 
     RF_param_grid = {
         'n_estimators':         [50, 100, 200],         # Number of trees in the forest
-        'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
-        'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
-        'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
+        # 'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
+        # 'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
+        # 'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
         'max_features':         ['sqrt', 'log2'],       # Number of features considered for splitting
         # 'bootstrap':            [True, False],          # Whether to use bootstrapped samples
         'criterion':            ['gini', 'entropy']     # Splitting criteria
@@ -133,7 +132,7 @@ def setupML():
     ADA_param_grid = {
         'n_estimators':                 [50, 100, 200],
         'learning_rate':                [0.01, 0.1, 1.0],
-        'estimator__max_depth':         [1, 3, 5],
+        # 'estimator__max_depth':         [1, 3, 5],
         'estimator__min_samples_split': [2, 5]
     }
 

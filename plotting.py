@@ -471,7 +471,7 @@ def confusionMatrix(labels:           Sequence,
     
     conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities, normalize="true")
     plt.figure(figsize=(10, 8))
-    sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activities, yticklabels=activities, ax=ax)
+    sns.heatmap(conf_matrix, annot=True, cmap='Blues', xticklabels=activities, yticklabels=activities, ax=ax)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("Actual")
     ax.set_title(f'Confusion matrix, {model}: {optimalizer}')

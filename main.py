@@ -214,9 +214,9 @@ def main(
         
         ''' PLOTS OF PCA '''
         
-        fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
 
-        fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, want_arrows=False)
+        fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
         
         fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 

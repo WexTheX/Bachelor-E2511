@@ -13,24 +13,24 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  1,
+    'want_feature_extraction':  0,
     'norm_IMU':                 0,
     'separate_types':           1,
     'want_new_CLFs':            1,
-    'want_plots':               0,
+    'want_plots':               1,
     'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
     'want_calc_exposure':       0,
-    'model_selection':          ['lr', 
-                                 'svm', 'knn'
-                                 , 'rf', 'gb', 'ada'
-                                 , 'gnb'
+    'model_selection':          [#'lr', 
+                              'svm', #'knn'
+                                #  , 'rf', 'gb', 'ada'
+                                 #, 'gnb'
                                 ],
     'method_selection':         [],
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       0.95,
-    'random_seed':              7,
+    'variance_explained':       2,
+    'random_seed':              64,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
@@ -190,8 +190,8 @@ def loadDataset(separate_types: bool,
         output_path     = "OutputFiles/Separated/"
 
         labels = [
-            'GRINDBIG', 'GRINDSMALL',
-            'IDLE', 'IMPA', 'GRINDMED',
+            'GRINDBIG', 'GRINDMED', 'GRINDSMALL',
+            'IDLE', 'IMPA', 
             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
 

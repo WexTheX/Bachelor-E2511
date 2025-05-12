@@ -186,7 +186,8 @@ def biplot(feature_df:              pd.DataFrame,
            scaler:                  Any,
            train_labels:            Sequence,
            label_mapping:           Dict[str, Any],
-           want_arrows:             bool,
+           window_length_seconds:   int,
+           want_arrows:             bool = False,
            feature_start_index:     int = 90,
            num_features_per_sensor: int = 15,
            output_filename:         str = "plots/biplot.png"
@@ -245,7 +246,7 @@ def biplot(feature_df:              pd.DataFrame,
 
   plt.xlabel("PC1")
   plt.ylabel("PC2")
-  plt.title("Complete dataset in 2 Principal Components")
+  plt.title(f"Complete dataset in 2 Principal Components, {window_length_seconds}s windows")
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 
@@ -262,7 +263,8 @@ def biplot3D(feature_df:              pd.DataFrame,
              scaler:                  Any,
              train_labels:            Sequence,
              label_mapping:           Dict[str, Any],
-             want_arrows:             bool,
+             window_length_seconds:   int,
+             want_arrows:             bool = False,
              feature_start_index:     int = 90,
              num_features_per_sensor: int = 15,
              output_filename:         str = "plots/biplot3D.png"
@@ -330,7 +332,7 @@ def biplot3D(feature_df:              pd.DataFrame,
   ax.set_xlabel("PC1")
   ax.set_ylabel("PC2")
   ax.set_zlabel("PC3")
-  plt.title("Complete dataset in 3 Principal Components")
+  plt.title(f"Complete dataset in 3 Principal Components, {window_length_seconds}s windows")
 
   plt.legend(handles=legend_handles, title="Labels", loc='best') # 'best' tries to find optimal location
 

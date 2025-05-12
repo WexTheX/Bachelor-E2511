@@ -393,7 +393,9 @@ def plotDecisionBoundaries(X:               pd.DataFrame,
         disp = DecisionBoundaryDisplay.from_estimator(
                 clf,
                 X,
+                grid_resolution=1000,
                 response_method="predict",
+                plot_method='pcolormesh',
                 cmap=cmap,
                 alpha=0.6,
                 ax=ax,
@@ -467,7 +469,7 @@ def confusionMatrix(labels:           Sequence,
 
     test_predict = clf.predict(X_test)
     
-    conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities)
+    conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities, normalize="true")
     plt.figure(figsize=(10, 8))
     sns.heatmap(conf_matrix, annot=True, cmap='coolwarm', xticklabels=activities, yticklabels=activities, ax=ax)
     ax.set_xlabel("Predicted")

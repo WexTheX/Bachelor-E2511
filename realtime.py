@@ -44,6 +44,7 @@ df_columns = ["Timestamp",                                         # Predefines 
            "Temp","Press",
            "Range","Lum","IRLum"]    
 prediction_list = {}   
+time_per_activity = {}
 tot_sample_log = []                                      # Prepares dict of predictions
 
 ''' PICKLE IMPORTS '''
@@ -271,6 +272,13 @@ async def RT_main():
             print(f"Streaming stopped, {end_time_local}")
 
             print(f"Prediction list: \n {prediction_list}")
+
+            temp_predictions = prediction_list.values()
+
+            for i in temp_predictions:
+                time_per_activity[i] = time_per_activity[i] + window_length_sec
+
+            print(f"Time spent per activity in seconds: \n {time_per_activity}")
 
             ''' STORE SAMPLE LOG FOR FUTURE ANALYSIS '''
             #sample_df = pd.DataFrame(data=tot_sample_log, columns=df_columns)

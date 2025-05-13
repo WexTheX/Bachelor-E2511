@@ -72,7 +72,7 @@ def main(
     '''
     
     fig_list_0, fig_list_1, n_results, accuracy_list = [], [], [], []
-    fig_0, fig_1, fig_2, fig_3, fig_4, fig_5 = None, None, None, None, None, None
+    fig_0, fig_1, fig_2, fig_3, fig_4, fig_5, fig_6 = None, None, None, None, None, None, None
     plots = {}
     combined_df = pd.DataFrame()
     result = {}
@@ -220,7 +220,7 @@ def main(
         
         fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
-        datasetOverview(window_labels, window_length_seconds, test_size)
+        fig_6 = datasetOverview(window_labels, window_length_seconds, test_size)
 
         plots = {
             'Learning curve': fig_0,
@@ -230,7 +230,8 @@ def main(
             'Scree plot': fig_2,
             'Biplot': fig_3,
             'Biplot 3D': fig_4,
-            'Decision boundaries': fig_5
+            'Decision boundaries': fig_5,
+            'Distribution of labels': fig_6
         }
 
         ## Only to not get double plots when using/ importing main function to user interface

@@ -57,20 +57,20 @@ def rename_data(path:           str,
                 convert_bin_to_txt(os.path.join(folder_path, f))
 
         # Fetch and sort .txt files based on new date format
-        files = sorted(
-            [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activity_name[i])],
-            key=convert_date_format  # Sorts based on date YYYY / MM / DD
-        )
+        # files = sorted(
+        #     [f for f in os.listdir(folder_path) if f.endswith(".txt") and not f.startswith(activity_name[i])],
+        #     key=convert_date_format  # Sorts based on date YYYY / MM / DD
+        # )
 
-        for old_name in files:
-            new_index = find_next_available_index(folder_path, activity_name[i])  # Find available index
-            new_name = f"{activity_name[i]}_{new_index}.txt"
+        # for old_name in files:
+        #     new_index = find_next_available_index(folder_path, activity_name[i])  # Find available index
+        #     new_name = f"{activity_name[i]}_{new_index}.txt"
             
-            old_path = os.path.join(folder_path, old_name)
-            new_path = os.path.join(folder_path, new_name)
+        #     old_path = os.path.join(folder_path, old_name)
+        #     new_path = os.path.join(folder_path, new_name)
 
-            os.rename(old_path, new_path)
-            print(f"Name updated from: {old_name} -> {new_name}")
+        #     os.rename(old_path, new_path)
+        #     print(f"Name updated from: {old_name} -> {new_name}")
 
     print("Namechanges completed!")
 
@@ -82,7 +82,7 @@ def tab_txt_to_csv(txt_file:    str,
     
     # Convert tab seperated txt file to csv file
     # txt_file, csv_file format : "filename.txt", "filename.csv"
-    df_txt = pd.read_csv(txt_file, delimiter=r'\t', engine='python') # Delimiter is now all whitespace (tab and space etc)
+    df_txt = pd.read_csv(txt_file, delimiter=r'\t', engine='python') 
     df_txt.to_csv(csv_file, index = None)
 
     return None
@@ -109,13 +109,15 @@ def fillSets(path:  str
             if f.endswith(".bin") and not f.startswith(activity_name[i]):
                 convert_bin_to_txt(os.path.join(folder_path, f))
 
-        txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt") and os.path.isfile(os.path.join(folder_path, f))]
-        
-        
-        for j in range(len(txt_files)):
+        # txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt") and os.path.isfile(os.path.join(folder_path, f))]
+        for f in os.listdir(folder_path):
+            if f.endswith(".txt"):
+                sets.append(f"{folder_path}/" + f)
+                sets_label.append(activity_name[i])
+        # for j in range(len(txt_files)):
 
-            sets.append(f"{folder_path}/{activity_name[i]}_" + str(j) )
-            sets_label.append(activity_name[i])
+        #     sets.append(f"{folder_path}/{activity_name[i]}_" + str(j) )
+        #     sets_label.append(activity_name[i])
 
     ''' TODO: ONLY USE ONE DATAFILES FOLDER '''
     # for i, name in enumerate(path_names):

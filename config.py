@@ -13,7 +13,7 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  0,
+    'want_feature_extraction':  1,
     'norm_IMU':                 0,
     'separate_types':           1,
     'want_new_CLFs':            1,

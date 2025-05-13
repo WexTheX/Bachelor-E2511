@@ -17,20 +17,17 @@ main_config = {
     'norm_IMU':                 0,
     'separate_types':           1,
     'want_new_CLFs':            1,
-    'want_plots':               0,
+    'want_plots':               1,
     'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
     'want_offline_test':        0,
     'want_calc_exposure':       0,
-    'model_selection':          ['svm', 
-                                #  'svm', 'knn'
-                                #  , 'rf', 'gb', 'ada'
-                                #  , 'gnb'
-                                ],
-    'method_selection':         [],
+    'model_selection':          ['lr'
+                                ], #['lr', 'svm', 'knn', 'rf', 'gb', 'ada', 'gnb']
+    'method_selection':         ["BS", "RS", "GS", "HGS"], #"BS", "RS", "GS", "HGS"
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       0.70,
-    'random_seed':              4,
+    'variance_explained':       2,
+    'random_seed':              64,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
@@ -75,12 +72,12 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                #  1.0, 10.0, 100.0
+                                 1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
         "coef0":                [0.0, 0.5, 1.0],
-        # "degree":               [2, 3, 4, 5]
+        "degree":               [2, 3, 4, 5]
     }
 
     KNN_param_grid = {
@@ -186,18 +183,18 @@ def loadDataset(separate_types: bool,
 
     if separate_types == True:
         
-        path            = "Datafiles/DatafilesSeparated_without_Aker" 
+        path            = "Datafiles/DatafilesSeparated_Aker" 
         output_path     = "OutputFiles/Separated/"
 
         labels = [
-            'GRINDBIG', 'GRINDSMALL',
-            'IDLE', 'IMPA', 'GRINDMED',
+            'GRINDBIG', 'GRINDMED', 'GRINDSMALL',
+            'IDLE', 'IMPA', 
             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
 
     if separate_types == False:
 
-        path            = "Datafiles/DatafilesCombined_without_Aker"
+        path            = "Datafiles/DatafilesCombined_Aker"
         output_path     = "OutputFiles/Combined/"
 
         labels = [

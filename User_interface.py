@@ -210,18 +210,27 @@ with tab5:
 
     path = "Datafiles"
     # TODO Fix separated and combined
+    if separate_types == True:
+        category_dirs = {
+            "GrindBig": path + "/DatafilesSeparated_Aker/GrindBig",
+            "GrindMed": path + "/DatafilesSeparated_Aker/GrindMed",
+            "GrindSmall": path + "/DatafilesSeparated_Aker/GrindSmall",
+            "Idle": path + "/DatafilesSeparated_Aker/Idle",
+            "Impa": path + "/DatafilesSeparated_Aker/Impa",  
+            #"SandSim": path + "/DatafilesSeparated/SandSim",
+            "WeldAlTIG": path + "/DatafilesSeparated_Aker/WeldAlTIG",
+            "WeldStMAG": path + "/DatafilesSeparated_Aker/WeldStMAG",
+            "WeldStTIG": path + "/DatafilesSeparated_Aker/WeldStTIG"
+        }
+    
+    else:
+        category_dirs = {
+            "Grinding": path + "DatafilesCombined_aker/Grinding",
+            "Idle": path + "DatafilesCombined_aker/Idle",
+            "Impa": path + "DatafilesCombined_aker/Impa",
+            "Welding": path + "DatafilesCombined_aker/Welding"
+        }
 
-    category_dirs = {
-        "GrindBig": path + "/DatafilesSeparated/GrindBig",
-        "GrindMed": path + "/DatafilesSeparated/GrindMed",
-        "GrindSmall": path + "/DatafilesSeparated/GrindSmall",
-        "Idle": path + "/DatafilesSeparated/Idle",
-        "Impa": path + "/DatafilesSeparated/Impa",  
-        #"SandSim": path + "/DatafilesSeparated/SandSim",
-        "WeldAlTIG": path + "/DatafilesSeparated/WeldAlTIG",
-        "WeldStMAG": path + "/DatafilesSeparated/WeldStMAG",
-        "WeldStTIG": path + "/DatafilesSeparated/WeldStTIG"
-    }
 
     #Dropdown menu for category selection
     selected_category = st.selectbox("Select Activity Type", category_dirs.keys())

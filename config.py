@@ -16,29 +16,30 @@ main_config = {
     'want_feature_extraction':  0, # True: Extract statistical features from datafiles files, create "feature_df" dataframe. False: Read "xxx_feature_df.csv" from file
     'norm_IMU':                 0, # True: Normalize IMU data. False: Use IMU data in x, y, and z direction
     'use_granular_labels':      0, # True: Use granular (8) labels for classification. False: Use high-level (4) labels for classification
-    'want_new_CLFs':            0, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
-    'want_plots':               0, # True: Generate and save plots. False: Skip plotting
-    'save_joblib':              1, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
-    'want_offline_test':        1, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
-    'want_calc_exposure':       1, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip
-    'model_selection': [
+    'want_new_CLFs':            1, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
+    'want_plots':               1, # True: Generate and save plots. False: Skip plotting
+    'save_joblib':              0, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
+    'want_offline_test':        0, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
+    'want_calc_exposure':       0, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip
+    'model_selection': [        
+                                # 'LR',        
                                 'SVM',
-                                # 'RF',
                                 # 'KNN',
                                 # 'GNB',
-                                # 'LR',
+                                # 'RF',
                                 # 'GB',
-                                # 'ADA',
+                                # 'ADA',                  
     ],
+
     'method_selection':         [
-                                'BS',
+                                'BS',    
                                 # 'RS',
                                 # 'GS',
                                 # 'HGS'
     ],
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       0.95,
+    'variance_explained':       2,
     'random_seed':              42,
     'window_length_seconds':    20,
     'test_size':                0.25,
@@ -68,7 +69,7 @@ main_config = {
 
 def setupML():
 
-    random_seed = 420
+    random_seed = main_config['random_seed']
     num_folds = 3
 
     base_params =  {'class_weight': 'balanced', 
@@ -84,12 +85,12 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                 1.0, 10.0, 100.0
+                                #  1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-        "coef0":                [0.0, 0.5, 1.0],
-        "degree":               [2, 3, 4, 5]
+        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        # "coef0":                [0.0, 0.5, 1.0],
+        # "degree":               [2, 3, 4, 5]
     }
 
     KNN_param_grid = {
@@ -178,7 +179,7 @@ def setupML():
     
     search_kwargs = {
         'n_jobs':              -1, 
-        'verbose':             3,
+        'verbose':             0,
         'cv':                  StratifiedKFold(n_splits=num_folds),
         'scoring':             'f1_weighted',
         'return_train_score':  True
@@ -195,7 +196,7 @@ def loadDataset(use_granular_labels:    bool,
 
     if use_granular_labels == True:
         
-        path            = "Datafiles/DatafilesSeparated_Aker" # "Datafiles/DatafilesSeparated_without_Akgber"
+        path            = "Datafiles/DatafilesSeparated_Aker" # "Datafiles/DatafilesSeparated_without_Aker"
         output_path     = "OutputFiles/Separated/"
 
         labels = [

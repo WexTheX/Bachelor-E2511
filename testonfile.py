@@ -39,10 +39,9 @@ def runInferenceOnFile(file_path:           str,
                         ds_fs:              int,
                         window_length_sec:  int,
                         want_prints:        bool,
-                        file_to_test:       str,
                         variables:          list[str],
                         norm_IMU:               bool,
-                        separated_or_combined:  str = 'Combined', # or Combined
+                        separated_or_combined:  str = 'Separated', # or Combined
 
                         start_offset:       int = 0
                         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -73,7 +72,7 @@ def runInferenceOnFile(file_path:           str,
     results = []
 
     print("___________________________________________________________________________________")
-    print(f"Testing file {file_to_test}")
+    print(f"Testing file {file_path}")
     
     ### Load trained model
     clf     = joblib.load(clf_path)
@@ -212,23 +211,29 @@ def offlineTest(test_file_path:        str,
 
     # Paths
     test_files          = os.listdir(test_file_path)
+   
     df_result_all       = [] # List for storing results
 
     for filename in test_files:
-
-        file_to_test = os.path.join(test_file_path, filename)
-        file_to_test_no_ext = file_to_test.replace(".txt", "")
         
-        if filename.endswith(".csv"):
-            continue  # Skipping .csv files
+        try:
+            # file_to_test = test_file_path + "/" + filename
 
-        elif filename.endswith(".bin"): ##Converting .bin to .txt
-            convert_bin_to_txt(file_to_test_no_ext)
+            file_to_test = os.path.join(test_file_path, filename)
+            
+            # file_to_test_no_ext = file_to_test.replace(".txt", "")
+            
+            if filename.endswith(".csv"):
+                continue  # Skipping .csv files
 
-        df_result, features_df = runInferenceOnFile(file_to_test_no_ext, fs, ds_fs, window_length_seconds, want_prints,
-                                                    file_to_test, variables, norm_IMU)
-    
-        df_result_all.append(df_result)
+            elif filename.endswith(".bin"): ##Converting .bin to .txt
+                convert_bin_to_txt(file_to_test)
+
+            df_result, features_df = runInferenceOnFile(file_to_test, fs, ds_fs, window_length_seconds, want_prints, variables, norm_IMU)
+        
+            df_result_all.append(df_result)
+        except Exception as e:
+            print(f"Warning: Skipped {filename}: {e}")
 
     # Save as csv
     combined_df = pd.concat(df_result_all, ignore_index=True)
@@ -252,7 +257,7 @@ def calcExposure(combined_df:               pd.DataFrame,
                  predictions_csv:           str = "predictions.csv",
                  activity_length_csv:       str = "activity_length.csv",
                  summary_csv:               str = "exposure_summary.csv",
-                 seconds_to_x:              int = 3600,
+                 seconds_to_x:              int = 60,
                  default_activity_length:   float = 0.0,
                 ) -> pd.DataFrame:
     
@@ -359,8 +364,6 @@ def initializeExposureIntensityMatrix(  exposures:                     list[str]
       which act as proxies for the actual exposure intensity (e.g., using
       acceleration energy for MSK load).
     '''
-
-    # 1, 60, 3600
 
     # TODO 
     # Future work: find more proxies, set up sensor readings coming in

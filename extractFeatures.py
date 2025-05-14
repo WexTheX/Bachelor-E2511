@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 # SignalProcessing part is needed when this file is imported in main.py
 from SignalProcessing.get_Time_Domain_features_of_signal import get_Time_Domain_features_of_signal
 from SignalProcessing.get_Freq_Domain_features_of_signal import get_Freq_Domain_features_of_signal
-from preprocessing import tab_txt_to_csv, delete_header, rename_data, compare_bin_and_txt
+from preprocessing import tab_txt_to_csv, delete_header, preprocess_filetype, compare_bin_and_txt
 
 # Changed name for clarity
 # Still based on Roya's "ExtractIMU_Features"
@@ -31,6 +31,7 @@ def extractDFfromFile(file_path:    str,
     
     # TODO fix delete_header()
     # delete_header(file_path)
+
     df = pd.read_csv(file_path, delimiter="\t")
 
     ''' REMOVE 10 SECONDS '''

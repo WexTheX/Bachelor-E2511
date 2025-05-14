@@ -198,7 +198,7 @@ def main(
         
         ''' CONFUSION MATRIX '''
 
-        fig_0 = plotLearningCurve(n_results, PCA_train_df, train_labels)
+        # fig_0 = plotLearningCurve(n_results, PCA_train_df, train_labels)
 
         fig_1 = confusionMatrix(test_labels, PCA_test_df, activity_name, result)
         
@@ -331,8 +331,8 @@ if __name__ == "__main__" and 0:
     print(std_df)
     print(randomness_list)
 
-    mean_dfs.to_csv("OutputFiles/mean_dfs")
-    std_df.to_csv("OutputFiles/std_df")
+    mean_dfs.to_csv("OutputFiles/mean_metrics_results")
+    std_df.to_csv("OutputFiles/std_metrics_results")
 
     # f1_mean.append(current_f1.mean())
     # f1_std.append(current_f1.std())

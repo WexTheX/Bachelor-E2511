@@ -33,7 +33,7 @@ variables = []
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_0.txt")
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_1.txt")
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_2.txt")
-datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_3.txt")
+# datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_3.txt")
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_4.txt")
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_5.txt")
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_6.txt")
@@ -70,7 +70,9 @@ datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_4.txt")
 # datasets.append("Preprocessing/DatafilesSeparated/Idle/IDLE_8.txt")
 
-# datasets.append("800v200hz/800hz.txt")
+
+
+
 
 ''' ADD VARIABLES '''
 variables.append("Axl.X")
@@ -372,19 +374,19 @@ f_type = "fir"
 # normalizeSets(datasets)
 
 ds_fs = 800
-plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-plotWelch(datasets, variables, fs, ds_fs, size=size)  
+# plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
 ds_fs = 400
-plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-plotWelch(datasets, variables, fs, ds_fs, size=size)
+# plotWelch(datasets, variables, fs, ds_fs, size=size)
 
 ds_fs = 200
-plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
-plotWelch(datasets, variables, fs, ds_fs, size=size)
+# plotWelch(datasets, variables, fs, ds_fs, size=size)
 
 # f_type = "iir"
 # ds_fs = 200
@@ -392,16 +394,36 @@ plotWelch(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
 # plotWelch(datasets, variables, fs, ds_fs, f_type = "iir", size=size)
 
-# datasets = []
-# datasets.append("800v200hz/200hz.txt")
+datasets = []
+# datasets.append("sample_test/test1/800 hz/30.04.2025 080330.txt")
+# datasets.append("sample_test/test2/800 hz/30.04.2025 080916.txt")
+# datasets.append("sample_test/test3/800 hz/30.04.2025 084548.txt")
+# datasets.append("sample_test/test4/800 hz/30.04.2025 090747.txt")
 
-fs = 200
+# fs = 800
+ds_fs = 800
+# plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotFFT(datasets, variables, fs, ds_fs, size=size)
+# plotWelch(datasets, variables, fs, ds_fs, size=size) 
+
+fs = 800
 ds_fs = 200
 # plotTime(datasets, variables, fs, ds_fs, size=size)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
 # plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
 
+datasets = []
+# datasets.append("sample_test/test1/200 hz/30.04.2025 080328.txt")
+# datasets.append("sample_test/test2/200 hz/30.04.2025 080914.txt")
+# datasets.append("sample_test/test3/200 hz/30.04.2025 084546.txt")
+# datasets.append("sample_test/test4/200Hz/30.04.2025 090745.txt")
+
+fs = 200
+ds_fs = 200
+# plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotFFT(datasets, variables, fs, ds_fs, size=size)
+# plotWelch(datasets, variables, fs, ds_fs, size=size)  
 
 plt.show()
 

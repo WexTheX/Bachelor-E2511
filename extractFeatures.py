@@ -30,7 +30,7 @@ def extractDFfromFile(file_path:    str,
     #   print(f"Error in read_csv in file {file_path}: {e}")
     
     # TODO fix delete_header()
-    delete_header(file_path)
+    # delete_header(file_path)
     df = pd.read_csv(file_path, delimiter="\t")
 
     ''' REMOVE 10 SECONDS '''

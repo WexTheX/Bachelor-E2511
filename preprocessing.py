@@ -39,7 +39,7 @@ def convert_date_format(filename: str
     
     return filename # Returns date if nothing is changed
 
-def rename_data(path:           str,
+def preprocess_filetype(path:           str,
                 path_names:     Sequence,
                 activity_name:  str
                 ) -> None:
@@ -48,7 +48,7 @@ def rename_data(path:           str,
 
     for i in range(len(path_names)):
         folder_path = os.path.join(path, path_names[i])
-        print(f"Re-naming files in: {folder_path}")
+        print(f"Preprocessing filetype in: {folder_path}")
 
         
         # Convert bin to txt file if bin file found
@@ -72,7 +72,7 @@ def rename_data(path:           str,
         #     os.rename(old_path, new_path)
         #     print(f"Name updated from: {old_name} -> {new_name}")
 
-    print("Namechanges completed!")
+    print("Filetype preprocessing completed!")
 
     return None
 
@@ -93,7 +93,7 @@ def fillSets(path:  str
     path_names          = os.listdir(path)
     activity_name       = [name.upper() for name in path_names]
 
-    rename_data(path, path_names, activity_name)
+    preprocess_filetype(path, path_names, activity_name)
 
     sets:       List[str] = []
     sets_label: List[str] = []

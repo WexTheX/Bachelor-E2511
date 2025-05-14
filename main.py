@@ -164,8 +164,8 @@ def main(
     ''' Principal Component Analysis (PCA)'''
 
     # Calculate PCA components, create PCA object, fit + transform
-    # PCA_components      = setNComponents(train_data_scaled, variance_explained)
-    PCA_final           = PCA(n_components = variance_explained)
+    PCA_components      = setNComponents(train_data_scaled, variance_explained)
+    PCA_final           = PCA(n_components = PCA_components)
     PCA_final.fit(train_data_scaled)
 
     PCA_train_df        = pd.DataFrame(PCA_final.transform(train_data_scaled))
@@ -212,13 +212,13 @@ def main(
         
         ''' PLOTS OF PCA '''
         
-        fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
+        # fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
 
-        fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
+        # fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
         
-        fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        # fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
-        fig_6 = datasetOverview(window_labels, window_length_seconds, test_size)
+        # fig_6 = datasetOverview(window_labels, window_length_seconds, test_size)
 
         plots = {
             'Learning curve': fig_0,

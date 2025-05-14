@@ -15,31 +15,31 @@ main_config = {
     # --- GLOBAL VARIABLES / FLAGS ---
     'want_feature_extraction':  0, # True: Extract statistical features from datafiles files, create "feature_df" dataframe. False: Read "xxx_feature_df.csv" from file
     'norm_IMU':                 0, # True: Normalize IMU data. False: Use IMU data in x, y, and z direction
-    'use_granular_labels':      0, # True: Use granular (8) labels for classification. False: Use high-level (4) labels for classification
+    'use_granular_labels':      1, # True: Use granular (8) labels for classification. False: Use high-level (4) labels for classification
     'want_new_CLFs':            1, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
     'want_plots':               1, # True: Generate and save plots. False: Skip plotting
-    'save_joblib':              0, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
+    'save_joblib':              1, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
     'want_offline_test':        0, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
     'want_calc_exposure':       0, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip
     'model_selection': [        
                                 # 'LR',        
                                 'SVM',
-                                # 'KNN',
-                                # 'GNB',
-                                # 'RF',
-                                # 'GB',
-                                # 'ADA',                  
+    #                             'KNN',
+    #                             'GNB',
+    #                             'RF',
+    #                             'GB',
+    #                             'ADA',                  
     ],
 
     'method_selection':         [
-                                'BS',    
+                                'BsS',    
                                 # 'RS',
                                 # 'GS',
                                 # 'HGS'
     ],
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       2,
+    'variance_explained':       20,
     'random_seed':              42,
     'window_length_seconds':    20,
     'test_size':                0.25,

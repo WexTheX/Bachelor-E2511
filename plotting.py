@@ -463,7 +463,7 @@ def confusionMatrix(labels:           Sequence,
   model       = result['model_name']
   optimalizer = result['optimalizer']
 
-  fig = plt.figure(figsize=(10, 8))
+  #fig = plt.figure(figsize=(10, 8))
 
   try:
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -471,11 +471,13 @@ def confusionMatrix(labels:           Sequence,
     test_predict = clf.predict(X_test)
     
     conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities, normalize="true")
-    plt.figure(figsize=(10, 8))
+    #plt.figure(figsize=(10, 8))
     sns.heatmap(conf_matrix, annot=True, cmap='Blues', xticklabels=activities, yticklabels=activities, ax=ax)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("Actual")
     ax.set_title(f'Confusion matrix, {model}: {optimalizer}')
+    fig.tight_layout()
+    fig.canvas.draw()
 
   except Exception as e:
     print(f"Unable to plot confusion matrix: {e}")

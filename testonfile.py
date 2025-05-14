@@ -303,7 +303,7 @@ def calcExposure(combined_df:               pd.DataFrame,
     activity_length_complete    = activity_length.reindex(labels, fill_value=default_activity_length)
 
     # Save as CSV
-    activity_length_complete.name = f"{"Unit:"} {time_unit}"
+    #activity_length_complete.name = f"{"Unit:"} {time_unit}"
     activity_length_filename_out = os.path.join(csv_path, activity_length_csv)
     activity_length_complete.to_csv(activity_length_filename_out)
 

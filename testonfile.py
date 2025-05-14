@@ -41,10 +41,9 @@ def runInferenceOnFile(file_path:           str,
                         want_prints:        bool,
                         file_to_test:       str,
                         variables:          list[str],
-                        norm_IMU:           bool,
-                        clf_path:           str = "OutputFiles/Separated/classifier.joblib",
-                        pca_path:           str = "OutputFiles/Separated/PCA.joblib",
-                        scaler_path:        str = "OutputFiles/Separated/scaler.joblib",
+                        norm_IMU:               bool,
+                        separated_or_combined:  str = 'Combined', # or Combined
+
                         start_offset:       int = 0
                         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     
@@ -67,6 +66,9 @@ def runInferenceOnFile(file_path:           str,
     9. Formats the results, including time ranges, into a pandas DataFrame.
     10. Optionally prints formatted results to the console during processing.
     '''
+    clf_path:           str = f"OutputFiles/{separated_or_combined}/classifier.joblib"
+    pca_path:           str = f"OutputFiles/{separated_or_combined}/PCA.joblib"
+    scaler_path:        str = f"OutputFiles/{separated_or_combined}/scaler.joblib"
 
     results = []
 
@@ -240,16 +242,18 @@ def offlineTest(test_file_path:        str,
 
     return combined_df #,features_df_all
 
-def calcExposure(
-                 combined_df:           pd.DataFrame,
-                 csv_path:              str,
-                 window_length_seconds: int,
-                 labels:                list[str],
-                 exposures_and_limits:  dict[str, float],
-                 filter_on:             bool,
-                 predictions_csv:       str = "predictions.csv",
-                 summary_csv:           str = "summary.csv",
-                 seconds_to_x:          int = 3600
+def calcExposure(combined_df:               pd.DataFrame,
+                 csv_path:                  str,
+                 window_length_seconds:     int,
+                 labels:                    list[str],
+                 exposures_and_limits:      dict[str, float],
+                 use_granular_labels:       bool,
+                 filter_on:                 bool = True,
+                 predictions_csv:           str = "predictions.csv",
+                 activity_length_csv:       str = "activity_length.csv",
+                 summary_csv:               str = "exposure_summary.csv",
+                 seconds_to_x:              int = 3600,
+                 default_activity_length:   float = 0.0,
                 ) -> pd.DataFrame:
     
     '''
@@ -263,6 +267,13 @@ def calcExposure(
 
     exposures           = exposures_and_limits.keys()
     safe_limit_vector   = exposures_and_limits.values()
+
+    if seconds_to_x == 3600:
+        time_unit = 'hours'
+    elif seconds_to_x == 60:
+        time_unit = 'minutes'
+    elif seconds_to_x == 1:
+        time_unit = 'seconds'
 
     # --- 1. Setup from combined DataFrame ---
     if combined_df.empty:
@@ -282,33 +293,36 @@ def calcExposure(
         print(f"Calculating exposure... (filter off)")
         predicted_activities    = combined_df['Activity']
 
-    default_value = 0.0
-
     activity_counts             = predicted_activities.value_counts()
     activity_length             = activity_counts * window_length_seconds / seconds_to_x
-    activity_length_complete    = activity_length.reindex(labels, fill_value=default_value)
+    activity_length_complete    = activity_length.reindex(labels, fill_value=default_activity_length)
+
+    # Save as CSV
+    activity_length_complete.name = f"{"Unit:"} {time_unit}"
+    activity_length_filename_out = os.path.join(csv_path, activity_length_csv)
+    activity_length_complete.to_csv(activity_length_filename_out)
 
     # --- 2. Create exposure intensity matrix and calculate exposure, make summary ---
     # x
     activity_duration_vector    = activity_length_complete.values
     
     # A
-    exposure_intensity_matrix   = initializeExposureIntensityMatrix(exposures, labels)
+    exposure_intensity_matrix   = initializeExposureIntensityMatrix(exposures, labels, use_granular_labels, seconds_to_x)
     
     # b = Ax
     total_exposure_vector       = exposure_intensity_matrix @ activity_duration_vector
-
+   
     summary_df                  = exposureSummary(total_exposure_vector, safe_limit_vector, exposures)
 
-    filename_out = os.path.join(csv_path, summary_csv)
-    summary_df.to_csv(filename_out, index=False)
+    summary_filename_out = os.path.join(csv_path, summary_csv)
+    summary_df.to_csv(summary_filename_out)
 
     # --- 3. Print in terminal ---
     print()
-    print(f"Predicted hours: \n {activity_length_complete.round(decimals=2)}")
+    print(f"Predicted {time_unit}: \n {activity_length_complete.round(decimals=2)}")
     print(f"Risk factors increased. Grind big!")
     print("-" * 99)
-    print(f"Exposure intensity matrix: \n {exposure_intensity_matrix}")
+    print(f"Exposure intensity matrix ({time_unit}): \n {exposure_intensity_matrix}")
     print("-" * 99)
     print(summary_df.round(decimals=1))
     print("-" * 57)
@@ -317,16 +331,18 @@ def calcExposure(
 
 def initializeExposureIntensityMatrix(  exposures:                     list[str], 
                                         activities:                    list[str],
+                                        use_granular_labels:           bool,
+                                        seconds_to_x:                  int,
                                         # Dummy variables
-                                        variable_0:                    float = round(random.uniform(10.0, 2000.0), 1),
-                                        weld_to_rad:                   float = 1234.0,
-                                        variable_1:                    float = round(random.uniform(10.0, 2000.0), 1),
-                                        variable_2:                    float = round(random.uniform(10.0, 2000.0), 1),
-                                        variable_3:                    float = round(random.uniform(10.0, 2000.0), 1),
+                                        variable_0:                    float = round(random.uniform(1.0, 2.0), 1),
+                                        weld_to_rad:                   float = 12.0,
+                                        variable_1:                    float = round(random.uniform(1.0, 2.0), 1),
+                                        variable_2:                    float = round(random.uniform(1.0, 2.0), 1),
+                                        variable_3:                    float = round(random.uniform(1.0, 2.0), 1),
                                         # Dummy sensor proxies
-                                        gravityless_norm_accel_mean:   float = round(random.uniform(10.0, 2000.0), 1) - 9.81,
-                                        gravityless_norm_accel_energy: float = round(random.uniform(10.0, 2000.0), 1) - 9.81,
-                                        temperature_energy:            float = round(random.uniform(10.0, 2000.0), 1)
+                                        gravityless_norm_accel_mean:   float = round(random.uniform(10.0, 12.0), 1) - 9.81,
+                                        gravityless_norm_accel_energy: float = round(random.uniform(10.0, 20.0), 1) - 9.81,
+                                        temperature_energy:            float = round(random.uniform(1.0, 2.0), 1)
                                         ) -> pd.DataFrame:
     
     '''
@@ -343,25 +359,43 @@ def initializeExposureIntensityMatrix(  exposures:                     list[str]
       which act as proxies for the actual exposure intensity (e.g., using
       acceleration energy for MSK load).
     '''
-    
+
+    # 1, 60, 3600
+
     # TODO 
     # Future work: find more proxies, set up sensor readings coming in
     try:
         df = pd.DataFrame(0.0, index=exposures, columns=activities)
 
-        # If there is something common to all welding or grinding, use *WELD and *GRIND
         WELD    = df.columns[df.columns.str.startswith('WELD')]
         GRIND   = df.columns[df.columns.str.startswith('GRIND')]
+        IMPA    = df.columns[df.columns.str.startswith('IMPA')]
         
-        df.loc['CARCINOGEN',    ['WELDSTMAG', 'WELDSTTIG']] = variable_0
-        df.loc['RESPIRATORY',   ['WELDALTIG']]              = variable_1
-        df.loc['NEUROTOXIN',    ['WELDSTTIG']]              = variable_2
-        df.loc['RADIATION',     [*WELD]]                    = weld_to_rad
-        df.loc['NOISE',         [*GRIND]]                   = variable_3
-        df.loc['VIBRATION',     [*GRIND]]                   = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
-        df.loc['THERMAL',       [*WELD]]                    = temperature_energy
-        df.loc['MSK',           [*GRIND, 'IMPA']]           = gravityless_norm_accel_energy
-    
+        if use_granular_labels == True:
+            # If there is something common to all welding or grinding, use *WELD and *GRIND
+            
+            df.loc['CARCINOGEN',    ['WELDSTMAG', 'WELDSTTIG']] = variable_0
+            df.loc['RESPIRATORY',   ['WELDALTIG']]              = variable_1
+            df.loc['NEUROTOXIN',    ['WELDSTTIG']]              = variable_2
+            df.loc['RADIATION',     [*WELD]]                    = weld_to_rad
+            df.loc['NOISE',         [*GRIND]]                   = variable_3
+            df.loc['VIBRATION',     [*GRIND]]                   = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
+            df.loc['THERMAL',       [*WELD]]                    = temperature_energy
+            df.loc['MSK',           [*GRIND, *IMPA]]            = gravityless_norm_accel_energy
+
+        if use_granular_labels == False:
+            
+            df.loc['CARCINOGEN',    [*WELD]]                    = variable_0
+            df.loc['RESPIRATORY',   [*WELD]]                    = variable_1
+            df.loc['NEUROTOXIN',    [*WELD]]                    = variable_2
+            df.loc['RADIATION',     [*WELD]]                    = weld_to_rad
+            df.loc['NOISE',         [*GRIND, *IMPA]]            = variable_3
+            df.loc['VIBRATION',     [*GRIND]]                   = 2 * gravityless_norm_accel_mean**2 # from https://www.ergonomiportalen.no/kalkulator/#/vibrasjoner 
+            df.loc['THERMAL',       [*WELD]]                    = temperature_energy
+            df.loc['MSK',           [*GRIND, *IMPA]]            = gravityless_norm_accel_energy
+            
+        df = df * seconds_to_x
+        
     except KeyError as e:
         print(f"Error: A row or column label was not found in the DataFrame: {e}. Check 'exposures' and 'activities' lists.")
     except Exception as e:

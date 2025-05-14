@@ -733,7 +733,7 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
                       X:                pd.DataFrame,
                       y:                Sequence,
                       cv_string:        str = "SKF", #SKF = StratifiedKFold, SS = ShuffleSplit
-                      n_splits:         int = 5,
+                      n_splits:         int = 10,
                       train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 15),
                       output_filename:  str = "plots/Learning_curve.png",
                       ) -> Figure:
@@ -747,6 +747,9 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
   varying training set sizes.
   '''
 
+  # from sklearn.datasets import load_digits
+  # X, y = load_digits(return_X_y=True)
+  # print(X.shape)
 
   # --- 1. Plotting Setup ---
 
@@ -774,6 +777,7 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
   fig_height  = nrows * 4
 
   fig, axes   = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height), squeeze=False)
+  # fig, axes   = plt.subplots(nrows=1, ncols=2, figsize=(10, 6), sharey=True)
   axes        = axes.flatten()  # Flatten in case it's 2D array of axes
 
   # --- 2. CV  ---
@@ -886,7 +890,14 @@ def datasetOverview(labels:                 Sequence,
 
   print(df)
 
-def plotScoreVsWindowLength(window_lengths, mean_scores, std_scores, score_type='F1 Score', color='blue', filename=None):
+def plotScoreVsWindowLength(window_lengths: Sequence, 
+                            mean_scores:    Sequence, 
+                            std_scores:     Sequence, 
+                            score_type:     str ='F1 Score',
+                            color:          str ='blue', 
+                            filename:       str | None = None
+                            ) -> None:
+    
     """
     Plots a score (e.g., F1 score or Accuracy) with ±1 standard deviation shaded area and saves the plot.
     

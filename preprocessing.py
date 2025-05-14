@@ -48,7 +48,7 @@ def rename_data(path:           str,
 
     for i in range(len(path_names)):
         folder_path = os.path.join(path, path_names[i])
-        print(f"Re-naming files in: {folder_path}")
+        # print(f"Re-naming files in: {folder_path}")
 
         
         # Convert bin to txt file if bin file found
@@ -103,7 +103,7 @@ def fillSets(path:  str
     
     for i, name in enumerate(path_names):
         folder_path = os.path.join(path,name)
-        print(f"Finding files in: {folder_path}")
+        # print(f"Finding files in: {folder_path}")
         
         for f in os.listdir(folder_path):
             if f.endswith(".bin") and not f.startswith(activity_name[i]):

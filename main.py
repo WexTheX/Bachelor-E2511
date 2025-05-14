@@ -28,7 +28,7 @@ def main(
     # Flags
     want_feature_extraction: bool,
     save_joblib: bool, 
-    separate_types: bool,
+    use_granular_labels: bool,
     want_new_CLFs: bool, 
     want_plots: bool, 
     want_offline_test: bool, 
@@ -74,7 +74,7 @@ def main(
     fig_list_0, fig_list_1, n_results, accuracy_list = [], [], [], []
     fig_0, fig_1, fig_2, fig_3, fig_4, fig_5, fig_6 = None, None, None, None, None, None, None
     plots = {}
-    combined_df = pd.DataFrame()
+    combined_df, metrics_df = pd.DataFrame(), pd.DataFrame()
     result = {}
     
 
@@ -84,7 +84,7 @@ def main(
 
     ''' LOAD DATASET '''
 
-    path, output_path, labels, original_feature_names, cmap_name, label_mapping = loadDataset(separate_types, norm_IMU, cmap)
+    path, output_path, labels, original_feature_names, cmap_name, label_mapping = loadDataset(use_granular_labels, norm_IMU, cmap)
 
     sets, sets_labels, activity_name = fillSets(path)
 
@@ -150,8 +150,6 @@ def main(
 
 
     ''' SPLITTING TEST/TRAIN + SCALING'''
-    
-    # for i in randomness(0, max) # velg 5 random randomnesses
 
     train_data, test_data, train_labels, test_labels = train_test_split(feature_df, window_labels, test_size=test_size,
                                                                         random_state=random_seed, stratify=window_labels)
@@ -182,7 +180,7 @@ def main(
         
         ''' EVALUATION '''
 
-        result, accuracy_list = evaluateCLFs(n_results, PCA_test_df, test_labels, clf_results_path)
+        result, accuracy_list, metrics_df = evaluateCLFs(n_results, PCA_test_df, test_labels, clf_results_path)
 
     else:
 
@@ -254,9 +252,9 @@ def main(
     if want_calc_exposure:
 
         summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels,
-                                   exposures_and_limits, filter_on=True)
+                                   exposures_and_limits, use_granular_labels)
     
-    return plots, result
+    return plots, result, metrics_df
 
 
 if __name__ == "__main__" and 1:
@@ -267,74 +265,101 @@ if __name__ == "__main__" and 0:
 
     start_time = time.time()
 
-    f1_mean = []
-    f1_std = []
-    accuracy_mean = []
-    accuracy_std = []
+    f1_mean, f1_std, accuracy_mean, accuracy_std, window_lengths_for_plot, randomness_list, f1_scores, accuracies = [], [], [], [], [], [], [], []
 
-    window_lengths_for_plot = []
-
-    window_sec_lower = 180
-    window_sec_upper = 195
+    window_sec_lower = 20
+    window_sec_upper = 25
     window_sec_interval = 5
-    num_randomness: int = 5
 
-    for i in range(window_sec_lower, window_sec_upper, window_sec_interval):
+    # for i in range(window_sec_lower, window_sec_upper, window_sec_interval):
         
-        print(f"Current window length: {i} seconds.")
-        window_lengths_for_plot.append(i)
+    # print(f"Current window length: {i} seconds.")
+    # window_lengths_for_plot.append(i)
 
-        main_config["want_feature_extraction"]  = True
-        main_config["window_length_seconds"]    = i
+    main_config["want_feature_extraction"]  = False
+    main_config["window_length_seconds"]    = 20
 
-        randomness_list = []
+    num_randomness: int = 10
+
+    current_f1          = np.zeros(num_randomness)
+    current_accuracy    = np.zeros(num_randomness)
+
+    for i in range(num_randomness):
+        randomness_list.append(random.randint(i*1000000, (i+1)*1000000 - 1)) 
+    
+    print(randomness_list)
+
+    main_config["want_new_CLFs"] = True
+    main_config['model_selection'] = ['gnb', 'gb', 'lr', 'svm', 'rf', 'knn', 'ada']
+    main_config['method_selection'] = ['bsw']
+
+    dfs = list(range(len(randomness_list)))
+
+
+    for j, rand_seed in enumerate(randomness_list): 
+        main_config["random_seed"] = rand_seed
+        # main_config["want_new_CLFs"] = False
+
+        print(f"Random seed nr {j}: {rand_seed}")
+        plots, result, metrics_df = main(**main_config)
         
-        current_f1          = np.zeros(num_randomness)
-        current_accuracy    = np.zeros(num_randomness)
+        dfs[j] = metrics_df
 
-        for i in range(num_randomness):
-            randomness_list.append(random.randint(i*1000000, (i+1)*1000000 - 1)) 
-        
-        print(randomness_list)
-                               
-        f1_scores = []
-        accuracies = []
+        # current_f1[j] = result["test_f1_score"]
+        # current_accuracy[j] = result["test_accuracy"]
 
-        for j, rand_seed in enumerate(randomness_list): 
-          main_config["random_seed"] = rand_seed
-          main_config["want_new_CLFs"] = True
-          main_config['model_selection'] = 'svm'
-          main_config['method_selection'] = []
+        # print(current_accuracy[j])
+        # main_config["want_feature_extraction"] = False
 
-          print(rand_seed)
-          plots, result = main(**main_config)
-          current_f1[j] = result["test_f1_score"]
-          current_accuracy[j] = result["test_accuracy"]
-          print(current_accuracy[j])
-          main_config["want_feature_extraction"] = False
+    # dfs = [df1, df2, df3]  # for example
+    
+    mean_dfs = sum(dfs) / len(dfs)
 
-        f1_mean.append(current_f1.mean())
-        f1_std.append(current_f1.std())
+    # Convert list of DataFrames to 3D NumPy array: (N, rows, columns)
+    data = np.array([df.values for df in dfs])
 
-        accuracy_mean.append(current_accuracy.mean())
-        accuracy_std.append(current_accuracy.std())
+    # Compute std along axis 0 (across the N DataFrames)
+    std_array = np.std(data, axis=0, ddof=1)  # ddof=1 for sample std
 
-        print(f1_mean)
+    # Reconstruct DataFrame with original index and columns
+    std_df = pd.DataFrame(std_array, index=dfs[0].index, columns=dfs[0].columns)
 
-    plotScoreVsWindowLength(
-        window_lengths=window_lengths_for_plot,
-        mean_scores=f1_mean,
-        std_scores=f1_std,
-        score_type='F1 score',
-        color='blue',
-        filename='plots/f1_score_vs_window_length_2'
-    )
+    mean_dfs = mean_dfs.sort_values(by='f1_score', ascending=False)
+    std_df = std_df.sort_values(by='f1_score', ascending=True)
 
-    plotScoreVsWindowLength(
-        window_lengths=window_lengths_for_plot,
-        mean_scores=f1_mean,
-        std_scores=f1_std,
-        score_type='Accuracy score',
-        color='red',
-        filename='plots/accuracy_score_vs_window_length_2'
-    )
+    print(mean_dfs)
+    print(std_df)
+    print(randomness_list)
+
+    mean_dfs.to_csv("OutputFiles/mean_dfs")
+    std_df.to_csv("OutputFiles/std_df")
+
+    # f1_mean.append(current_f1.mean())
+    # f1_std.append(current_f1.std())
+
+    # accuracy_mean.append(current_accuracy.mean())
+    # accuracy_std.append(current_accuracy.std())
+
+    stop_time = time.time()
+
+    print(f"Runtime: {stop_time-start_time}")
+
+    # print(f1_mean)
+
+    # plotScoreVsWindowLength(
+    #     window_lengths=window_lengths_for_plot,
+    #     mean_scores=f1_mean,
+    #     std_scores=f1_std,
+    #     score_type='F1 score',
+    #     color='blue',
+    #     filename='plots/f1_score_vs_window_length_2'
+    # )
+
+    # plotScoreVsWindowLength(
+    #     window_lengths=window_lengths_for_plot,
+    #     mean_scores=f1_mean,
+    #     std_scores=f1_std,
+    #     score_type='Accuracy score',
+    #     color='red',
+    #     filename='plots/accuracy_score_vs_window_length_2'
+    # )

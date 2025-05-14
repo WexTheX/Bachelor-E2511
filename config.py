@@ -13,20 +13,33 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  0,
-    'norm_IMU':                 0,
-    'separate_types':           1,
-    'want_new_CLFs':            1,
-    'want_plots':               1,
-    'save_joblib':              0, # Pickle the classifier, scaler and PCA objects.
-    'want_offline_test':        0,
-    'want_calc_exposure':       0,
-    'model_selection':          ['lr'],# 'svm', 'knn', 'rf', 'ada', 'gnb'],
-    'method_selection':         ["BS"], #"BS", "RS", "GS", "HGS"
+    'want_feature_extraction':  0, # True: Extract statistical features from datafiles files, create "feature_df" dataframe. False: Read "xxx_feature_df.csv" from file
+    'norm_IMU':                 0, # True: Normalize IMU data. False: Use IMU data in x, y, and z direction
+    'use_granular_labels':      0, # True: Use granular (8) labels for classification. False: Use high-level (4) labels for classification
+    'want_new_CLFs':            0, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
+    'want_plots':               0, # True: Generate and save plots. False: Skip plotting
+    'save_joblib':              1, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
+    'want_offline_test':        1, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
+    'want_calc_exposure':       1, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip
+    'model_selection': [
+                                'SVM',
+                                # 'RF',
+                                # 'KNN',
+                                # 'GNB',
+                                # 'LR',
+                                # 'GB',
+                                # 'ADA',
+    ],
+    'method_selection':         [
+                                'BS',
+                                # 'RS',
+                                # 'GS',
+                                # 'HGS'
+    ],
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
-    'random_seed':              420,
+    'random_seed':              42,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
@@ -71,12 +84,12 @@ def setupML():
 
     SVM_param_grid = {
         "C":                    [0.01, 0.1,
-                                #  1.0, 10.0, 100.0
+                                 1.0, 10.0, 100.0
                                 ],
         "kernel":               ["linear", "poly", "rbf", "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-        # "coef0":                [0.0, 0.5, 1.0],
-        # "degree":               [2, 3, 4, 5]
+        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        "coef0":                [0.0, 0.5, 1.0],
+        "degree":               [2, 3, 4, 5]
     }
 
     KNN_param_grid = {
@@ -120,13 +133,13 @@ def setupML():
     }
 
     GB_param_grid = {
-        'n_estimators':         [100, 200, 300],
+        # 'n_estimators':         [100],#, 300],
         'learning_rate':        [0.01, 0.05, 0.1],
         'max_depth':            [3, 5, 7],
-        'min_samples_split':    [2, 5, 10],
-        'min_samples_leaf':     [1, 2, 4],
-        'subsample':            [0.6, 0.8, 1.0],
-        'max_features':         ['sqrt', 'log2', None],
+        # 'min_samples_split':    [2, 5, 10],
+        # 'min_samples_leaf':     [1, 2],
+        # 'subsample':            [0.6, 0.8, 1.0],
+        # 'max_features':         ['sqrt', 'log2', None],
     }
     
     ADA_param_grid = {
@@ -165,7 +178,7 @@ def setupML():
     
     search_kwargs = {
         'n_jobs':              -1, 
-        'verbose':             0,
+        'verbose':             3,
         'cv':                  StratifiedKFold(n_splits=num_folds),
         'scoring':             'f1_weighted',
         'return_train_score':  True
@@ -173,16 +186,16 @@ def setupML():
 
     return model_names, models, optimization_methods, search_kwargs
 
-def loadDataset(separate_types: bool,
-                norm_IMU:       bool,
-                cmap:           Colormap
+def loadDataset(use_granular_labels:    bool,
+                norm_IMU:               bool,
+                cmap:                   Colormap
                 ) -> Tuple[str, str, List[str], List[str], Colormap, dict]:
     
     ''' Define the path to training datafiles here.'''
 
-    if separate_types == True:
+    if use_granular_labels == True:
         
-        path            = "Datafiles/DatafilesSeparated_Aker" 
+        path            = "Datafiles/DatafilesSeparated_Aker" # "Datafiles/DatafilesSeparated_without_Akgber"
         output_path     = "OutputFiles/Separated/"
 
         labels = [
@@ -191,13 +204,13 @@ def loadDataset(separate_types: bool,
             'WELDALTIG', 'WELDSTMAG', 'WELDSTTIG'
         ]
 
-    if separate_types == False:
+    if use_granular_labels == False:
 
-        path            = "Datafiles/DatafilesCombined_Aker"
+        path            = "Datafiles/DatafilesCombined_Aker" # "Datafiles/DatafilesCombined_withoutAker"
         output_path     = "OutputFiles/Combined/"
 
         labels = [
-            'IDLE', 'GRINDING', 'IMPA', 'WELDING'
+             'GRINDING', 'IDLE', 'IMPA', 'WELDING'
         ]
 
     if norm_IMU == True:

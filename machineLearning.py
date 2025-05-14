@@ -253,7 +253,7 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
         clf = base_estimator
         best_clf = clf
         best_params = None
-        best_score = None
+        best_score = 0.0000
         train_test_delta = 0.0000
         mean_test_score = 0.0000
         std_test_score = 0.0000
@@ -349,17 +349,19 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
     mean_test_score   = result_dict['mean_test_score']
     std_test_score    = result_dict['std_test_score']
     train_test_delta  = result_dict['train_test_delta']
+    best_score        = result_dict['best_score']
 
-    start             = time.time()
-    test_predict      = clf.predict(test_df)
-    end               = time.time()
+    start             = time.perf_counter()
+    test_predict_time = clf.predict(test_df)
+    end               = time.perf_counter()
     predict_time      = 1000 * (end-start) / len(test_labels)
 
-    accuracy_score    = metrics.accuracy_score(test_labels, test_predict)
-    f1_score          = metrics.f1_score(test_labels, test_predict, average="weighted")
+    accuracy_score    = metrics.accuracy_score(test_labels, test_predict_time)
+    f1_score          = metrics.f1_score(test_labels, test_predict_time, average="weighted")
 
-    result_dict['test_accuracy'] = accuracy_score
-    result_dict['test_f1_score'] = f1_score
+    result_dict['test_accuracy']    = accuracy_score
+    result_dict['test_f1_score']    = f1_score
+    result_dict['avg_predict_time'] = test_predict_time
 
     if f1_score > highest_score:
       highest_score     = f1_score
@@ -370,18 +372,22 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
     accuracy_list.append(accuracy_score)
     
     rows.append({
-        'model_name':       model_name,
-        'optimalizer':      optimalizer,
-        'accuracy':         accuracy_score,
-        'f1_score':         f1_score,
-        'avg_predict_time': predict_time,
-        'valid_mean':       mean_test_score,
-        'valid_std':        std_test_score,
-        'train_test_delta': train_test_delta
+        'model_name':         model_name,
+        'optimalizer':        optimalizer,
+        'accuracy':           accuracy_score,
+        'f1_score':           f1_score,
+        'avg_predict_time':   predict_time,
+        'train_f1_weighted':  best_score,
+        'valid_mean':         mean_test_score,
+        'valid_std':          std_test_score,
+        'train_test_delta':   train_test_delta
     })
 
-  metrics_df = pd.DataFrame(rows).sort_values(by='avg_predict_time', ascending=True)
-  metrics_df.to_csv(output_path, index=False)
+  metrics_df = pd.DataFrame(rows)
+  metrics_df.set_index(['model_name', 'optimalizer'], inplace=True)
+  metrics_df = metrics_df.sort_values(by='avg_predict_time', ascending=True)
+
+  # metrics_df.to_csv(output_path, index=False)
 
   print(metrics_df)
   print("")
@@ -405,4 +411,4 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
   except Exception as e:
     print(f"Error in saving classifier results: {e}") 
 
-  return best_result, accuracy_list
+  return best_result, accuracy_list, metrics_df

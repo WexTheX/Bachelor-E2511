@@ -76,7 +76,7 @@ with tab2:
             want_feature_extraction = st.checkbox("Want feature extraction")
             want_new_CLFs = st.checkbox("Want new classifiers")
             save_joblib = st.checkbox("Save classifier and transformations with joblib")
-            separate_types = st.checkbox("Separate types of classes (TIG VS MAG etc)", True)
+            use_granular_labels = st.checkbox("Separate types of classes (TIG VS MAG etc)", True)
             want_offline_test = st.checkbox("Want offline test")
             want_calc_exposure = st.checkbox("Want calc exposure")
             want_plots = st.checkbox("Want plots and results")
@@ -100,7 +100,7 @@ with tab2:
         config = {
             'want_feature_extraction': want_feature_extraction,
             'save_joblib': save_joblib,
-            'separate_types': separate_types,
+            'use_granular_labels': use_granular_labels,
             'want_new_CLFs': want_new_CLFs,
             'want_plots': want_plots,
             'want_offline_test': want_offline_test,
@@ -123,7 +123,7 @@ with tab2:
             'norm_IMU': norm_IMU
         }
 
-        plots, result = main(**config)
+        plots, result, metrics_df = main(**config)
         
         st.session_state["plots"] = plots
         st.session_state["result"] = result
@@ -210,7 +210,7 @@ with tab5:
 
     path = "Datafiles"
     # TODO Fix separated and combined
-    if separate_types == True:
+    if use_granular_labels == True:
         category_dirs = {
             "GrindBig": path + "/DatafilesSeparated_Aker/GrindBig",
             "GrindMed": path + "/DatafilesSeparated_Aker/GrindMed",

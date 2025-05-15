@@ -19,20 +19,20 @@ main_config = {
     'want_new_CLFs':            1, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
     'want_plots':               1, # True: Generate and save plots. False: Skip plotting
     'save_joblib':              1, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
-    'want_offline_test':        1, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
+    'want_offline_test':        0, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
     'want_calc_exposure':       0, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip
     'model_selection': [        
                                 # 'LR',        
                                 'SVM',
-                                # 'KNN',
-                                # 'GNB',
-                                # 'RF',
-                                # 'GB',
-                                # 'ADA',                  
+    #                             'KNN',
+    #                             'GNB',
+    #                             'RF',
+    #                             'GB',
+    #                             'ADA',                  
     ],
 
     'method_selection':         [
-                                'BS',    
+                                'BsS',    
                                 # 'RS',
                                 # 'GS',
                                 # 'HGS'

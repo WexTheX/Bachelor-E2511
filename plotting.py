@@ -406,12 +406,12 @@ def plotDecisionBoundaries(X:               pd.DataFrame,
         ax.scatter(xs, ys, c=point_colors, s=25, edgecolors="k", linewidths=0.35)
 
         # Text
-        ax.set_title(f"{model_name}: {optimalizer}", fontsize=10, fontweight='normal')
+        ax.set_title(f"{model_name}: {optimalizer}", fontsize=14, fontweight='normal')
         ax.text(
           0.98, 0.02,  # X and Y position in axes coords (0=left/bottom, 1=right/top)
           f"{accuracy:.3f}".lstrip("0"),
           transform=ax.transAxes,
-          fontsize=8,
+          fontsize=12,
           ha='right',
           va='bottom',
           bbox=None
@@ -422,7 +422,7 @@ def plotDecisionBoundaries(X:               pd.DataFrame,
         ax.set_ylabel('')
         # ax.set_aspect('equal', adjustable='box')
 
-      fig.suptitle("Classifier Decision Boundaries", fontsize=14)
+      fig.suptitle("Classifier Decision Boundaries", fontsize=16)
 
     for j in range(num_plots, len(axes)):
       fig.delaxes(axes[j])
@@ -463,7 +463,7 @@ def confusionMatrix(labels:           Sequence,
   model       = result['model_name']
   optimalizer = result['optimalizer']
 
-  fig = plt.figure(figsize=(10, 8))
+  #fig = plt.figure(figsize=(10, 8))
 
   try:
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -471,11 +471,13 @@ def confusionMatrix(labels:           Sequence,
     test_predict = clf.predict(X_test)
     
     conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities, normalize="true")
-    plt.figure(figsize=(10, 8))
+    #plt.figure(figsize=(10, 8))
     sns.heatmap(conf_matrix, annot=True, cmap='Blues', xticklabels=activities, yticklabels=activities, ax=ax)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("Actual")
     ax.set_title(f'Confusion matrix, {model}: {optimalizer}')
+    fig.tight_layout()
+    fig.canvas.draw()
 
   except Exception as e:
     print(f"Unable to plot confusion matrix: {e}")
@@ -490,7 +492,7 @@ def confusionMatrix(labels:           Sequence,
 
 def plotFeatureImportance(pca:                    Any,
                           original_feature_names: List[str],
-                          threshold:              Optional[float] = None,
+                          threshold:              Optional[float] = None, #= 0.673,
                           percentile_cutoff:      float = 25.0,
                           output_filename:        str = "plots/feature_importance.png"
                           ) -> Figure:

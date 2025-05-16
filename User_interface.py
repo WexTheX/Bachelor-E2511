@@ -18,7 +18,7 @@ clf_results_path = "CLF results/clf_results.joblib"
 cmap = "tab10"
 random_seed = 420
 frequencies = [25, 50, 100, 200, 400, 800]
-percentages = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1, 2, 3]
+percentages = [0.8, 0.85, 0.9, 0.95, 2]
 n_iter = 30
 exposures_and_limits = {'CARCINOGEN': 1000.0,
                         'RESPIRATORY': 750.0,
@@ -88,7 +88,7 @@ with tab2:
             ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=5)
             window_length_seconds = st.selectbox("Window length (seconds):", [20, 40])
             test_size = st.selectbox("Amount of test data", [0.25, 0.3])
-            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=5)
+            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=3)
 
 
 
@@ -135,7 +135,7 @@ with tab2:
 
 ## TAB NUMBER THREE ##
 with tab3:
-    st.write(plots)
+    #st.write(plots)
     plots = st.session_state.get("plots", {})
     result = st.session_state.get("result", {})
 
@@ -212,7 +212,6 @@ with tab5:
     path_granular = "Datafiles/DatafilesSeparated_Aker"
     path_combined = "Datafiles/DatafilesCombined_aker"
 
-    # TODO Fix separated and combined
     if use_granular_labels == True:
         
         category_dirs = {

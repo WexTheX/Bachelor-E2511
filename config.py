@@ -39,7 +39,7 @@ main_config = {
     ],
 
     # --- DATASET & MODELING VARIABLES ---
-    'variance_explained':       2,
+    'variance_explained':       0.95,
     'random_seed':              42,
     'window_length_seconds':    20,
     'test_size':                0.25,

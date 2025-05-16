@@ -17,7 +17,7 @@ prediction_csv_path = "testOnFile"
 clf_results_path = "CLF results/clf_results.joblib"
 cmap = "tab10"
 random_seed = 420
-frequencies = [25, 50, 100, 200, 400, 800, 1600]
+frequencies = [25, 50, 100, 200, 400, 800]
 percentages = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1, 2, 3]
 n_iter = 30
 exposures_and_limits = {'CARCINOGEN': 1000.0,
@@ -72,7 +72,7 @@ with tab2:
         with st.expander("Model and Settings"):
             model_selection = st.multiselect("Select ML models: ", ML_models)
             method_selection = st.multiselect("Hyperparameter search methods:", Search_methods)
-            Splitting_method = st.selectbox("Validation technique:", ["StratifiedKFOLD", "TimeSeriesSplit"])
+            Splitting_method = st.write("Validation technique: StratifiedKFOLD")
             want_feature_extraction = st.checkbox("Want feature extraction")
             want_new_CLFs = st.checkbox("Want new classifiers")
             save_joblib = st.checkbox("Save classifier and transformations with joblib")
@@ -84,11 +84,11 @@ with tab2:
         
     with col2:
         with st.expander("Preprocessing Parameters"):
-            fs = st.selectbox("Sampling frequency:", frequencies, index=5)
+            fs = st.write("Sampling frequency: 800 Hz")
             ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=5)
             window_length_seconds = st.selectbox("Window length (seconds):", [20, 40])
             test_size = st.selectbox("Amount of test data", [0.25, 0.3])
-            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=4)
+            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=5)
 
 
 
@@ -135,6 +135,7 @@ with tab2:
 
 ## TAB NUMBER THREE ##
 with tab3:
+    st.write(plots)
     plots = st.session_state.get("plots", {})
     result = st.session_state.get("result", {})
 
@@ -159,7 +160,7 @@ with tab3:
                 st.pyplot(plot_obj)
 
     else:
-        st.info("Plots will be displayed here after training if 'Want plots' is checked.")
+        st.info("Plots will be displayed here if 'Want plots' is checked and the main function is ran")
 
 #  plots = {
 #                      'Learning curve': fig_0,
@@ -208,27 +209,30 @@ with tab4:
 with tab5:
     st.info("This tab is for adding new data for training the ML model")
 
-    path = "Datafiles"
+    path_granular = "Datafiles/DatafilesSeparated_Aker"
+    path_combined = "Datafiles/DatafilesCombined_aker"
+
     # TODO Fix separated and combined
     if use_granular_labels == True:
+        
         category_dirs = {
-            "GrindBig": path + "/DatafilesSeparated_Aker/GrindBig",
-            "GrindMed": path + "/DatafilesSeparated_Aker/GrindMed",
-            "GrindSmall": path + "/DatafilesSeparated_Aker/GrindSmall",
-            "Idle": path + "/DatafilesSeparated_Aker/Idle",
-            "Impa": path + "/DatafilesSeparated_Aker/Impa",  
+            "GrindBig": path_granular + "/GrindBig",
+            "GrindMed": path_granular + "GrindMed",
+            "GrindSmall": path_granular + "/GrindSmall",
+            "Idle": path_granular + "/Idle",
+            "Impa": path_granular + "/Impa",  
             #"SandSim": path + "/DatafilesSeparated/SandSim",
-            "WeldAlTIG": path + "/DatafilesSeparated_Aker/WeldAlTIG",
-            "WeldStMAG": path + "/DatafilesSeparated_Aker/WeldStMAG",
-            "WeldStTIG": path + "/DatafilesSeparated_Aker/WeldStTIG"
+            "WeldAlTIG": path_granular + "/WeldAlTIG",
+            "WeldStMAG": path_granular + "/WeldStMAG",
+            "WeldStTIG": path_granular + "/WeldStTIG"
         }
     
     else:
         category_dirs = {
-            "Grinding": path + "DatafilesCombined_aker/Grinding",
-            "Idle": path + "DatafilesCombined_aker/Idle",
-            "Impa": path + "DatafilesCombined_aker/Impa",
-            "Welding": path + "DatafilesCombined_aker/Welding"
+            "Grinding": path_combined + "/Grinding",
+            "Idle": path_combined + "/Idle",
+            "Impa": path_combined + "/Impa",
+            "Welding": path_combined + "/Welding"
         }
 
 

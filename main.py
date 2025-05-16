@@ -198,27 +198,27 @@ def main(
         
         ''' CONFUSION MATRIX '''
 
-        fig_0 = plotLearningCurve(n_results, PCA_train_df, train_labels)
+        #fig_0 = plotLearningCurve(n_results, PCA_train_df, train_labels)
 
-        fig_1 = confusionMatrix(test_labels, PCA_test_df, activity_name, result)
+        #fig_1 = confusionMatrix(test_labels, PCA_test_df, activity_name, result)
         
         ''' FEATURE IMPORTANCE '''
         
-        fig_list_0  = plotPCATable(PCA_final, features_per_table=28) 
+        #fig_list_0  = plotPCATable(PCA_final, features_per_table=28) 
 
-        fig_list_1  = plotFeatureImportance(PCA_final, original_feature_names) 
+        #fig_list_1  = plotFeatureImportance(PCA_final, original_feature_names) 
 
-        fig_2       = screePlot(PCA_final)
+        #fig_2       = screePlot(PCA_final)
         
         ''' PLOTS OF PCA '''
         
-        # fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
+        #fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
 
-        # fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
+        #fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
         
-        # fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
-        # fig_6 = datasetOverview(window_labels, window_length_seconds, test_size)
+        #fig_6 = datasetOverview(window_labels, window_length_seconds, test_size)
 
         plots = {
             'Learning curve': fig_0,
@@ -231,10 +231,13 @@ def main(
             'Decision boundaries': fig_5,
             'Distribution of labels': fig_6
         }
-
+        
+        
         ## Only to not get double plots when using/ importing main function to user interface
         if __name__ == "__main__":
-            plt.show() 
+            plt.show()
+            #fig_1.show()
+            
 
     ''' PICKLING CLASSIFIER '''
 
@@ -253,7 +256,6 @@ def main(
 
         summary_df  = calcExposure(combined_df, prediction_csv_path, window_length_seconds, labels,
                                    exposures_and_limits, use_granular_labels)
-    
     return plots, result, metrics_df
 
 

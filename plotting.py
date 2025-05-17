@@ -351,7 +351,7 @@ def plotDecisionBoundaries(X:               pd.DataFrame,
                            results:         List[Dict[str, Any]],
                            accuracy_list:   List[float],
                            cmap:            str,
-                           grid_resolution: int = 2000,
+                           grid_resolution: int = 1000,
                            output_filename: str = "plots/decision_boundaries.png"
                           ) -> Optional[Figure]:
   

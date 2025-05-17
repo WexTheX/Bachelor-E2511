@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import scipy as sp
 import math as math
+import os
 
 from SignalProcessing.get_Freq_Domain_features_of_signal import getFFT, getWelch
 
@@ -37,6 +38,24 @@ variables = []
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_4.txt")
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_5.txt")
 # datasets.append("Datafiles/DatafilesSeparated_without_Aker/GrindSmall/GRINDSMALL_6.txt")
+
+#### Grindsmall
+# datasets.append("Datafiles/DatafilesSeparated_Aker/GrindSmall/03.04.2025 073733.txt")
+# datasets.append("Datafiles/DatafilesSeparated_Aker/GrindSmall/03.04.2025 075419.txt")
+# datasets.append("Datafiles/DatafilesSeparated_Aker/GrindSmall/03.04.2025 093138.txt")
+# datasets.append("Datafiles/DatafilesSeparated_Aker/GrindSmall/03.04.2025 100310.txt")
+
+#### Grindmed
+# datasets.append("Datafiles/DatafilesSeparated_Aker/GrindMed/03.04.2025 105022.txt")
+# datasets.append("Datafiles/DatafilesSeparated_Aker/GrindMed/05-05-2025 110952.txt")
+# datasets.append("Datafiles/DatafilesSeparated_Aker/GrindMed/05-05-2025 111946_snipped.txt")
+# datasets.append("Datafiles/DatafilesSeparated_Aker/GrindMed/05-05-2025 115308.txt")
+
+#### Grindbig
+# datasets.append("Datafiles\DatafilesSeparated_Aker\GrindBig\03.04.2025 094935.txt")
+# datasets.append("Datafiles\DatafilesSeparated_Aker\GrindBig\03.04.2025 103152.txt")
+# datasets.append("Datafiles\DatafilesSeparated_Aker\GrindBig\28.04.2025 120407.txt")
+# datasets.append("Datafiles\DatafilesSeparated_Aker\GrindBig\30.04.2025 092739.txt")
 
 
 
@@ -72,14 +91,74 @@ variables = []
 
 
 
+base_path = "Datafiles/DatafilesSeparated_Aker"
+
+selected_files = {
+    "GrindBig"  : [],
+    "GrindMed"  : [],
+    "GrindSmall": [],
+    "Idle"      : [2],
+    "Impa"      :[],
+    "WeldAlTig" :[2],
+    "WeldStMag" :[2],
+    "WeldStTig" :[2]
+}
+
+highlight = None  ##What graph to highlight in a thicker line None = no highlightes graph
+base_linewidth = 1.2
+
+
+
+def generate_dataset_paths_by_index(base_path, selected_files):
+    datasets = []
+    for class_name, indices in selected_files.items():
+        folder_path = os.path.join(base_path, class_name)
+        try:
+            files = sorted([
+                f for f in os.listdir(folder_path)
+                if f.endswith(".txt")
+            ])
+        except FileNotFoundError:
+            print(f"⚠️ Directory not found: {folder_path}")
+            continue
+
+        for idx in indices:
+            if idx < len(files):
+                file_path = os.path.join(folder_path, files[idx])
+                label = f"{class_name}_{idx}"
+                datasets.append((file_path, label))
+            else:
+                print(f"⚠️ Index {idx} out of range in folder: {folder_path}")
+    return datasets
+
+
+
+# Eksempelbruk:
+
+
+# Her spesifiserer du hvilke filer du vil ha fra hver klasse
+
+
+# Generer og skriv ut
+datasets = generate_dataset_paths_by_index(base_path, selected_files)
+
+
+
+for line in datasets:
+    print(line)
+
+
+
+
+
 
 
 ''' ADD VARIABLES '''
-variables.append("Axl.X")
+# variables.append("Axl.X")
 # variables.append("Axl.Y")
 # variables.append("Axl.Z")
 
-# variables.append("Mag.X")
+variables.append("Mag.X")
 # variables.append("Mag.Y")
 # variables.append("Mag.Z")
 
@@ -238,7 +317,7 @@ def normalizeSets(datasets):
     
 
 ''' TIME PLOTTING '''
-def plotTime(sets, vars, fs, ds_fs, f_type="fir", size=20):
+'''def plotTime(sets, vars, fs, ds_fs, f_type="fir", size=20):
   # for i in sets:
   #   df = pd.read_csv(i, delimiter="\t")
 
@@ -277,7 +356,38 @@ def plotTime(sets, vars, fs, ds_fs, f_type="fir", size=20):
     plt.title('Time, %s' % i, size=size)
     plt.legend(legendNames, prop={'size': size})
     plt.grid()
-    # plt.show()
+    # plt.show()'''
+def plotTime(sets, vars, fs, ds_fs, f_type="fir", size=20, highlight_index=None, base_linewidth=base_linewidth):
+    cmap = plt.get_cmap("tab10")
+    
+    for i in vars:
+        plt.figure(figsize=(12, 6), dpi=100)
+        legendNames = []
+
+        for idx, (path, label) in enumerate(sets):
+            og_df = pd.read_csv(path, delimiter="\t")
+            if ds_fs == fs:
+                df = og_df
+            else:
+                df = downsample(og_df, fs, ds_fs, f_type=f_type)
+            x = df[i]
+
+            color = cmap(idx % 10)
+            linewidth = base_linewidth * (3 if idx == highlight_index else 1)
+
+            plt.plot(x, color=color, linewidth=linewidth)
+
+            legendNames.append(f"{label}, {i}")
+
+
+        plt.xlabel(f'Time, {ds_fs}', size=size)
+        plt.ylabel('Value', size=size)
+        plt.xticks(fontsize=size)
+        plt.yticks(fontsize=size)
+        plt.title('Time, %s' % i, size=size)
+        plt.legend(legendNames, prop={'size': size})
+        plt.grid()
+
 
 
 ''' FFT PLOTTING '''
@@ -313,7 +423,7 @@ def plotFFT(sets, vars, fs, ds_fs, f_type="fir", size=20):
       
 
 ''' WELCH PLOTTING '''
-def plotWelch(sets, vars, fs, ds_fs, f_type="fir", size=20):
+'''def plotWelch(sets, vars, fs, ds_fs, f_type="fir", size=20):
   # for i in sets:
   #   legendNames = []
   #   og_df = pd.read_csv(i, delimiter="\t")
@@ -357,7 +467,40 @@ def plotWelch(sets, vars, fs, ds_fs, f_type="fir", size=20):
     plt.yticks(fontsize = size)
     plt.title('Welch PSD', size=size)
     plt.legend(legendNames, loc='upper right', prop={'size': size})
-    # plt.show()
+    # plt.show()'''
+
+
+
+def plotWelch(sets, variables, fs, ds_fs, f_type="fir", size=20, highlight_index=None, base_linewidth = base_linewidth):
+    cmap = plt.get_cmap("tab10")
+    
+    for var in variables:
+        plt.figure(figsize=(12, 6), dpi=100)
+
+        legendNames = []
+
+        for idx, (path, label) in enumerate(sets):
+            og_df = pd.read_csv(path, delimiter="\t")
+            df = og_df if ds_fs == fs else downsample(og_df, fs, ds_fs, f_type)
+            x = df[var]
+
+            freq, psd = getWelch(x, ds_fs, filtering, omega_n, order)
+            color = cmap(idx % 10)
+            linewidth = base_linewidth * (3 if idx == highlight_index else 1)
+
+            name = path.split("/")[-1]
+            plt.semilogy(freq, psd, label=f"{name}, {var}", color=color, linewidth=linewidth)
+            legendNames.append(f"{label}, {var}")
+
+        plt.grid()
+        plt.xlabel(f'Frequency (Hz), {ds_fs} Hz signal', size=size)
+        plt.ylabel('Power Spectral Density', size=size)
+        plt.xticks(fontsize=size)
+        plt.yticks(fontsize=size)
+        plt.title(f'Welch PSD, {var}', size=size)
+        plt.legend(legendNames, loc='upper right', prop={'size': size})
+
+
 
 # info_df = pd.read_csv(datasets[0], delimiter="\t")
 # info_df = info_df.set_index(pd.timedelta_range(start='0us', periods=len(info_df['Timestamp']), freq="1250us"))
@@ -373,10 +516,25 @@ f_type = "fir"
 
 # normalizeSets(datasets)
 
+
+
+
 ds_fs = 800
 # plotTime(datasets, variables, fs, ds_fs, size=size)
+# plotTime(datasets, variables, fs, ds_fs, size=size, highlight_index=highlight)
 # plotFFT(datasets, variables, fs, ds_fs, size=size)
 # plotWelch(datasets, variables, fs, ds_fs, size=size)  
+# plotWelch(datasets, variables, fs, ds_fs, size=size, highlight_index=highlight)
+
+
+
+plotTime(datasets, variables, fs, fs, size=size, highlight_index=highlight)
+plotWelch(datasets, variables, fs, fs, size=size, highlight_index=highlight)
+
+plt.show(block=True)
+
+
+
 
 ds_fs = 400
 # plotTime(datasets, variables, fs, ds_fs, size=size)

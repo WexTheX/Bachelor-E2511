@@ -94,10 +94,10 @@ variables = []
 base_path = "Datafiles/DatafilesSeparated_Aker"
 
 selected_files = {
-    "GrindBig"  : [],
-    "GrindMed"  : [],
-    "GrindSmall": [],
-    "Idle"      : [],
+    "GrindBig"  :[],
+    "GrindMed"  :[],
+    "GrindSmall":[],
+    "Idle"      :[],
     "Impa"      :[],
     "WeldAlTig" :[],
     "WeldStMag" :[],

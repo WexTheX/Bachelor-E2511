@@ -97,15 +97,16 @@ selected_files = {
     "GrindBig"  : [],
     "GrindMed"  : [],
     "GrindSmall": [],
-    "Idle"      : [2],
+    "Idle"      : [],
     "Impa"      :[],
-    "WeldAlTig" :[2],
-    "WeldStMag" :[2],
-    "WeldStTig" :[2]
+    "WeldAlTig" :[],
+    "WeldStMag" :[],
+    "WeldStTig" :[0,1,4]
 }
 
 highlight = None  ##What graph to highlight in a thicker line None = no highlightes graph
-base_linewidth = 1.2
+base_linewidth = 1 ## base linewidth, highlighted will be 3x base
+
 
 
 
@@ -471,7 +472,7 @@ def plotFFT(sets, vars, fs, ds_fs, f_type="fir", size=20):
 
 
 
-def plotWelch(sets, variables, fs, ds_fs, f_type="fir", size=20, highlight_index=None, base_linewidth = base_linewidth):
+def plotWelch(sets, variables, fs, ds_fs, f_type="fir", size=20, highlight_index=None, base_linewidth=base_linewidth):
     cmap = plt.get_cmap("tab10")
     
     for var in variables:

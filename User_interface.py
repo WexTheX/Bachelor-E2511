@@ -2,11 +2,11 @@ import streamlit as st
 from main import main
 import os
 import asyncio
-from realtime import RT_main, get_predictions
+from live_detection import RT_main, get_predictions
 import time
 import threading
 from streamlit_autorefresh import st_autorefresh
-from realtime import shutdown_event
+from live_detection import shutdown_event
 import pandas as pd
 import numpy as np
 # args for main()

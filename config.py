@@ -15,8 +15,8 @@ main_config = {
     'want_feature_extraction':  1, # True: Extract statistical features from datafiles files, create "feature_df" dataframe. False: Read "xxx_feature_df.csv" from file
     'norm_IMU':                 0, # True: Normalize IMU data. False: Use IMU data in x, y, and z direction
     'use_granular_labels':      1, # True: Use granular (8) labels for classification. False: Use high-level (4) labels for classification
-    'want_new_CLFs':            0, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
-    'want_plots':               0, # True: Generate and save plots. False: Skip plotting
+    'want_new_CLFs':            1, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
+    'want_plots':               1, # True: Generate and save plots. False: Skip plotting
     'save_joblib':              0, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
     'want_offline_test':        0, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
     'want_calc_exposure':       0, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip

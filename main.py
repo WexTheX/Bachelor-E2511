@@ -20,7 +20,7 @@ from extractFeatures import extractDFfromFile, extractFeaturesFromDF
 from machineLearning import setNComponents, evaluateCLFs, makeNClassifiers
 from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve, datasetOverview, plotScoreVsWindowLength, plotScalabilityOfScoreTime
 from preprocessing import fillSets, downsample, pickleFiles, saveJoblibFiles
-from testonfile import offlineTest, calcExposure
+from offline_classification import offlineTest, calcExposure
 from config import setupML, loadDataset, main_config
 
 def main(

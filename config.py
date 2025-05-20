@@ -12,26 +12,26 @@ from typing import List, Dict, Any, Tuple, Sequence, Optional
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
-    'want_feature_extraction':  1, # True: Extract statistical features from datafiles files, create "feature_df" dataframe. False: Read "xxx_feature_df.csv" from file
-    'norm_IMU':                 0, # True: Normalize IMU data. False: Use IMU data in x, y, and z direction
-    'use_granular_labels':      1, # True: Use granular (8) labels for classification. False: Use high-level (4) labels for classification
-    'want_new_CLFs':            1, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
-    'want_plots':               1, # True: Generate and save plots. False: Skip plotting
-    'save_joblib':              0, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
-    'want_offline_test':        0, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
-    'want_calc_exposure':       0, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip
+    'want_feature_extraction':  True, # True: Extract statistical features from datafiles files, create "feature_df" dataframe. False: Read "xxx_feature_df.csv" from file
+    'norm_IMU':                 False, # True: Normalize IMU data. False: Use IMU data in x, y, and z direction
+    'use_granular_labels':      True, # True: Use granular (8) labels for classification. False: Use high-level (4) labels for classification
+    'want_new_CLFs':            True, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
+    'want_plots':               True, # True: Generate and save plots. False: Skip plotting
+    'save_joblib':              True, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
+    'want_offline_test':        True, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
+    'want_calc_exposure':       True, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip
     'model_selection': [        
-                                # 'LR',        
-                                # 'SVM',
-                                # 'KNN',
-                                # 'GNB',
-                                # 'RF',
-                                # 'GB',
-                                # 'ADA',                  
+                                'LR',        
+                                'SVM',
+                                'KNN',
+                                'GNB',
+                                'RF',
+                                'GB',
+                                'ADA',                  
     ],
 
     'method_selection':         [
-                                # 'BS',    
+                                'BS',    
                                 # 'RS',
                                 # 'GS',
                                 # 'HGS'
@@ -109,7 +109,7 @@ def setupML():
     }
 
     LR_param_grid = {
-        'C':                    [0.001, 0.01, 0.1],#, 1.0, 10.0, 100.0],             #
+        'C':                    [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],       #
         # 'dual':                 [False],                                    # Dual or Primal formulation
         # 'fit_intercept':        [True],                                     # Constant added to function (bias)             
         # 'intercept_scaling':    [1],                                        # Only useful when Solver = liblinear, fit_intercept = true
@@ -179,7 +179,7 @@ def setupML():
     
     search_kwargs = {
         'n_jobs':              -1, 
-        'verbose':             3,
+        'verbose':             0,
         'cv':                  StratifiedKFold(n_splits=num_folds),
         'scoring':             'f1_weighted',
         'return_train_score':  True

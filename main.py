@@ -216,7 +216,7 @@ def main(
 
         fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
         
-        # fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
+        fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
         fig_6 = datasetOverview(window_labels, window_length_seconds, test_size)
 

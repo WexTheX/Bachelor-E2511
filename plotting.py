@@ -891,6 +891,7 @@ def datasetOverview(labels:                 Sequence,
     print(f"Error saving plot to {output_filename}: {e}")
 
   print(df)
+  return fig
 
 def plotScoreVsWindowLength(window_lengths: Sequence, 
                             mean_scores:    Sequence, 

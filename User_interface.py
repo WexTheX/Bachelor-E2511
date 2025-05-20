@@ -41,7 +41,7 @@ result = {}
 
 st.title("User interface")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Settings",  "Results and plots", "File prediction", "Live prediction", "New files/data"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Settings",  "Results and plots", "Offline classification", "Live classification", "New files/data"])
 
 
 ## TAB NUMBER ONE ##
@@ -68,7 +68,7 @@ with tab1: #SETTINGS
             st.write("Sampling frequency: 800 Hz")
             ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=5)
             window_length_seconds = st.selectbox("Window length (seconds):", [20, 40])
-            test_size = st.selectbox("Amount of test data", [0.25, 0.3])
+            test_size = st.selectbox("Amount of test data", [0.2, 0.25, 0.3], index=1)
             variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=3)
 
 
@@ -126,7 +126,7 @@ with tab2: #Results
             st.write(f"Seclected classifier location: \n {clf_results_path}")
     
 
-        st.write(f"Accuracy: {round(result['test_accuracy'], 3)}    \n F-score: {round(result['test_f1_score'], 3)}")
+        st.write(f"Accuracy: {round(result['test_accuracy'], 3)}    \n F1-score: {round(result['test_f1_score'], 3)}")
     
         selected_plots = st.multiselect("Select plot(s)", plots.keys())
 
@@ -178,7 +178,7 @@ with tab3:    #File prediction
             st.dataframe(df_summary)  
 
         upload_directory = 'testOnFile/testFiles/'
-        uploaded_test_file = st.file_uploader("Upload the file(s) you want to check", type= 'txt')
+        uploaded_test_file = st.file_uploader("Upload the file(s) you want to check", type= ["txt","bin"])
 
 
         if uploaded_test_file is not None:
@@ -208,15 +208,12 @@ with tab4: #REAL TIME
     with column2:
         if st.checkbox("Show classification"):
             prediction_list = get_predictions()
-            #st.write(prediction_list)
-            st.write({'Thu, 10 Apr 2025 13:26:14 +0000': np.str_('IDLE'),	 	
-                     'Thu, 10 Apr 2025 13:26:34 +0000': np.str_('IMPA'),	 	
-                     'Thu, 10 Apr 2025 13:26:54 +0000': np.str_('IMPA')})
+            st.write(prediction_list)
             st_autorefresh(interval= 10 * 1000, key="test")
 
 ## TAB NUMBER FIVE ##
 with tab5: #New files/data 
-    st.info("This tab is for adding new data for training the ML model")
+    st.info("This tab is for adding new data for training models")
 
     path_granular = "Datafiles/DatafilesSeparated_Aker"
     path_combined = "Datafiles/DatafilesCombined_aker"
@@ -248,7 +245,7 @@ with tab5: #New files/data
     selected_category = st.selectbox("Select Activity Type", category_dirs.keys())
 
     #File uploader
-    uploaded_file = st.file_uploader(f"Upload file for {selected_category}", type=["txt"])
+    uploaded_file = st.file_uploader(f"Upload file for {selected_category}", type=["txt", "bin"])
 
     if uploaded_file is not None:
         target_dir = category_dirs[selected_category]

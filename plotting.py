@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import ndarray
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -7,7 +8,7 @@ import math
 from sklearn import metrics
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.decomposition import PCA
-from sklearn.model_selection import LearningCurveDisplay, ShuffleSplit, StratifiedKFold
+from sklearn.model_selection import LearningCurveDisplay, ShuffleSplit, StratifiedKFold, learning_curve
 from typing import List, Dict, Any, Tuple, Sequence, Optional
 from matplotlib.lines import Line2D
 from matplotlib.figure import Figure
@@ -190,7 +191,7 @@ def biplot(feature_df:              pd.DataFrame,
            want_arrows:             bool = False,
            feature_start_index:     int = 90,
            num_features_per_sensor: int = 15,
-           output_filename:         str = "plots/biplot.png"
+           output_filename:         str = "plots/biplot"
            ) -> Figure:
   
   '''
@@ -205,7 +206,7 @@ def biplot(feature_df:              pd.DataFrame,
 
   # --- 1. Fit scaler and PCA transform ---
   try:
-    PCA_object        = PCA(n_components = 2)
+    PCA_object        = PCA(n_components = 4)
     total_data_scaled = scaler.fit_transform(feature_df)
     X                 = pd.DataFrame(PCA_object.fit_transform(total_data_scaled))
 
@@ -214,7 +215,7 @@ def biplot(feature_df:              pd.DataFrame,
     raise
 
   # --- 2. Plotting ---
-  xs, ys = X[0], X[1]
+  xs, ys, zs, ws = X[0], X[1], X[2], X[3]
 
   unique_original_labels  = sorted(list(set(train_labels)))
   point_colors            = [label_mapping[label] for label in train_labels]
@@ -231,6 +232,69 @@ def biplot(feature_df:              pd.DataFrame,
 
   fig, ax = plt.subplots(figsize=(10, 8))
   ax.scatter(xs, ys, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
+  ax.set_xlabel("PC1")
+  ax.set_ylabel("PC2")
+  ax.legend(handles=legend_handles, title="Labels")
+  
+  try:
+    fig.savefig(output_filename + "_1vs2.png", dpi=300, bbox_inches='tight')
+  except Exception as e:
+    print(f"Error saving plot to {output_filename}: {e}") 
+
+  fig, ax = plt.subplots(figsize=(10, 8))
+  ax.scatter(xs, zs, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
+  ax.set_xlabel("PC1")
+  ax.set_ylabel("PC3")
+  ax.legend(handles=legend_handles, title="Labels")
+  
+  try:
+    fig.savefig(output_filename + "_1vs3.png", dpi=300, bbox_inches='tight')
+  except Exception as e:
+    print(f"Error saving plot to {output_filename}: {e}") 
+  
+  fig, ax = plt.subplots(figsize=(10, 8))
+  ax.scatter(xs, ws, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
+  ax.set_xlabel("PC1")
+  ax.set_ylabel("PC4")
+  ax.legend(handles=legend_handles, title="Labels")
+
+  try:
+    fig.savefig(output_filename + "_1vs4.png", dpi=300, bbox_inches='tight')
+  except Exception as e:
+    print(f"Error saving plot to {output_filename}: {e}") 
+
+  fig, ax = plt.subplots(figsize=(10, 8))
+  ax.scatter(ys, zs, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
+  ax.set_xlabel("PC2")
+  ax.set_ylabel("PC3")
+  ax.legend(handles=legend_handles, title="Labels")
+ 
+  try:
+    fig.savefig(output_filename + "_2vs3.png", dpi=300, bbox_inches='tight')
+  except Exception as e:
+    print(f"Error saving plot to {output_filename}: {e}") 
+
+  fig, ax = plt.subplots(figsize=(10, 8))
+  ax.scatter(ys, ws, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
+  ax.set_xlabel("PC2")
+  ax.set_ylabel("PC4")
+  ax.legend(handles=legend_handles, title="Labels")
+  
+  try:
+    fig.savefig(output_filename + "_2vs4.png", dpi=300, bbox_inches='tight')
+  except Exception as e:
+    print(f"Error saving plot to {output_filename}: {e}") 
+
+  fig, ax = plt.subplots(figsize=(10, 8))
+  ax.scatter(zs, ws, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
+  ax.set_xlabel("PC3")
+  ax.set_ylabel("PC4")
+  ax.legend(handles=legend_handles, title="Labels")
+  
+  try:
+    fig.savefig(output_filename + "_3vs4.png", dpi=300, bbox_inches='tight')
+  except Exception as e:
+    print(f"Error saving plot to {output_filename}: {e}") 
 
   # plt.figure(figsize=(10, 8))
   # plt.scatter(xs, ys, c=point_colors, s=45, edgecolors="k", linewidths=0.35)
@@ -351,7 +415,7 @@ def plotDecisionBoundaries(X:               pd.DataFrame,
                            results:         List[Dict[str, Any]],
                            accuracy_list:   List[float],
                            cmap:            str,
-                           grid_resolution: int = 2000,
+                           grid_resolution: int = 4000,
                            output_filename: str = "plots/decision_boundaries.png"
                           ) -> Optional[Figure]:
   
@@ -406,7 +470,7 @@ def plotDecisionBoundaries(X:               pd.DataFrame,
         ax.scatter(xs, ys, c=point_colors, s=25, edgecolors="k", linewidths=0.35)
 
         # Text
-        ax.set_title(f"{model_name}: {optimalizer}", fontsize=14, fontweight='normal')
+        # ax.set_title(f"{model_name}: {optimalizer}", fontsize=10, fontweight='normal')
         ax.text(
           0.98, 0.02,  # X and Y position in axes coords (0=left/bottom, 1=right/top)
           f"{accuracy:.3f}".lstrip("0"),
@@ -418,11 +482,11 @@ def plotDecisionBoundaries(X:               pd.DataFrame,
         )
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.set_xlabel('')
-        ax.set_ylabel('')
+        ax.set_xlabel('PC1')
+        ax.set_ylabel('PC2')
         # ax.set_aspect('equal', adjustable='box')
 
-      fig.suptitle("Classifier Decision Boundaries", fontsize=16)
+      # fig.suptitle("Classifier Decision Boundaries", fontsize=16)
 
     for j in range(num_plots, len(axes)):
       fig.delaxes(axes[j])
@@ -492,7 +556,7 @@ def confusionMatrix(labels:           Sequence,
 
 def plotFeatureImportance(pca:                    Any,
                           original_feature_names: List[str],
-                          threshold:              Optional[float] = None, #= 0.673,
+                          threshold:              Optional[float] = 0.63, #None, #= 0.673,
                           percentile_cutoff:      float = 25.0,
                           output_filename:        str = "plots/feature_importance.png"
                           ) -> Figure:
@@ -603,9 +667,9 @@ def plotFeatureImportance(pca:                    Any,
           ha='left', 
           bbox=dict(boxstyle='round,pad=0.5', fc='wheat', alpha=0.6))
 
-    ax.set_title(f"Importance of {len(original_feature_names)} original features to {pca.n_components} Principal Components", fontsize=16)
-    ax.set_xlabel("Sorted features", fontsize=12)
-    ax.set_ylabel("% Contribution to all PC's", fontsize=12)
+    # ax.set_title(f"Importance of {len(original_feature_names)} original features to {pca.n_components} Principal Components", fontsize=16)
+    ax.set_xlabel("Sorted features", fontsize=10)
+    ax.set_ylabel("% Contribution to all PC's", fontsize=10)
 
     ax.grid(True, linestyle=':',  alpha=0.6)
     ax.set_xticks(np.arange(0, len(sorted_vector), 10))
@@ -687,58 +751,68 @@ def getSensorAndSuffixImportance(feature_dict:    dict[Any, Any],
 
   return sensor_df, suffix_df, fig
 
-def screePlot(pca:              Any,
-              output_filename:  str = "plots/PCA_scree_plot.png"
+def screePlot(pca: Any,
+              output_filename: str = "plots/PCA_scree_plot.png"
               ) -> Figure:
+    '''
+    Generates and saves a scree plot from a fitted PCA object.
 
-  '''
-  Generates and saves a scree plot from a fitted PCA object.
+    This function takes a fitted PCA result and creates a scree plot, which
+    visualizes the proportion of variance explained by each principal component.
+    It includes both individual and cumulative variance. The generated plot
+    is also saved to a file.
+    '''
 
-  This function takes a fitted PCA result and creates a scree plot, which
-  visualizes the proportion of variance explained by each principal component.
-  The plot helps in determining the 'elbow point' to select the optimal
-  number of components. The generated plot is also saved to a file.
-  '''
+    fig = plt.figure(figsize=(8, 5))
 
-  fig = plt.figure(figsize=(8, 5))
+    try:
+        n_components = pca.n_components_
+        explained_variance_ratio = pca.explained_variance_ratio_
+        cumulative_variance = np.cumsum(explained_variance_ratio)
+        component_numbers = np.arange(n_components) + 1
 
-  try:
-    n_components = pca.n_components_
-    explained_variance_ratio = pca.explained_variance_ratio_
+        # Plot individual component variance
+        plt.plot(component_numbers,
+                 explained_variance_ratio,
+                 'o-',
+                 linewidth=2,
+                 label='Individual Variance')
 
-    # --- 1. Create the Scree Plot ---
-    component_numbers = np.arange(n_components) + 1
+        # Plot cumulative variance with yellow squares and dotted line
+        plt.plot(component_numbers,
+                 cumulative_variance,
+                 's--',
+                 color='gold',
+                 linewidth=2,
+                 markersize=6,
+                 label='Cumulative Variance')
 
-    # Plot individual component variance
-    plt.plot(component_numbers, explained_variance_ratio, 'o-', linewidth=2, label='Individual Variance')
+        # Add labels and title
+        plt.title('Scree Plot')
+        plt.xlabel('Principal Component Number')
+        plt.ylabel('Proportion of Variance Explained')
+        plt.xticks(component_numbers, rotation=90)
+        plt.legend()
+        plt.grid(True)
 
-    # Add labels and title
-    plt.title('Scree Plot')
-    plt.xlabel('Principal Component Number')
-    plt.ylabel('Proportion of Variance Explained')
-    plt.xticks(component_numbers, rotation=90)
-    plt.legend()
-    plt.grid(True)
+    except Exception as e:
+        print(f"PCA error in screePlot: {e}")
 
-  except Exception as e:
-    print(f"PCA error in screePlot: {e}")
+    # Save file
+    try:
+        fig.savefig(output_filename, dpi=300, bbox_inches='tight')
+    except Exception as e:
+        print(f"Error saving plot to {output_filename}: {e}")
 
-
-  # --- 2. Save file ---
-  try:
-    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
-  except Exception as e:
-    print(f"Error saving plot to {output_filename}: {e}")
-
-  return fig
+    return fig
 
 def plotLearningCurve(results:          List[Dict[str, Any]],
                       X:                pd.DataFrame,
                       y:                Sequence,
                       cv_string:        str = "SKF", #SKF = StratifiedKFold, SS = ShuffleSplit
-                      n_splits:         int = 10,
-                      train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 15),
-                      output_filename:  str = "plots/Learning_curve.png",
+                      n_splits:         int = 3,
+                      train_sizes:      np.ndarray = np.linspace(0.1, 1.0, 5),
+                      output_filename:  str = "plots/Learning_curve_",
                       ) -> Figure:
   
   '''
@@ -750,14 +824,10 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
   varying training set sizes.
   '''
 
-  # from sklearn.datasets import load_digits
-  # X, y = load_digits(return_X_y=True)
-  # print(X.shape)
-
   # --- 1. Plotting Setup ---
 
   if cv_string == "SKF":
-    cv_type = StratifiedKFold(n_splits=n_splits)
+    cv_type = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
   elif cv_string == "SS":
     cv_type = ShuffleSplit(n_splits=n_splits, test_size=0.2, random_state=0)
 
@@ -796,7 +866,6 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
       "score_name": "Accuracy",
   }
 
-
   # --- 3. Generate Plots ---
   for ax_idx, estimator in enumerate(models):
 
@@ -804,7 +873,7 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
       LearningCurveDisplay.from_estimator(estimator, **common_params, ax=axes[ax_idx], scoring="balanced_accuracy")
       handles, _ = axes[ax_idx].get_legend_handles_labels()
       axes[ax_idx].legend(handles[:2], ["Training Score", "Test Score"])
-      axes[ax_idx].set_title(f"Learning Curve for {estimator.__class__.__name__}")
+      # axes[ax_idx].set_title(f"Learning Curve for {estimator.__class__.__name__}")
 
     except Exception as e:
       print(f"Error plotting learning curve: {e}")
@@ -819,11 +888,96 @@ def plotLearningCurve(results:          List[Dict[str, Any]],
 
   # --- 4. Save file ---
   try:
-    fig.savefig(output_filename, dpi=300, bbox_inches='tight')
+    fig.savefig(output_filename + estimator.__class__.__name__ + ".png", dpi=300, bbox_inches='tight')
   except Exception as e:
     print(f"Error saving plot to {output_filename}: {e}")
 
   return fig
+
+
+def plotScalabilityOfScoreTime(results:     Any,
+                               X:           Sequence, 
+                               y:           Sequence,
+                               train_sizes: ndarray = np.linspace(0.1, 1.0, 15),
+                               cv:          Any = StratifiedKFold(n_splits=5, shuffle=True, random_state=42),
+                               n_jobs:      int = -1,
+                               output_filename: str = "plots/scalability"
+                               ):
+
+    models = [result['classifier'] for result in results]
+
+    for model in models:
+        model_name = model.__class__.__name__
+
+        # --- Learning Curve Plot ---
+        fig_lc, ax_lc = plt.subplots(figsize=(10, 6))
+        try:
+            LearningCurveDisplay.from_estimator(
+                model,
+                X=X,
+                y=y,
+                train_sizes=train_sizes,
+                cv=cv,
+                n_jobs=n_jobs,
+                score_type="both",
+                line_kw={"marker": "o"},
+                std_display_style="fill_between",
+                score_name="Accuracy",
+                scoring="balanced_accuracy",
+                ax=ax_lc
+            )
+            handles, _ = ax_lc.get_legend_handles_labels()
+            ax_lc.legend(handles[:2], ["Training Score", "Test Score"])
+            # ax_lc.set_title(f"Learning Curve: {model_name}")
+        except Exception as e:
+            print(f"Error plotting learning curve for {model_name}: {e}")
+            ax_lc.set_title("Learning Curve Failed")
+            ax_lc.text(0.5, 0.5, "Plotting failed", ha='center', va='center', color='red')
+
+        fig_lc.tight_layout()
+        try:
+            fig_lc.savefig(f"{output_filename}_learning_curve_{model_name}.png", dpi=300, bbox_inches='tight')
+        except Exception as e:
+            print(f"Error saving learning curve plot for {model_name}: {e}")
+        plt.close(fig_lc)
+
+        # --- Score Time Scalability Plot ---
+        fig_st, ax_st = plt.subplots(figsize=(10, 6))
+        try:
+            train_sizes_run, _, _, _, score_times = learning_curve(
+                model,
+                X=X,
+                y=y,
+                train_sizes=train_sizes,
+                cv=cv,
+                n_jobs=n_jobs,
+                return_times=True
+            )
+            score_times = score_times * 1000  # Convert to milliseconds
+
+            ax_st.plot(train_sizes_run, score_times.mean(axis=1), "o-", color='tab:orange')
+            ax_st.fill_between(
+                train_sizes_run,
+                score_times.mean(axis=1) - score_times.std(axis=1),
+                score_times.mean(axis=1) + score_times.std(axis=1),
+                alpha=0.3,
+                color='tab:orange'
+            )
+            ax_st.set_xlabel("Number of samples in the training set")
+            ax_st.set_ylabel("Score time [ms]")
+            # ax_st.set_title(f"Score Time vs Training Size: {model_name}")
+            ax_st.set_ylim(bottom=0)
+        except Exception as e:
+            print(f"Error computing score time for {model_name}: {e}")
+            ax_st.set_title("Score Time Plot Failed")
+            ax_st.text(0.5, 0.5, "Plotting failed", ha='center', va='center', color='red')
+
+        fig_st.tight_layout()
+        try:
+            fig_st.savefig(f"{output_filename}_score_time_{model_name}.png", dpi=300, bbox_inches='tight')
+        except Exception as e:
+            print(f"Error saving score time plot for {model_name}: {e}")
+        plt.close(fig_st)
 
 
 def datasetOverview(labels:                 Sequence,
@@ -852,17 +1006,25 @@ def datasetOverview(labels:                 Sequence,
   # Create Figure and Axes objects
   fig, ax = plt.subplots(figsize=(10, 6)) # Adjust figsize as needed
 
-  bars = ax.bar(plot_labels, plot_values, color='skyblue')
-  
+  bar_width = 0.4  # Smaller bar width to fit two bars
+  x = np.arange(len(plot_labels))  # numeric x locations
+
+  bars = ax.bar(x - bar_width/2, plot_values, width=bar_width, color='skyblue', label=f"{window_length_seconds}s")
+
+  # bars = ax.bar(plot_labels, plot_values, color='skyblue')
+  ax.set_xticks(x)
+  ax.set_xticklabels(plot_labels, rotation=45, ha="right")  
   ax.set_xlabel("Class")
   ax.set_ylabel("Number of windows")
-  ax.set_title(f"Distribution of classes in the dataset, {window_length_seconds} second windows")
+  # ax.set_title(f"Distribution of classes in the dataset, {window_length_seconds} second windows")
   plt.xticks(rotation=45, ha="right") # Rotate x-axis labels if they overlap
   ax.grid(axis='y', linestyle='--')
   # ax.set_ylim(0, (max(plot_values) + 50))
 
-  total_minutes=0.0
-  total_samples =0
+  total_minutes   = 0.0
+  total_samples   = 0
+  total_minutes_2 = 0.0
+  total_samples_2 = 0
   # Optional: Add text labels on top of bars
   for bar in bars:
       
@@ -875,11 +1037,40 @@ def datasetOverview(labels:                 Sequence,
       total_minutes += yval * window_length_seconds / 60
       total_samples += yval
 
+  # For comparing
+  data_60s = {
+        'GRINDBIG': (33, 0.09),
+        'GRINDMED': (40, 0.109),
+        'GRINDSMALL': (75, 0.204),
+        'IDLE': (76, 0.207),
+        'IMPA': (27, 0.074),
+        'WELDALTIG': (33, 0.09),
+        'WELDSTMAG': (54, 0.147),
+        'WELDSTTIG': (29, 0.079)
+    }
+  
+  compare_dict = data_60s
+
+  if compare_dict:
+    sorted_comp_counts = dict(sorted(compare_dict.items()))
+    comp_labels = list(sorted_comp_counts.keys())
+    comp_values = [sorted_comp_counts.get(lbl, (0, 0))[0] for lbl in plot_labels]  # match order
+    bars2 = ax.bar(x + bar_width/2, comp_values, width=bar_width, color='orange', label='Comparison')
+
+    # Optional: text labels on comparison bars
+    for bar in bars2:
+        yval = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2.0, yval + 0.005 * max(plot_values),
+                int(yval), ha='center', va='bottom')
+        
+        total_minutes_2 += yval
+        total_samples_2 += yval
+
   # Add total_seconds as a box annotation in the plot
   ax.text(0.95, 0.95,
-          f"Total minutes: {int(total_minutes):,}\nTotal samples: {int(total_samples):,}\nTrain samples: {int(train_size * total_samples)}",
+          f"Total minutes (20s): {int(total_minutes):,}\nTotal samples (20s): {int(total_samples):,}\nTotal minutes (60s): {int(total_minutes_2):,}\nTotal samples (60s): {int(total_samples_2)}",
           transform=ax.transAxes,
-          fontsize=12,
+          fontsize=10,
           verticalalignment='top',
           horizontalalignment='right',
           bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.5))

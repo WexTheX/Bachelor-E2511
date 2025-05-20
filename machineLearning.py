@@ -279,6 +279,12 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
 
         train_test_delta = mean_train_score - mean_test_score
 
+        print("Validation scores for each fold (best param combo):")
+        split_keys = [k for k in clf.cv_results_ if k.startswith('split') and k.endswith('_test_score')]
+        for split in sorted(split_keys):
+            score = clf.cv_results_[split][clf.best_index_]
+            print(f"{split}: {score:.4f}")
+
         print(f"{clf.cv_results_['params'][clf.best_index_]} gives the best worst-case test result: (mean - {num_of_STD}*std): {pessimistic_test_score}")
         print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
         print(f"\n") 

@@ -2,11 +2,11 @@ import streamlit as st
 from main import main
 import os
 import asyncio
-from realtime import RT_main, get_predictions
+from live_prediction import RT_main, get_predictions
 import time
 import threading
 from streamlit_autorefresh import st_autorefresh
-from realtime import shutdown_event
+from live_prediction import shutdown_event
 import pandas as pd
 import numpy as np
 # args for main()
@@ -15,11 +15,14 @@ Search_methods = ["BS", "RS", "GS", "HGS"]
 test_file_path = "testOnFile/testFiles"
 prediction_csv_path = "testOnFile"
 clf_results_path = "CLF results/clf_results.joblib"
+combined_clf_path = "OutputFiles\Combined\classifier.joblib"
+separate_clf_path = "OutputFiles\Separated\classifier.joblib"
 cmap = "tab10"
-random_seed = 420
-frequencies = [25, 50, 100, 200, 400, 800, 1600]
-percentages = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1, 2, 3]
+random_seed = 42
+frequencies = [25, 50, 100, 200, 400, 800]
+percentages = [0.8, 0.85, 0.9, 0.95, 2]
 n_iter = 30
+fs = 800 
 exposures_and_limits = {'CARCINOGEN': 1000.0,
                         'RESPIRATORY': 750.0,
                         'NEUROTOXIN': 30.0,
@@ -38,33 +41,11 @@ result = {}
 
 st.title("User interface")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Real time streaming", "ML model", "Results", "Test classifier on a file" , "New files/data" ])
-        
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Settings",  "Results and plots", "Offline classification", "Live classification", "New files/data"])
+
 
 ## TAB NUMBER ONE ##
-with tab1:
-    column1,column2 = st.columns(2)
-    with column1:
-        if st.button("Start classifying in real time"):
-            asyncio.run(RT_main())
-        
-        if st.button("Stop classifying in real time"):
-            shutdown_event.set()
-
-    
-    with column2:
-        if st.checkbox("Show classification"):
-            prediction_list = get_predictions()
-            #st.write(prediction_list)
-            st.write({'Thu, 10 Apr 2025 13:26:14 +0000': np.str_('IDLE'),	 	
-                     'Thu, 10 Apr 2025 13:26:34 +0000': np.str_('IMPA'),	 	
-                     'Thu, 10 Apr 2025 13:26:54 +0000': np.str_('IMPA')})
-            st_autorefresh(interval= 10 * 1000, key="test")
-
-
-
-## TAB NUMBER TWO ##
-with tab2:
+with tab1: #SETTINGS 
     st.info("This tab is for running main function with chosen parameters")
     col1, col2 = st.columns(2)
 
@@ -72,7 +53,7 @@ with tab2:
         with st.expander("Model and Settings"):
             model_selection = st.multiselect("Select ML models: ", ML_models)
             method_selection = st.multiselect("Hyperparameter search methods:", Search_methods)
-            Splitting_method = st.selectbox("Validation technique:", ["StratifiedKFOLD", "TimeSeriesSplit"])
+            Splitting_method = st.write("Validation technique: StratifiedKFOLD")
             want_feature_extraction = st.checkbox("Want feature extraction")
             want_new_CLFs = st.checkbox("Want new classifiers")
             save_joblib = st.checkbox("Save classifier and transformations with joblib")
@@ -84,11 +65,11 @@ with tab2:
         
     with col2:
         with st.expander("Preprocessing Parameters"):
-            fs = st.selectbox("Sampling frequency:", frequencies, index=5)
+            st.write("Sampling frequency: 800 Hz")
             ds_fs = st.selectbox("Downsampled frequency:", frequencies, index=5)
             window_length_seconds = st.selectbox("Window length (seconds):", [20, 40])
-            test_size = st.selectbox("Amount of test data", [0.25, 0.3])
-            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=4)
+            test_size = st.selectbox("Amount of test data", [0.2, 0.25, 0.3], index=1)
+            variance_explained = st.selectbox("PCA variance (%) to retain:", percentages, index=3)
 
 
 
@@ -129,19 +110,23 @@ with tab2:
         st.session_state["result"] = result
 
         #st.write(result)
-    
-    
 
 
-## TAB NUMBER THREE ##
-with tab3:
+## TAB NUMBER TWO ##
+with tab2: #Results 
+    #st.write(plots)
     plots = st.session_state.get("plots", {})
     result = st.session_state.get("result", {})
 
     if want_plots and plots:
         st.write(f"Best classifier: {result['model_name']}  \n Hyperparameter search method: {result['optimalizer']}")
         st.write(f"Hyperparameter dictionary: {result['best_params']}")
-        st.write(f"Accuracy: {round(result['test_accuracy'], 3)}    \n F-score: {round(result['test_f1_score'], 3)}")
+
+        if want_new_CLFs:
+            st.write(f"Seclected classifier location: \n {clf_results_path}")
+    
+
+        st.write(f"Accuracy: {round(result['test_accuracy'], 3)}    \n F1-score: {round(result['test_f1_score'], 3)}")
     
         selected_plots = st.multiselect("Select plot(s)", plots.keys())
 
@@ -159,20 +144,23 @@ with tab3:
                 st.pyplot(plot_obj)
 
     else:
-        st.info("Plots will be displayed here after training if 'Want plots' is checked.")
+        st.info("Plots will be displayed here if 'Want plots' is checked and the main function is ran")
 
-#  plots = {
-#                      'Learning curve': fig_0,
-#                      'Confusion matrix': fig_1,
-#                      'PCA table': fig_list_0,
-#                      'Feature importance': fig_list_1,
-#                      'Scree plot': fig_2,
-#                      'Biplot': fig_3,
-#                      'Biplot 3D': fig_4,
-#                      'Decision boundaries': fig_5
-#                      }
+    # plots = {
+    #     'Learning curve': fig_0,
+    #     'Confusion matrix': fig_1,
+    #     'PCA table': fig_list_0,
+    #     'Feature importance': fig_list_1,
+    #     'Scree plot': fig_2,
+    #     'Biplot': fig_3,
+    #     'Biplot 3D': fig_4,
+    #     'Decision boundaries': fig_5,
+    #     'Distribution of labels': fig_6
+    # }
 
-with tab4:    
+
+## TAB NUMBER THREE ##
+with tab3:    #File prediction 
         if want_offline_test:
             predictions_path = 'testOnFile/predictions.csv' 
             df_predictions = pd.read_csv(predictions_path)
@@ -180,7 +168,7 @@ with tab4:
             st.dataframe(df_predictions)  
 
         else:
-            st.info("If 'Want offline test' is checked in the ML model tab results of uploaded files will be displayed here")
+            st.info("If 'Want offline test' is checked in the Settings tab results of uploaded files will be displayed here")
 
 
         if want_calc_exposure:
@@ -190,7 +178,7 @@ with tab4:
             st.dataframe(df_summary)  
 
         upload_directory = 'testOnFile/testFiles/'
-        uploaded_test_file = st.file_uploader("Upload the file(s) you want to check", type= 'txt')
+        uploaded_test_file = st.file_uploader("Upload the file(s) you want to check", type= ["txt","bin"])
 
 
         if uploaded_test_file is not None:
@@ -204,31 +192,52 @@ with tab4:
             st.success(f"File uploaded and saved to {upload_directory}")
         
 
-## TAB NUMBER FIVE ##
-with tab5:
-    st.info("This tab is for adding new data for training the ML model")
 
-    path = "Datafiles"
-    # TODO Fix separated and combined
+## TAB NUMBER FOUR ##
+
+with tab4: #REAL TIME 
+    column1,column2 = st.columns(2)
+    with column1:
+        if st.button("Start classifying in real time"):
+            asyncio.run(RT_main())
+        
+        if st.button("Stop classifying in real time"):
+            shutdown_event.set()
+
+    
+    with column2:
+        if st.checkbox("Show classification"):
+            prediction_list = get_predictions()
+            st.write(prediction_list)
+            st_autorefresh(interval= 10 * 1000, key="test")
+
+## TAB NUMBER FIVE ##
+with tab5: #New files/data 
+    st.info("This tab is for adding new data for training models")
+
+    path_granular = "Datafiles/DatafilesSeparated_Aker"
+    path_combined = "Datafiles/DatafilesCombined_aker"
+
     if use_granular_labels == True:
+        
         category_dirs = {
-            "GrindBig": path + "/DatafilesSeparated_Aker/GrindBig",
-            "GrindMed": path + "/DatafilesSeparated_Aker/GrindMed",
-            "GrindSmall": path + "/DatafilesSeparated_Aker/GrindSmall",
-            "Idle": path + "/DatafilesSeparated_Aker/Idle",
-            "Impa": path + "/DatafilesSeparated_Aker/Impa",  
+            "GrindBig": path_granular + "/GrindBig",
+            "GrindMed": path_granular + "GrindMed",
+            "GrindSmall": path_granular + "/GrindSmall",
+            "Idle": path_granular + "/Idle",
+            "Impa": path_granular + "/Impa",  
             #"SandSim": path + "/DatafilesSeparated/SandSim",
-            "WeldAlTIG": path + "/DatafilesSeparated_Aker/WeldAlTIG",
-            "WeldStMAG": path + "/DatafilesSeparated_Aker/WeldStMAG",
-            "WeldStTIG": path + "/DatafilesSeparated_Aker/WeldStTIG"
+            "WeldAlTIG": path_granular + "/WeldAlTIG",
+            "WeldStMAG": path_granular + "/WeldStMAG",
+            "WeldStTIG": path_granular + "/WeldStTIG"
         }
     
     else:
         category_dirs = {
-            "Grinding": path + "DatafilesCombined_aker/Grinding",
-            "Idle": path + "DatafilesCombined_aker/Idle",
-            "Impa": path + "DatafilesCombined_aker/Impa",
-            "Welding": path + "DatafilesCombined_aker/Welding"
+            "Grinding": path_combined + "/Grinding",
+            "Idle": path_combined + "/Idle",
+            "Impa": path_combined + "/Impa",
+            "Welding": path_combined + "/Welding"
         }
 
 
@@ -236,7 +245,7 @@ with tab5:
     selected_category = st.selectbox("Select Activity Type", category_dirs.keys())
 
     #File uploader
-    uploaded_file = st.file_uploader(f"Upload file for {selected_category}", type=["txt"])
+    uploaded_file = st.file_uploader(f"Upload file for {selected_category}", type=["txt", "bin"])
 
     if uploaded_file is not None:
         target_dir = category_dirs[selected_category]

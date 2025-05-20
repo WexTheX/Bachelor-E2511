@@ -84,11 +84,11 @@ def runInferenceOnFile(file_path:           str,
 
     ### Load file and preprocess
     
-    df = extractDFfromFile(file_path, fs, drop_index=False)
-
-    ### Downsample
-    if ds_fs < fs:
-        df = downsample(df, fs, ds_fs, variables)
+    df = extractDFfromFile(file_path, ds_fs, drop_index=False)
+    
+    ### Downsample --- Does not make sense to downsample testing dataset as we want it "unedited"
+    # if ds_fs < fs:
+    #     df = downsample(df, fs, ds_fs, variables)
     
     ### Feature extraction
     features_list, _ = extractFeaturesFromDF(df, "unknown", window_length_sec, ds_fs, norm_IMU)

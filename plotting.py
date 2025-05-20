@@ -415,7 +415,7 @@ def plotDecisionBoundaries(X:               pd.DataFrame,
                            results:         List[Dict[str, Any]],
                            accuracy_list:   List[float],
                            cmap:            str,
-                           grid_resolution: int = 4000,
+                           grid_resolution: int = 1000,
                            output_filename: str = "plots/decision_boundaries.png"
                           ) -> Optional[Figure]:
   
@@ -527,21 +527,18 @@ def confusionMatrix(labels:           Sequence,
   model       = result['model_name']
   optimalizer = result['optimalizer']
 
-  #fig = plt.figure(figsize=(10, 8))
-
   try:
     fig, ax = plt.subplots(figsize=(10, 8))
 
     test_predict = clf.predict(X_test)
     
     conf_matrix = metrics.confusion_matrix(labels, test_predict, labels=activities, normalize="true")
-    #plt.figure(figsize=(10, 8))
+    
     sns.heatmap(conf_matrix, annot=True, cmap='Blues', xticklabels=activities, yticklabels=activities, ax=ax)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("Actual")
     ax.set_title(f'Confusion matrix, {model}: {optimalizer}')
-    fig.tight_layout()
-    fig.canvas.draw()
+    
 
   except Exception as e:
     print(f"Unable to plot confusion matrix: {e}")
@@ -551,7 +548,9 @@ def confusionMatrix(labels:           Sequence,
     fig.savefig(output_filename, dpi=300, bbox_inches='tight')
   except Exception as e:
     print(f"Error saving plot to {output_filename}: {e}")
-
+  
+  fig.tight_layout()
+  fig.canvas.draw()
   return fig
 
 def plotFeatureImportance(pca:                    Any,
@@ -1083,6 +1082,7 @@ def datasetOverview(labels:                 Sequence,
     print(f"Error saving plot to {output_filename}: {e}")
 
   print(df)
+  return fig
 
 def plotScoreVsWindowLength(window_lengths: Sequence, 
                             mean_scores:    Sequence, 

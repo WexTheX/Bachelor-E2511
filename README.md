@@ -154,12 +154,6 @@ real_time_window_sec = 30
 
 
 ## Visualization
-To visualize options and paramters run the `User_interface.py` file like this:
+To visualize options, parameters and understand how the code works, please find the user interface manual.
 
-```bash
-streamlit run User_interface.py
-```
-
-This should open a web browser page with the user interface running on `localhost` port `8051`.
-From here one can interact with the code, providing the same functionalities as altering the code and runnning `main.py` aswell as `realtime.py`, though it's recomended to also pay attention to the terminal since only results are displayed not the progress. Just to avoid impatience.
 

@@ -384,12 +384,14 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
     })
 
   metrics_df = pd.DataFrame(rows)
-  metrics_df.set_index(['model_name', 'optimalizer'], inplace=True)
-  metrics_df = metrics_df.sort_values(by='avg_predict_time', ascending=True)
+  metrics_df.set_index(['model_name', 'optimalizer'], inplace=True) # NB, change
+  # metrics_df.set_index('model_name', inplsace=True)
+  metrics_df = metrics_df.sort_index(level='model_name')
+  # metrics_df.sort_index(inplace=True)
 
   # metrics_df.to_csv(output_path, index=False)
 
-  print(metrics_df)
+  # print(metrics_df)
   print("")
   print(f"Best clf: \t {best_model}: {best_optimalizer}")
   print(f"f1_score: \t {highest_score:.4f}")

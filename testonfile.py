@@ -227,6 +227,7 @@ def offlineTest(test_file_path:        str,
                 continue  # Skipping .csv files
 
             elif filename.endswith(".bin"): ##Converting .bin to .txt
+            
                 convert_bin_to_txt(file_to_test)
 
             df_result, features_df = runInferenceOnFile(file_to_test, fs, ds_fs, window_length_seconds, want_prints, variables, norm_IMU)
@@ -253,7 +254,7 @@ def calcExposure(combined_df:               pd.DataFrame,
                  labels:                    list[str],
                  exposures_and_limits:      dict[str, float],
                  use_granular_labels:       bool,
-                 filter_on:                 bool = True,
+                 filter_on:                 bool = False,
                  predictions_csv:           str = "predictions.csv",
                  activity_length_csv:       str = "activity_length.csv",
                  summary_csv:               str = "exposure_summary.csv",
@@ -449,19 +450,30 @@ def exposureSummary(total_exposure_vector:     np.array,
 
     return df
 
-def moving_mode_filter(series:  pd.Series, 
-                       window:  int
-                       ) -> pd.Series:
-    
+def moving_mode_filter(series: pd.Series, window: int) -> pd.Series:
     '''
-    Applies a moving mode filter to a Pandas Series.
+    Applies a moving mode filter to a Pandas Series with deterministic tie-breaking:
+    if multiple modes exist, the first one (in order of appearance in the window) is selected.
     '''
+    result = []
 
-    return pd.Series(
-        [
-            Counter(series[max(0, i - window // 2): i + window // 2 + 1]).most_common(1)[0][0]
-            if not series[max(0, i - window // 2): i + window // 2 + 1].empty else None
-            for i in range(len(series))
-        ],
-        index=series.index
-    )
+    for i in range(len(series)):
+        # Define the window slice
+        start = max(0, i - window // 2)
+        end = i + window // 2 + 1
+        window_slice = series[start:end]
+
+        if window_slice.empty:
+            result.append(None)
+        else:
+            freqs = Counter(window_slice)
+            max_freq = max(freqs.values())
+            modes = {k for k, v in freqs.items() if v == max_freq}
+
+            # Choose the first occurring mode from the original window slice
+            for val in window_slice:
+                if val in modes:
+                    result.append(val)
+                    break
+
+    return pd.Series(result, index=series.index)

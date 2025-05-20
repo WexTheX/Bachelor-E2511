@@ -43,7 +43,7 @@ main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
     'want_feature_extraction':  0,
-    'separate_types':           1, 
+    'use_granular_labels':      1, 
     'want_new_CLFs':            0,
     'want_plots':               1,
     'want_pickle':              0, # Pickle the classifier, scaler and PCA objects.
@@ -54,7 +54,7 @@ main_config = {
 
     # --- DATASET & MODELING VARIABLES ---
     'variance_explained':       0.95,
-    'random_seed':              4201,
+    'random_seed':              42,
     'window_length_seconds':    20,
     'test_size':                0.25,
     'fs':                       800,
@@ -64,10 +64,15 @@ main_config = {
     'norm_IMU':                 False,
 
     # --- EXPOSURE CALCULATION VARIABLES ---
-    'exposures': [
-        'CARCINOGEN', 'RESPIRATORY', 'NEUROTOXIN', 'RADIATION', 'NOISE', 'VIBRATION', 'THERMAL', 'MSK'
-    ],
-    'safe_limit_vector': [1000.0, 750.0, 30.0, 120.0, 900.0, 400.0, 2500.0, 400.0], 
+     'exposures_and_limits': {'CARCINOGEN':  1000.0,
+                             'RESPIRATORY': 750.0, 
+                             'NEUROTOXIN':  30.0, 
+                             'RADIATION':   120.0, 
+                             'NOISE':       900.0, 
+                             'VIBRATION':   400.0,
+                             'THERMAL':     2500.0, 
+                             'MSK':         500.0
+                            },
     'variables': ["Timestamp","Gyr.X","Gyr.Y","Gyr.Z","Axl.X","Axl.Y","Axl.Z","Mag.X","Mag.Y","Mag.Z","Temp"],
 
     # --- FILE PATHS ---
@@ -83,7 +88,7 @@ main_config = {
 
 - **`want_feature_extraction`**: Finds the features in each window (`window_length_seconds` variable changes the window length in seconds) of the dataset if `true` and stores them for easy creation of a new classifier. `main.py` has to be run with this enabled if new data is gathered.
 
-- **`separate_types`**: Separates the type of category even further (e.g, Tig steel vs Tig Aluminium instead of just Welding) if `true`
+- **`use_granular_labels`**: Separates the type of category even further (e.g, Tig steel vs Tig Aluminium instead of just Welding) if `true`
 - **`want_new_CLFs`**: Creates and compares classifier models that are selected in `model_selection` and chooses the highest performing model if `true `. 
 - **`want_plots`**: Shows a variety of useful plots such as the confusion matrix, PCA plot and learningcurve if `True`. Good in combination with `want_new_CLFs` for analysis.
 - **`want_pickle`**: Saves the current classifier by using the `pickle` library. Good if new data is collected and `want_new_CLFs` finds a better model.

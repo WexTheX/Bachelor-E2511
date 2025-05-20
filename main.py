@@ -18,11 +18,10 @@ from typing import List, Dict, Any, Tuple, Sequence
 # Local imports
 from extractFeatures import extractDFfromFile, extractFeaturesFromDF
 from machineLearning import setNComponents, evaluateCLFs, makeNClassifiers
-from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve, datasetOverview, plotScoreVsWindowLength
+from plotting import plotDecisionBoundaries, biplot, biplot3D, plotPCATable, plotFeatureImportance, confusionMatrix, screePlot, plotLearningCurve, datasetOverview, plotScoreVsWindowLength, plotScalabilityOfScoreTime
 from preprocessing import fillSets, downsample, pickleFiles, saveJoblibFiles
 from testonfile import offlineTest, calcExposure
 from config import setupML, loadDataset, main_config
-
 
 def main(
     # Flags
@@ -165,7 +164,7 @@ def main(
 
     # Calculate PCA components, create PCA object, fit + transform
     PCA_components      = setNComponents(train_data_scaled, variance_explained)
-    PCA_final           = PCA(n_components = PCA_components)
+    PCA_final           = PCA(n_components = PCA_components, svd_solver='full')
     PCA_final.fit(train_data_scaled)
 
     PCA_train_df        = pd.DataFrame(PCA_final.transform(train_data_scaled))
@@ -202,7 +201,7 @@ def main(
 
         fig_1 = confusionMatrix(test_labels, PCA_test_df, activity_name, result)
         
-        ''' FEATURE IMPORTANCE '''
+        # ''' FEATURE IMPORTANCE '''
         
         fig_list_0  = plotPCATable(PCA_final, features_per_table=28) 
 
@@ -213,12 +212,16 @@ def main(
         ''' PLOTS OF PCA '''
         
         fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
+        fig_3 = biplot(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
 
+        fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
         fig_4 = biplot3D(feature_df, scaler, window_labels, label_mapping, window_length_seconds)
         
         fig_5 = plotDecisionBoundaries(PCA_train_df, train_labels, label_mapping, n_results, accuracy_list, cmap_name)
 
         fig_6 = datasetOverview(window_labels, window_length_seconds, test_size)
+
+        
 
         plots = {
             'Learning curve': fig_0,
@@ -259,109 +262,161 @@ def main(
     return plots, result, metrics_df
 
 
-if __name__ == "__main__" and 1:
+randomness_loop = False
+
+if __name__ == "__main__" and randomness_loop == False:
     main(**main_config)
 
 
-if __name__ == "__main__" and 0:
+if __name__ == "__main__" and randomness_loop == True:
 
     start_time = time.time()
 
     f1_mean, f1_std, accuracy_mean, accuracy_std, window_lengths_for_plot, randomness_list, f1_scores, accuracies = [], [], [], [], [], [], [], []
 
     window_sec_lower = 20
-    window_sec_upper = 25
+    window_sec_upper = 245
     window_sec_interval = 5
 
-    # for i in range(window_sec_lower, window_sec_upper, window_sec_interval):
+    all_window_dfs = []
+    all_window_dfs_std = []
+
+    import matplotlib.cm as cm
+    colors = cm.get_cmap('tab10')
+
+    for i in range(window_sec_lower, window_sec_upper, window_sec_interval):
         
-    # print(f"Current window length: {i} seconds.")
-    # window_lengths_for_plot.append(i)
+        print(f"Current window length: {i} seconds.")
+        window_lengths_for_plot.append(i)
 
-    main_config["want_feature_extraction"]  = False
-    main_config["window_length_seconds"]    = 20
+        num_randomness: int = 20
 
-    num_randomness: int = 10
+        current_f1          = np.zeros(num_randomness)
+        current_accuracy    = np.zeros(num_randomness)
 
-    current_f1          = np.zeros(num_randomness)
-    current_accuracy    = np.zeros(num_randomness)
+        randomness_list = []
 
-    for i in range(num_randomness):
-        randomness_list.append(random.randint(i*1000000, (i+1)*1000000 - 1)) 
-    
-    print(randomness_list)
-
-    main_config["want_new_CLFs"] = True
-    main_config['model_selection'] = ['gnb', 'gb', 'lr', 'svm', 'rf', 'knn', 'ada']
-    main_config['method_selection'] = ['bsw']
-
-    dfs = list(range(len(randomness_list)))
-
-
-    for j, rand_seed in enumerate(randomness_list): 
-        main_config["random_seed"] = rand_seed
-        # main_config["want_new_CLFs"] = False
-
-        print(f"Random seed nr {j}: {rand_seed}")
-        plots, result, metrics_df = main(**main_config)
+        for r in range(num_randomness):
+            randomness_list.append(random.randint(r*1000000, (r+1)*1000000 - 1)) 
         
-        dfs[j] = metrics_df
+        print(randomness_list)
 
-        # current_f1[j] = result["test_f1_score"]
-        # current_accuracy[j] = result["test_accuracy"]
+        main_config["want_new_CLFs"] = True
+        main_config['model_selection'] = ['gnb', 'lr', 'svm', 'rf', 'knn', 'ada', 'gb']
+        main_config['method_selection'] = []
 
-        # print(current_accuracy[j])
-        # main_config["want_feature_extraction"] = False
+        dfs = list(range(len(randomness_list)))
 
-    # dfs = [df1, df2, df3]  # for example
+
+        main_config["want_feature_extraction"]  = True
+        main_config["window_length_seconds"]    = i
+        main_config["want_plots"] = False
+
+        for j, rand_seed in enumerate(randomness_list): 
+            
+            main_config["random_seed"] = rand_seed
+            # main_config["want_new_CLFs"] = False
+
+            print(f"Random seed nr in inner loop: {j}: {rand_seed}")
+            plots, result, metrics_df = main(**main_config)
+            metrics_df = metrics_df.reset_index(level='optimalizer', drop=True)
+            # print(f"Metrics_df {j}: {metrics_df}")
+            
+            dfs[j] = metrics_df
+
+            main_config["want_feature_extraction"]  = False
+        
+        mean_dfs = sum(dfs) / len(dfs)
+
+        # Convert list of DataFrames to 3D NumPy array: (N, rows, columns)
+        data = np.array([df.values for df in dfs])
+
+        # Compute std along axis 0 (across the N DataFrames)
+        std_array = np.std(data, axis=0, ddof=1)  # ddof=1 for sample std
+
+        # Reconstruct DataFrame with original index and columns
+        std_df = pd.DataFrame(std_array, index=dfs[0].index, columns=dfs[0].columns)
+
+        print("Mean DF: ")
+        print(mean_dfs)
+        print(std_df)
+
     
-    mean_dfs = sum(dfs) / len(dfs)
+        all_window_dfs.append(mean_dfs)
+        all_window_dfs_std.append(std_df)
 
-    # Convert list of DataFrames to 3D NumPy array: (N, rows, columns)
-    data = np.array([df.values for df in dfs])
+    num_dfs = len(all_window_dfs)
+    num_rows = len(main_config['model_selection'])
 
-    # Compute std along axis 0 (across the N DataFrames)
-    std_array = np.std(data, axis=0, ddof=1)  # ddof=1 for sample std
+    for row_idx in range(num_rows):
+        f1_scores = []
+        std_scores = []
 
-    # Reconstruct DataFrame with original index and columns
-    std_df = pd.DataFrame(std_array, index=dfs[0].index, columns=dfs[0].columns)
+        for df in all_window_dfs:
+            f1_scores.append(df.iloc[row_idx]['f1_score'])
+        for df in all_window_dfs_std:
+            std_scores.append(df.iloc[row_idx]['f1_score'])
 
-    mean_dfs = mean_dfs.sort_values(by='f1_score', ascending=False)
-    std_df = std_df.sort_values(by='f1_score', ascending=True)
+        f1_scores = np.array(f1_scores, dtype=np.float64)
+        std_scores = np.array(std_scores, dtype=np.float64)
+        window_lengths_for_plot = np.array(window_lengths_for_plot, dtype=np.float64)
 
-    print(mean_dfs)
-    print(std_df)
-    print(randomness_list)
+        lower = f1_scores - std_scores
+        upper = f1_scores + std_scores
 
-    mean_dfs.to_csv("OutputFiles/mean_metrics_results")
-    std_df.to_csv("OutputFiles/std_metrics_results")
+        # Cap manually (in-place) to avoid relying on np.clip magic
+        lower[lower < 0.0] = 0.0
+        upper[upper > 1.0] = 1.0
 
-    # f1_mean.append(current_f1.mean())
-    # f1_std.append(current_f1.std())
+        # Clip f1_scores too just in case
+        f1_scores = np.clip(f1_scores, 0.0, 1.0)
 
-    # accuracy_mean.append(current_accuracy.mean())
-    # accuracy_std.append(current_accuracy.std())
+        color = colors(row_idx % 10)
+
+        # range(num_dfs)
+        plt.figure()
+        plt.plot(window_lengths_for_plot, f1_scores, marker='o', color=color)
+        plt.fill_between(window_lengths_for_plot, lower, upper,
+                     color=color, alpha=0.2, label=f'Mean ± 1 STD')
+        # plt.title(f'F1 Score for Row {row_idx}')
+        plt.xticks(np.arange(window_sec_lower, window_sec_upper, 25))
+        plt.xlabel('Window length')
+        plt.ylabel('F1 score')
+        # ylim = plt.ylim()       # get current y-axis limits (returns (lower, upper))
+        plt.ylim(0.45, 1.05)
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'plots/f1_row_{row_idx}.png', dpi=300, bbox_inches='tight')
+        plt.close()
+
+    plt.figure(figsize=(10, 6))
+
+    for row_idx in range(num_rows):
+        f1_scores = []
+
+        for df in all_window_dfs:
+            f1_scores.append(df.iloc[row_idx]['f1_score'])
+
+        f1_scores = np.array(f1_scores, dtype=np.float64)
+
+        color = colors(row_idx % 10)
+        label = all_window_dfs[0].index[row_idx]  # Assumes model name is in index
+
+        plt.plot(window_lengths_for_plot, f1_scores, color=color, label=label)
+
+    # plt.title("F1 Score Across Window Sizes for All Models")
+    plt.xlabel("Window length")
+    plt.ylabel("F1 Score")
+    ylim = plt.ylim()       # get current y-axis limits (returns (lower, upper))
+    plt.ylim(ylim[0]-0.05, 1.05)
+    plt.xticks(np.arange(window_sec_lower, window_sec_upper, 25))
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('plots/f1_all_models.png', dpi=300, bbox_inches='tight')
 
     stop_time = time.time()
 
     print(f"Runtime: {stop_time-start_time}")
-
-    # print(f1_mean)
-
-    # plotScoreVsWindowLength(
-    #     window_lengths=window_lengths_for_plot,
-    #     mean_scores=f1_mean,
-    #     std_scores=f1_std,
-    #     score_type='F1 score',
-    #     color='blue',
-    #     filename='plots/f1_score_vs_window_length_2'
-    # )
-
-    # plotScoreVsWindowLength(
-    #     window_lengths=window_lengths_for_plot,
-    #     mean_scores=f1_mean,
-    #     std_scores=f1_std,
-    #     score_type='Accuracy score',
-    #     color='red',
-    #     filename='plots/accuracy_score_vs_window_length_2'
-    # )
+    plt.show()

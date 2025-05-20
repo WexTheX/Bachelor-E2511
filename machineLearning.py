@@ -279,6 +279,12 @@ def makeNClassifiers(models:                Dict[str, Tuple[Any, Dict]],
 
         train_test_delta = mean_train_score - mean_test_score
 
+        print("Validation scores for each fold (best param combo):")
+        split_keys = [k for k in clf.cv_results_ if k.startswith('split') and k.endswith('_test_score')]
+        for split in sorted(split_keys):
+            score = clf.cv_results_[split][clf.best_index_]
+            print(f"{split}: {score:.4f}")
+
         print(f"{clf.cv_results_['params'][clf.best_index_]} gives the best worst-case test result: (mean - {num_of_STD}*std): {pessimistic_test_score}")
         print(f"Best model found and fitted in {elapsed_time:.4f} seconds")
         print(f"\n") 
@@ -384,12 +390,14 @@ def evaluateCLFs(results:           List[Dict[str, Any]],
     })
 
   metrics_df = pd.DataFrame(rows)
-  metrics_df.set_index(['model_name', 'optimalizer'], inplace=True)
-  metrics_df = metrics_df.sort_values(by='avg_predict_time', ascending=True)
+  metrics_df.set_index(['model_name', 'optimalizer'], inplace=True) # NB, change
+  # metrics_df.set_index('model_name', inplsace=True)
+  metrics_df = metrics_df.sort_index(level='model_name')
+  # metrics_df.sort_index(inplace=True)
 
   # metrics_df.to_csv(output_path, index=False)
 
-  print(metrics_df)
+  # print(metrics_df)
   print("")
   print(f"Best clf: \t {best_model}: {best_optimalizer}")
   print(f"f1_score: \t {highest_score:.4f}")

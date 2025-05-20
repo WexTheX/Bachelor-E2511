@@ -9,30 +9,29 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Colormap
 from typing import List, Dict, Any, Tuple, Sequence, Optional
 
-
 main_config = {
 
     # --- GLOBAL VARIABLES / FLAGS ---
     'want_feature_extraction':  1, # True: Extract statistical features from datafiles files, create "feature_df" dataframe. False: Read "xxx_feature_df.csv" from file
     'norm_IMU':                 0, # True: Normalize IMU data. False: Use IMU data in x, y, and z direction
     'use_granular_labels':      1, # True: Use granular (8) labels for classification. False: Use high-level (4) labels for classification
-    'want_new_CLFs':            0, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
-    'want_plots':               0, # True: Generate and save plots. False: Skip plotting
+    'want_new_CLFs':            1, # True: Train new classifiers based on 'model_selection' list, with 'method_selection' as HPO search. False: Load existing classifier
+    'want_plots':               1, # True: Generate and save plots. False: Skip plotting
     'save_joblib':              0, # True: Pickle (save) the classifier, scaler and PCA objects. False: Do not save
     'want_offline_test':        0, # True: Predict activities in folder "testFiles", save as "predictions.csv". False: Skip
     'want_calc_exposure':       0, # True: Calculate exposure based on predictions, create "exposure_summary.csv". False: Skip
     'model_selection': [        
                                 # 'LR',        
-                                'SVM',
-    #                             'KNN',
-    #                             'GNB',
-    #                             'RF',
-    #                             'GB',
-    #                             'ADA',                  
+                                # 'SVM',
+                                # 'KNN',
+                                # 'GNB',
+                                # 'RF',
+                                # 'GB',
+                                # 'ADA',                  
     ],
 
     'method_selection':         [
-                                #'BS    
+                                # 'BS',    
                                 # 'RS',
                                 # 'GS',
                                 # 'HGS'
@@ -65,6 +64,7 @@ main_config = {
     'test_file_path':           "testOnFile/testFiles",
     'prediction_csv_path':      "testOnFile",
     'clf_results_path':         "CLF results/clf_results.joblib"
+
 }
 
 def setupML():
@@ -84,13 +84,13 @@ def setupML():
     ADA_base    = AdaBoostClassifier(estimator=DecisionTreeClassifier(), random_state=random_seed)
 
     SVM_param_grid = {
-        "C":                    [0.01, 0.1,
-                                #  1.0, 10.0, 100.0
+        "C":                    [0.01, 0.1, 1.0,
+                                 1.0, 10.0, 100.0
                                 ],
-        "kernel":               ["linear"]#, "poly", "rbf", "sigmoid"],
-        # "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
-        # "coef0":                [0.0, 0.5, 1.0],
-        # "degree":               [2, 3, 4, 5]
+        "kernel":               ["linear", "poly", "rbf", "sigmoid"],
+        "gamma":                [0.01, 0.1, 1, 10.0, 100.0],
+        "coef0":                [0.0, 0.5, 1.0],
+        "degree":               [2, 3, 4, 5]
     }
 
     KNN_param_grid = {
@@ -125,28 +125,28 @@ def setupML():
 
     RF_param_grid = {
         'n_estimators':         [50, 100, 200],         # Number of trees in the forest
-        # 'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
-        # 'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
-        # 'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
+        'max_depth':            [10, 20, 30, None],     # Maximum depth of each tree
+        'min_samples_split':    [2, 5, 10],             # Minimum samples required to split a node
+        'min_samples_leaf':     [1, 2, 4],              # Minimum samples required in a leaf node
         'max_features':         ['sqrt', 'log2'],       # Number of features considered for splitting
         # 'bootstrap':            [True, False],          # Whether to use bootstrapped samples
         'criterion':            ['gini', 'entropy']     # Splitting criteria
     }
 
     GB_param_grid = {
-        # 'n_estimators':         [100],#, 300],
+        'n_estimators':         [100, 300],
         'learning_rate':        [0.01, 0.05, 0.1],
         'max_depth':            [3, 5, 7],
-        # 'min_samples_split':    [2, 5, 10],
-        # 'min_samples_leaf':     [1, 2],
-        # 'subsample':            [0.6, 0.8, 1.0],
-        # 'max_features':         ['sqrt', 'log2', None],
+        'min_samples_split':    [2, 5, 10],
+        'min_samples_leaf':     [1, 2],
+        'subsample':            [0.6, 0.8, 1.0],
+        'max_features':         ['sqrt', 'log2', None],
     }
     
     ADA_param_grid = {
         'n_estimators':                 [50, 100, 200],
         'learning_rate':                [0.01, 0.1, 1.0],
-        # 'estimator__max_depth':         [1, 3, 5],
+        'estimator__max_depth':         [1, 3, 5],
         'estimator__min_samples_split': [2, 5]
     }
 
@@ -179,7 +179,7 @@ def setupML():
     
     search_kwargs = {
         'n_jobs':              -1, 
-        'verbose':             0,
+        'verbose':             3,
         'cv':                  StratifiedKFold(n_splits=num_folds),
         'scoring':             'f1_weighted',
         'return_train_score':  True

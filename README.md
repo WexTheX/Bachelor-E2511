@@ -125,12 +125,11 @@ model_selection = ['svm', 'lr', 'rf']
 - **`norm_imu`**: Whether to use IMU x, y, z as features, `false` or the norm of x,y,z as features, `true`. Genereally for the project `norm_imu` was set to `false`.
 
 #### Exposure
-- **`exposures`**: 
-- **`safe_limit_vector`**:
-- **`variables`**:
-- **`test_file_path`**:
-- **`prediction_csv_path`**: 
-- **`clf_results_path`**:
+- **`exposures`**: placeholder values that connect activity to vibration
+- **`variables`**: The sensor configuration used when logging
+- **`test_file_path`**: Where the result from test file classification appear
+- **`prediction_csv_path`**: Where results from feature extraction will be saved
+- **`clf_results_path`**: Where a newly trained classifier will be saved
 
 
 
@@ -157,25 +156,5 @@ streamlit run User_interface.py
 ```
 
 This should open a web browser page with the user interface running on `localhost` port `8051`.
-
-![Interface1](GIT_images\Interface1.png)
-
 From here one can interact with the code, providing the same functionalities as altering the code and runnning `main.py` aswell as `realtime.py`, though it's recomended to also pay attention to the terminal since only results are displayed not the progress. Just to avoid impatience.
 
-![Interface2](GIT_images\Interface2.png)
-
-Change the settings as you would in the `config.py` file.
-
-![Interface3](GIT_images\Interface5.png)
-
-Examine the results and plots that you want.
-
-![Interface4](GIT_images\Interface8.png)
-
-Test the classifier on a file showing it's certainty and top 3 predictions for different windows.
-
-
-
-![Interface5](GIT_images\Interface9.png)
-
-On the last tab one may add new files/data that can be used for training.
